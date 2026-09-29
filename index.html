@@ -26,7 +26,7 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
 @media (max-width:900px){header{padding:12px 20px;align-items:flex-start}.logo{padding-top:8px}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:700px){header{display:block;padding:14px 16px}.logo{text-align:center;padding:2px 0 9px}.logo span{font-size:11px}nav{justify-content:center;overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px}nav button{font-size:13px;padding:9px 8px;white-space:nowrap}.hero{padding:42px 16px 34px}.hero h1{font-size:34px}.hero p{font-size:14px}.search{flex-direction:column;border-radius:11px}.search input{padding:15px 14px;min-height:50px}.search button{width:100%;padding:14px;min-height:48px}.container{padding:26px 14px}.title h2{font-size:21px}.cards,.grid{grid-template-columns:1fr;gap:10px}.card,.cat{padding:16px}.panel{padding:17px}.row{display:block}.row>*{margin-bottom:10px}.form input,.form select,.form textarea{font-size:16px;min-height:46px}.btn{min-height:44px}.login{padding:20px 14px;align-items:start;padding-top:48px}.loginbox{padding:24px 18px}}
 </style></head><body><header><div class="logo">GMC <span>MISSION ARCHIVE</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><script>
-const API='https://gmc-mission-archive.tyzm.workers.dev/api';
+const API='https://gmc-api-proxy.pages.dev/api';
 const API_TIMEOUT=15000;
 let T=localStorage.getItem('gmc_token')||'',ME=null,CATS=[];
 
