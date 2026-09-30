@@ -119,6 +119,11 @@ function selectCategory(btn,category=''){
   search(category);
 }
 
+function openMaterial(url){
+  if(!url)return;
+  window.open(url,'_blank','noopener');
+}
+
 async function search(category=''){
   const q=document.getElementById('q')?.value.trim()||'';
   const cards=document.getElementById('cards'), count=document.getElementById('heroResultCount');
@@ -137,12 +142,12 @@ async function search(category=''){
     }
     if(!Array.isArray(items)||!items.length){cards.innerHTML='<div class="notice">검색 결과가 없습니다.</div>';return}
     cards.innerHTML=items.map(m=>`
-      <article class="card">
+      <article class="card" style="cursor:pointer" onclick="openMaterial('${E(m.url||m.viewUrl||m.driveUrl||'').replace(/'/g,"&#039;")}')">
         <div class="tag">${E(m.category||'기타')}</div>
         <h3>${E(m.title||m.name||'제목 없음')}</h3>
         <p>${E(m.description||m.content||'')}</p>
         <div class="meta">${E(m.author||m.writer||'')} ${m.year?'· '+E(m.year):''}</div>
-        ${m.url||m.viewUrl||m.driveUrl?`<a class="btn light" style="margin-top:12px" href="${E(m.url||m.viewUrl||m.driveUrl)}" target="_blank" rel="noopener">자료 열기</a>`:''}
+        ${m.url||m.viewUrl||m.driveUrl?`<a class="btn light" style="margin-top:12px" href="${E(m.url||m.viewUrl||m.driveUrl)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">자료 열기</a>`:''}
       </article>`).join('');
   }catch(e){if(count)count.textContent='';cards.innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
 }
