@@ -123,12 +123,23 @@ async function openMaterialById(id){
   if(!id)return;
   try{
     const d=await A('getMaterial',[T,id]);
-    const m=d.material||d.item||d.data||d;
-    const url=m.url||m.viewUrl||m.driveUrl||m.webViewLink||m.downloadUrl||'';
-    if(url)window.open(url,'_blank','noopener');
-    else alert('이 자료의 열기 링크를 찾을 수 없습니다.');
+    const m=d.material||{};
+    document.getElementById('app').innerHTML=`<div class="container">
+      <button class="btn light" onclick="home()">← 자료실</button>
+      <div class="panel" style="margin-top:18px">
+        <div class="tag">${E(m.category||'기타')}</div>
+        <h1>${E(m.title||'제목 없음')}</h1>
+        <p>${E(m.description||'')}</p>
+        <div class="meta">${E(m.author||'')} ${m.year?'· '+E(m.year):''} ${m.language?'· '+E(m.language):''}</div>
+        <div class="row" style="margin-top:22px">
+          <a class="btn" href="${E(m.viewUrl||'')}" target="_blank" rel="noopener">Google Drive에서 열람</a>
+          <a class="btn light" href="${E(m.downloadUrl||'')}" target="_blank" rel="noopener">다운로드</a>
+        </div>
+      </div>
+    </div>`;
   }catch(e){alert(e.message||'자료를 열 수 없습니다.');}
 }
+
 
 async function search(category=''){
   const q=document.getElementById('q')?.value.trim()||'';
@@ -139,7 +150,7 @@ async function search(category=''){
     let d;
     // Keep compatibility with the current Worker API.
     try{d=await A('listMaterials',[T,{q,category}])}
-    catch(e){d=await A('listMaterials',[T,q])}
+    catch(e){d=await A('listMaterials',[T,{q,category}])}
     const items=d.materials||d.items||d.data||[];
     if(count){
       count.textContent = q
