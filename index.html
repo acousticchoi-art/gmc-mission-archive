@@ -93,7 +93,7 @@ async function home(){
     
     <div class="title"><h2>검색 결과</h2></div>
     <div class="cards" id="cards"><div class="notice">자료를 불러오는 중...</div></div>
-    <div class="title" style="margin-top:40px"><h2>자료 분야</h2></div>
+    
     <div class="grid" id="cats"></div>
   </div>`;
   await loadCats();
@@ -108,7 +108,7 @@ async function loadCats(){
       '<button class="cat" onclick="search()"><b>전체 자료</b><small>전체 보기</small></button>'+
       CATS.map(c=>{
         const name=typeof c==='string'?c:(c.name||c.category||'');
-        return `<button class="cat" onclick="search('${E(name).replace(/'/g,"&#039;")}')"><b>${E(name)}</b><small>자료 보기</small></button>`;
+        return `<button class="cat" onclick="search('${E(name).replace(/'/g,"&#039;")}')"><b>${E(name)}</b></button>`;
       }).join('');
   }catch(e){document.getElementById('cats').innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
 }
