@@ -255,7 +255,6 @@ function uploadView(){
   <div style="margin-top:8px;font-size:12px;color:#6b7280">파일 형식은 선택한 파일에서 자동으로 인식됩니다.</div>
   <button class="btn" style="margin-top:18px" onclick="upload()">Drive에 저장하고 등록</button><div id="uploadmsg"></div></div></div>`;
 }
-function fileToBase64(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result).split(',')[1]);r.onerror=reject;r.readAsDataURL(file)})}
 function detectFileType(file){
   const mime=(file?.type||'').toLowerCase(), ext=(file?.name||'').split('.').pop().toLowerCase();
   if(mime==='application/pdf'||ext==='pdf')return 'PDF';
@@ -268,14 +267,31 @@ function detectFileType(file){
   if(mime.includes('zip')||['zip','rar','7z'].includes(ext))return '압축파일';
   return ext?ext.toUpperCase():'기타';
 }
+async function directDriveUpload(file,uploadUrl,msg){
+  const chunkSize=8*1024*1024;
+  let start=0;
+  while(start<file.size){
+    const end=Math.min(start+chunkSize,file.size);
+    const chunk=file.slice(start,end);
+    const r=await fetch(uploadUrl,{method:'PUT',headers:{'Content-Length':String(end-start),'Content-Range':`bytes ${start}-${end-1}/${file.size}`},body:chunk});
+    if(r.status===200||r.status===201){const d=await r.json();return d;}
+    if(r.status!==308) {let t=await r.text();throw new Error(t||`Google Drive 업로드 오류 HTTP ${r.status}`)}
+    start=end;
+    const pct=Math.round(start/file.size*100);
+    msg.innerHTML=`<div class="notice">업로드 중입니다... ${pct}%</div>`;
+  }
+  throw new Error('업로드가 완료되었다는 응답을 받지 못했습니다.');
+}
 async function upload(){
   const f=document.getElementById('file').files[0],msg=document.getElementById('uploadmsg');
   if(!f){msg.innerHTML='<div class="notice error">파일을 선택하세요.</div>';return}
-  msg.innerHTML='<div class="notice">업로드 중입니다. 파일 크기에 따라 시간이 걸릴 수 있습니다.</div>';
+  msg.innerHTML='<div class="notice">업로드 준비 중...</div>';
   try{
-    const base64=await fileToBase64(f);
-    await A('uploadMaterial',[T,{title:document.getElementById('mt').value,description:document.getElementById('md').value,category:document.getElementById('mc').value,language:document.getElementById('ml').value,author:document.getElementById('ma').value,year:document.getElementById('my').value,fileType:detectFileType(f),fileName:f.name,mimeType:f.type,base64}]);
-    msg.innerHTML='';
+    const meta={fileName:f.name,mimeType:f.type||'application/octet-stream',size:f.size,fileType:detectFileType(f)};
+    const session=await A('prepareUpload',[T,meta]);
+    const uploaded=await directDriveUpload(f,session.uploadUrl,msg);
+    msg.innerHTML='<div class="notice">등록 정보를 저장하는 중...</div>';
+    await A('finalizeUpload',[T,{title:document.getElementById('mt').value,description:document.getElementById('md').value,category:document.getElementById('mc').value,language:document.getElementById('ml').value,author:document.getElementById('ma').value,year:document.getElementById('my').value,fileType:detectFileType(f),fileName:f.name,driveId:uploaded.id}]);
     alert('자료가 등록되었습니다.');
     await home();
   }catch(e){msg.innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
