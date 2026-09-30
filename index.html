@@ -91,7 +91,7 @@ async function home(){
   <section class="hero"><div class="hero-inner">
     <div class="eyebrow">GMC · MYANMAR MISSION</div><h1>Mission Archive</h1>
     <p>미얀마 선교의 기록과 지식을 함께 보존하고 나누는 자료 아카이브입니다.</p>
-    <div class="search"><input id="q" placeholder="자료 제목, 내용, 작성자 검색" onkeydown="if(event.key==='Enter')search()"><button onclick="search()">검색</button></div><div class="category-bar-wrap hero-categories"><div class="category-bar" id="cats"></div></div>
+    <div class="search"><input id="q" placeholder="자료 제목, 내용, 작성자 검색" onkeydown="if(event.key==='Enter')search()"><button onclick="search()">검색</button></div><div class="category-bar-wrap hero-categories"><div class="category-label">카테고리</div><div class="category-bar" id="cats"></div></div>
     <div id="heroResultCount" style="margin-top:7px;font-size:12px;opacity:.78;letter-spacing:.01em">전체 자료를 불러오는 중...</div>
   </div></section>
   <div class="container">
@@ -109,12 +109,14 @@ async function loadCats(){
     if(!Array.isArray(CATS))CATS=[];
     const names=CATS.map(c=>typeof c==='string'?c:(c.name||c.category||'')).filter(Boolean);
     document.getElementById('cats').innerHTML=names.map(name=>
-      `<button onclick="search('${E(name).replace(/'/g,"&#039;")}')">${E(name)}</button>`
+      `<button onclick="search('${E(name).replace(/'/g,"&#039;")}')">${E(categoryLabel(name))}</button>`
     ).join('');
   }catch(e){
     document.getElementById('cats').innerHTML='<div class="notice error">'+E(e.message)+'</div>';
   }
 }
+
+function categoryLabel(name){return name==='교육'?'유아교육':name;}
 
 function selectCategory(btn,category=''){
   document.querySelectorAll('#cats button').forEach(x=>x.classList.remove('active'));
@@ -250,7 +252,7 @@ async function saveUser(id){
 function uploadView(){
   document.getElementById('app').innerHTML=`<div class="container"><div class="title"><h2>자료 등록</h2><button class="btn light" onclick="admin()">← 관리자</button></div>
   <div class="panel form"><label>제목</label><input id="mt"><label>설명</label><textarea id="md"></textarea>
-  <div class="row"><div><label>카테고리</label><select id="mc">${CATS.map(c=>`<option>${E(typeof c==='string'?c:(c.name||c.category||''))}</option>`).join('')}</select></div><div><label>언어</label><input id="ml" value="한국어"></div></div>
+  <div class="row"><div><label>카테고리</label><select id="mc">${CATS.map(c=>{const raw=typeof c==='string'?c:(c.name||c.category||'');return `<option value="${E(raw)}">${E(categoryLabel(raw))}</option>`}).join('')}</select></div><div><label>언어</label><input id="ml" value="한국어"></div></div>
   <div class="row"><div><label>작성자</label><input id="ma"></div><div><label>작성연도</label><input id="my" value="${new Date().getFullYear()}"></div></div>
   <label>파일</label><input id="file" type="file">
   <div style="margin-top:8px;font-size:12px;color:#6b7280">파일 형식은 선택한 파일에서 자동으로 인식됩니다.</div>
