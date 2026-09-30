@@ -100,8 +100,7 @@ async function home(){
     
     <div class="grid" id="cats"></div>
   </div>`;
-  await loadCats();
-  await search();
+  await Promise.all([loadCats(),search()]);
 }
 
 async function loadCats(){
@@ -123,25 +122,20 @@ function selectCategory(btn,category=''){
   search(category);
 }
 
-async function openMaterialById(id){
+async function openMaterialById(id,url=''){
+  if(url){
+    window.open(url,'_blank','noopener');
+    return;
+  }
   if(!id)return;
+  const w=window.open('about:blank','_blank');
   try{
     const d=await A('getMaterial',[T,id]);
-    const m=d.material||{};
-    document.getElementById('app').innerHTML=`<div class="container">
-      <button class="btn light" onclick="home()">← 자료실</button>
-      <div class="panel" style="margin-top:18px">
-        <div class="tag">${E(m.category||'기타')}</div>
-        <h1>${E(m.title||'제목 없음')}</h1>
-        <p>${E(m.description||'')}</p>
-        <div class="meta">${E(m.author||'')} ${m.year?'· '+E(m.year):''} ${m.language?'· '+E(m.language):''}</div>
-        <div class="row" style="margin-top:22px">
-          <a class="btn" href="${E(m.viewUrl||'')}" target="_blank" rel="noopener">Google Drive에서 열람</a>
-          <a class="btn light" href="${E(m.downloadUrl||'')}" target="_blank" rel="noopener">다운로드</a>
-        </div>
-      </div>
-    </div>`;
-  }catch(e){alert(e.message||'자료를 열 수 없습니다.');}
+    const m=d.material||d.item||d.data||d;
+    const link=m.url||m.viewUrl||m.driveUrl||m.webViewLink||m.downloadUrl||'';
+    if(link){if(w)w.location.href=link;else window.location.href=link;}
+    else{if(w)w.close();alert('이 자료의 열기 링크를 찾을 수 없습니다.');}
+  }catch(e){if(w)w.close();alert(e.message||'자료를 열 수 없습니다.');}
 }
 
 
@@ -163,7 +157,7 @@ async function search(category=''){
     }
     if(!Array.isArray(items)||!items.length){cards.innerHTML='<div class="notice">검색 결과가 없습니다.</div>';return}
     cards.innerHTML=items.map(m=>`
-      <article class="card" style="cursor:pointer" onclick="openMaterialById('${E(m.id||m.materialId||m.ID||'').replace(/'/g,"&#039;")}')">
+      <article class="card" style="cursor:pointer" onclick="openMaterialById('${E(m.id||m.materialId||m.ID||'').replace(/'/g,"&#039;")}','${E(m.url||m.viewUrl||m.driveUrl||m.webViewLink||'').replace(/'/g,"&#039;")}')">
         <div class="tag">${E(m.category||'기타')}</div>
         <h3>${E(m.title||m.name||'제목 없음')}</h3>
         <p>${E(m.description||m.content||'')}</p>
@@ -171,6 +165,63 @@ async function search(category=''){
         ${m.url||m.viewUrl||m.driveUrl?`<a class="btn light" style="margin-top:12px" href="${E(m.url||m.viewUrl||m.driveUrl)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">자료 열기</a>`:''}
       </article>`).join('');
   }catch(e){if(count)count.textContent='';cards.innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
+}
+
+
+async function admin(){
+  if(!ME || ME.role!=='관리자')return;
+  document.getElementById('app').innerHTML=`<div class="container"><div class="title"><h2>관리자</h2></div>
+  <div class="grid">
+    <button class="cat" onclick="userAdmin()"><b>회원 관리</b><small>회원 등록·권한·상태·비밀번호 초기화</small></button>
+    <button class="cat" onclick="uploadView()"><b>자료 등록</b><small>Google Drive에 파일 저장 후 자료 등록</small></button>
+  </div></div>`;
+}
+function userAdmin(){
+  document.getElementById('app').innerHTML=`<div class="container"><div class="title"><h2>회원 관리</h2><button class="btn light" onclick="admin()">← 관리자</button></div>
+  <div class="panel form"><h3>회원 등록</h3>
+  <div class="row"><div><label>이름</label><input id="un"></div><div><label>아이디</label><input id="uid"></div></div>
+  <div class="row"><div><label>이메일</label><input id="ue"></div><div><label>소속 지부</label><input id="ub"></div></div>
+  <label>권한</label><select id="ur"><option>코디네이터</option><option>지역대표</option><option>지부장</option><option>지부원</option></select>
+  <label>초기 비밀번호</label><input id="up" type="password" minlength="6">
+  <button class="btn" style="margin-top:16px" onclick="createUser()">회원 등록</button><div id="umsg"></div></div>
+  <div class="panel"><h3>회원 목록</h3><div id="users"><div class="notice">불러오는 중...</div></div></div></div>`;
+  loadUsers();
+}
+async function loadUsers(){
+  try{
+    const r=await A('listUsers',[T]);
+    const users=r.users||r.items||r.data||[];
+    document.getElementById('users').innerHTML=Array.isArray(users)&&users.length
+      ? `<div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><tr><th style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">이름</th><th style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">아이디</th><th style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">권한</th><th style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">지부</th><th style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">상태</th><th style="padding:9px;border-bottom:1px solid var(--line)">작업</th></tr>${users.map(u=>`<tr><td style="padding:9px;border-bottom:1px solid var(--line)">${E(u.name)}</td><td style="padding:9px;border-bottom:1px solid var(--line)">${E(u.username)}</td><td style="padding:9px;border-bottom:1px solid var(--line)">${E(u.role)}</td><td style="padding:9px;border-bottom:1px solid var(--line)">${E(u.branch)}</td><td style="padding:9px;border-bottom:1px solid var(--line)">${E(u.status)}</td><td style="padding:9px;border-bottom:1px solid var(--line)"><button class="btn light" onclick="toggleUser('${E(u.id)}','${u.status==='활성'?'비활성':'활성'}')">${u.status==='활성'?'비활성화':'활성화'}</button></td></tr>`).join('')}</table></div>`
+      : '<div class="notice">등록된 회원이 없습니다.</div>';
+  }catch(e){document.getElementById('users').innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
+}
+async function createUser(){
+  const data={name:document.getElementById('un').value,username:document.getElementById('uid').value,email:document.getElementById('ue').value,branch:document.getElementById('ub').value,role:document.getElementById('ur').value,initialPassword:document.getElementById('up').value};
+  try{await A('createUser',[T,data]);document.getElementById('umsg').innerHTML='<div class="notice ok">회원이 등록되었습니다.</div>';loadUsers()}
+  catch(e){document.getElementById('umsg').innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
+}
+async function toggleUser(id,status){
+  try{await A('setUserStatus',[T,id,status]);loadUsers()}catch(e){alert(e.message)}
+}
+function uploadView(){
+  document.getElementById('app').innerHTML=`<div class="container"><div class="title"><h2>자료 등록</h2><button class="btn light" onclick="admin()">← 관리자</button></div>
+  <div class="panel form"><label>제목</label><input id="mt"><label>설명</label><textarea id="md"></textarea>
+  <div class="row"><div><label>카테고리</label><select id="mc">${CATS.map(c=>`<option>${E(typeof c==='string'?c:(c.name||c.category||''))}</option>`).join('')}</select></div><div><label>언어</label><input id="ml" value="한국어"></div></div>
+  <div class="row"><div><label>작성자</label><input id="ma"></div><div><label>작성연도</label><input id="my" value="${new Date().getFullYear()}"></div></div>
+  <label>자료 형식</label><input id="mf" placeholder="PDF / PPT / DOC / 사진 / 영상"><label>파일</label><input id="file" type="file">
+  <button class="btn" style="margin-top:18px" onclick="upload()">Drive에 저장하고 등록</button><div id="uploadmsg"></div></div></div>`;
+}
+function fileToBase64(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result).split(',')[1]);r.onerror=reject;r.readAsDataURL(file)})}
+async function upload(){
+  const f=document.getElementById('file').files[0],msg=document.getElementById('uploadmsg');
+  if(!f){msg.innerHTML='<div class="notice error">파일을 선택하세요.</div>';return}
+  msg.innerHTML='<div class="notice">업로드 중입니다. 파일 크기에 따라 시간이 걸릴 수 있습니다.</div>';
+  try{
+    const base64=await fileToBase64(f);
+    await A('uploadMaterial',[T,{title:document.getElementById('mt').value,description:document.getElementById('md').value,category:document.getElementById('mc').value,language:document.getElementById('ml').value,author:document.getElementById('ma').value,year:document.getElementById('my').value,fileType:document.getElementById('mf').value||f.type,fileName:f.name,mimeType:f.type,base64}]);
+    msg.innerHTML='<div class="notice ok">자료가 Google Drive에 저장되고 등록되었습니다.</div>';
+  }catch(e){msg.innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
 }
 
 async function pw(force=false){
