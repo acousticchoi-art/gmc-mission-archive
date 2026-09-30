@@ -108,6 +108,8 @@ function openMaterial(m){
   alert('이 자료의 연결된 파일 주소를 찾을 수 없습니다.');
 }
 
+let SEARCH_ITEMS=[];
+
 async function search(category=''){
   const q=document.getElementById('q')?.value.trim()||'';
   const cards=document.getElementById('cards'); if(!cards)return;
@@ -117,16 +119,26 @@ async function search(category=''){
     try{d=await A('listMaterials',[T,q,category])}
     catch(e){d=await A('listMaterials',[T,q])}
     const items=d.items||d.materials||d.data||[];
-    if(!Array.isArray(items)||!items.length){cards.innerHTML='<div class="notice">검색 결과가 없습니다.</div>';return}
-    cards.innerHTML=items.map(m=>`
-      <article class="card" style="cursor:pointer" onclick="openMaterial(${JSON.stringify(m).replace(/\\/g,'\\\\').replace(/'/g,'&#039;')})">
+    if(!Array.isArray(items)||!items.length){
+      SEARCH_ITEMS=[];
+      cards.innerHTML='<div class="notice">검색 결과가 없습니다.</div>';return
+    }
+    SEARCH_ITEMS=items;
+    cards.innerHTML=items.map((m,i)=>`
+      <article class="card" style="cursor:pointer" onclick="openMaterialByIndex(${i})">
         <div class="tag">${E(m.category||'기타')}</div>
         <h3>${E(m.title||m.name||'제목 없음')}</h3>
         <p>${E(m.description||m.content||'')}</p>
         <div class="meta">${E(m.author||m.writer||'')} ${m.year?'· '+E(m.year):''}</div>
-        ${m.url||m.viewUrl||m.driveUrl?`<a class="btn light" style="margin-top:12px" href="${E(m.url||m.viewUrl||m.driveUrl)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">자료 열기</a>`:'<div class="meta" style="margin-top:12px">자료 보기</div>'}
+        ${m.url||m.viewUrl||m.driveUrl||m.webViewLink||m.webContentLink?`<a class="btn light" style="margin-top:12px" href="${E(m.url||m.viewUrl||m.driveUrl||m.webViewLink||m.webContentLink)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">자료 열기</a>`:'<div class="meta" style="margin-top:12px">자료 보기</div>'}
       </article>`).join('');
   }catch(e){cards.innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
+}
+
+function openMaterialByIndex(i){
+  const m=SEARCH_ITEMS[i];
+  if(!m){alert('자료 정보를 찾을 수 없습니다.');return}
+  openMaterial(m);
 }
 
 async function pw(force=false){
