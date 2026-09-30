@@ -1,36 +1,36 @@
 <!doctype html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GMC Mission Archive</title><style>
-:root{--n:#17344f;--a:#b18a55;--bg:#f5f7f9;--line:#e1e7ec;--muted:#6d7883;--white:#fff;--danger:#a33d3d}
+:root{--n:#17344f;--a:#b18a55;--bg:#f6f8fa;--line:#e4e9ee;--muted:#74808b;--white:#fff;--danger:#a33d3d;--shadow:0 8px 24px rgba(23,52,79,.07)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{font-size:16px;scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:#1d2a35;font-family:Arial,"Noto Sans KR",sans-serif;line-height:1.45;overflow-x:hidden}
 button,input,select,textarea{font:inherit}button{cursor:pointer;touch-action:manipulation}
-header{min-height:70px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 clamp(16px,5vw,72px);gap:16px}
-.logo{font-weight:800;letter-spacing:.08em;color:var(--n);white-space:nowrap}.logo span{font-weight:400;color:#77828d}
+header{min-height:72px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 clamp(18px,5vw,72px);gap:18px;box-shadow:0 1px 0 rgba(23,52,79,.03)}
+.logo{font-weight:800;letter-spacing:.09em;font-size:15px;color:var(--n);white-space:nowrap}.logo span{font-weight:400;color:#77828d}
 nav{display:flex;align-items:center;gap:4px;flex-wrap:wrap;justify-content:flex-end}
 nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border-radius:8px}.primary{color:var(--n);font-weight:700}
-.hero{background:linear-gradient(135deg,#17344f,#2a4e6b);color:#fff;padding:clamp(48px,7vw,82px) 20px}
+.hero{background:linear-gradient(135deg,#17344f 0%,#244761 100%);color:#fff;padding:clamp(54px,7vw,78px) 20px 42px}
 .hero-inner,.container{width:min(1120px,100%);margin:auto}.eyebrow{font-size:11px;letter-spacing:.2em;opacity:.7}
-.hero h1{font-size:clamp(36px,5vw,48px);line-height:1.1;margin:12px 0}.hero p{max-width:650px;opacity:.8}
-.search{display:flex;width:100%;max-width:850px;background:#fff;border-radius:12px;overflow:hidden;margin-top:28px;box-shadow:0 8px 24px #0002}
-.search input{flex:1;min-width:0;border:0;padding:18px;outline:0;color:#1d2a35}.search button{border:0;background:var(--a);color:#fff;padding:0 28px;font-weight:bold;min-height:52px}
-.container{padding:38px 20px}.title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}.title h2{margin:0;font-size:clamp(20px,3vw,26px)}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}.cat,.card,.panel{background:#fff;border:1px solid var(--line);border-radius:13px}
+.hero h1{font-size:clamp(36px,5vw,48px);line-height:1.08;margin:13px 0 10px;letter-spacing:-.025em}.hero p{max-width:650px;opacity:.82;margin:0;line-height:1.7}
+.search{display:flex;width:100%;max-width:850px;background:#fff;border-radius:14px;overflow:hidden;margin-top:30px;box-shadow:0 12px 30px rgba(0,0,0,.16)}
+.search input{flex:1;min-width:0;border:0;padding:17px 19px;outline:0;color:#1d2a35;font-size:15px}.search button{border:0;background:var(--a);color:#fff;padding:0 27px;font-weight:bold;min-height:52px;transition:filter .15s}.search button:hover{filter:brightness(.96)}
+.container{padding:38px 20px 56px}.title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:15px}.title h2{margin:0;font-size:clamp(20px,3vw,25px);letter-spacing:-.02em}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}.cat,.card,.panel{background:#fff;border:1px solid var(--line);border-radius:15px;box-shadow:var(--shadow)}
 .cat{padding:20px;text-align:left;min-height:92px}.cat b{display:block;margin-bottom:7px}.cat small,.meta{color:var(--muted);font-size:12px}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:15px}.category-bar-wrap{margin-top:34px;padding-top:18px;border-top:1px solid var(--line)}
-.category-bar-title{font-size:13px;font-weight:700;color:#56616b;margin-bottom:10px}
-.category-bar{display:flex;gap:7px;overflow-x:auto;white-space:nowrap;padding:2px 1px 8px;scrollbar-width:thin}
-.category-bar button{flex:0 0 auto;border:1px solid var(--line);background:#fff;color:#56616b;border-radius:999px;padding:7px 12px;font-size:12px;line-height:1.2}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px}.category-bar-wrap{margin-top:42px;padding-top:22px;border-top:1px solid var(--line)}
+.category-bar-title{font-size:12px;font-weight:800;color:#65717c;margin-bottom:11px;letter-spacing:.02em}
+.category-bar{display:flex;gap:8px;overflow-x:auto;white-space:nowrap;padding:2px 2px 7px;scrollbar-width:none}.category-bar::-webkit-scrollbar{display:none}
+.category-bar button{flex:0 0 auto;border:1px solid #dfe5ea;background:#fff;color:#5c6873;border-radius:999px;padding:8px 13px;font-size:12px;line-height:1.2;transition:all .15s}
 .category-bar button:hover{border-color:var(--a);color:var(--a)}
-.category-bar button.active{background:var(--n);border-color:var(--n);color:#fff}
-.card{padding:20px;transition:transform .12s ease,box-shadow .12s ease}.card h3{margin:9px 0;line-height:1.35}.card p{color:var(--muted);font-size:14px;line-height:1.55}.tag{font-size:12px;color:var(--a);font-weight:bold}
+.category-bar button.active{background:var(--n);border-color:var(--n);color:#fff;box-shadow:0 3px 9px rgba(23,52,79,.16)}
+.card{padding:21px;transition:transform .16s ease,box-shadow .16s ease}.card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(23,52,79,.10)}.card h3{margin:9px 0 8px;line-height:1.4;letter-spacing:-.01em}.card p{color:var(--muted);font-size:14px;line-height:1.65;margin:0 0 12px}.tag{font-size:11px;color:var(--a);font-weight:800;letter-spacing:.02em}
 .panel{padding:24px;margin-bottom:18px}.form{max-width:700px}.form label{display:block;font-size:13px;font-weight:bold;margin:13px 0 6px}
 .form input,.form select,.form textarea{width:100%;padding:11px;border:1px solid #ccd5dc;border-radius:8px;background:#fff;color:#1d2a35}.form textarea{min-height:90px;resize:vertical}
 .btn{border:0;border-radius:8px;background:var(--n);color:#fff;padding:11px 16px;font-weight:bold;display:inline-block;text-decoration:none;text-align:center}.btn.light{background:#edf2f5;color:#27343e}.btn.danger{background:var(--danger)}
 .row{display:flex;gap:10px}.row>*{flex:1;min-width:0}.notice{padding:12px;border-radius:8px;background:#eef3f6;margin:12px 0}.error{background:#fff0f0;color:#8f3030}.ok{background:#edf8f0;color:#24653b}
 .login{min-height:calc(100vh - 145px);display:grid;place-items:center;padding:30px 20px}.loginbox{background:#fff;border:1px solid var(--line);border-radius:15px;padding:34px;width:min(440px,100%);box-shadow:0 12px 35px #17344f12}
-.loginbox h1{margin-top:0;color:var(--n)}footer{text-align:center;padding:45px 20px;color:#8b959e;font-size:13px}
+.loginbox h1{margin-top:0;color:var(--n)}footer{text-align:center;padding:34px 20px 42px;color:#929ba4;font-size:12px}
 @media (max-width:900px){header{padding:12px 20px;align-items:flex-start}.logo{padding-top:8px}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:700px){header{display:block;padding:14px 16px}.logo{text-align:center;padding:2px 0 9px}.logo span{font-size:11px}nav{justify-content:center;overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px}nav button{font-size:13px;padding:9px 8px;white-space:nowrap}.hero{padding:42px 16px 34px}.hero h1{font-size:34px}.hero p{font-size:14px}.search{flex-direction:column;border-radius:11px}.search input{padding:15px 14px;min-height:50px}.search button{width:100%;padding:14px;min-height:48px}.container{padding:26px 14px}.title h2{font-size:21px}.cards,.grid{grid-template-columns:1fr;gap:10px}.card,.cat{padding:16px}.panel{padding:17px}.row{display:block}.row>*{margin-bottom:10px}.form input,.form select,.form textarea{font-size:16px;min-height:46px}.btn{min-height:44px}.login{padding:20px 14px;align-items:start;padding-top:48px}.loginbox{padding:24px 18px}}
+@media (max-width:700px){header{display:block;padding:13px 16px}.logo{text-align:center;padding:2px 0 9px}.logo span{font-size:11px}nav{justify-content:center;overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px}nav button{font-size:13px;padding:9px 8px;white-space:nowrap}.hero{padding:42px 16px 36px}.hero h1{font-size:34px}.hero p{font-size:14px}.search{flex-direction:column;border-radius:11px}.search input{padding:15px 14px;min-height:50px}.search button{width:100%;padding:14px;min-height:48px}.container{padding:28px 14px 42px}.title h2{font-size:21px}.cards,.grid{grid-template-columns:1fr;gap:12px}.card,.cat{padding:16px}.panel{padding:17px}.row{display:block}.row>*{margin-bottom:10px}.form input,.form select,.form textarea{font-size:16px;min-height:46px}.btn{min-height:44px}.login{padding:20px 14px;align-items:start;padding-top:48px}.loginbox{padding:24px 18px}}
 </style></head><body><header><div class="logo">GMC <span>MISSION ARCHIVE</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><script>
 const API='https://gmc-mission-archive.tyzm.workers.dev/api';
 let T=localStorage.getItem('gmc_token')||'',ME=null,CATS=[];
@@ -86,7 +86,7 @@ async function home(){
   <section class="hero"><div class="hero-inner">
     <div class="eyebrow">GMC · MYANMAR MISSION</div><h1>Mission Archive</h1>
     <p>미얀마 선교의 기록과 지식을 함께 보존하고 나누는 자료 아카이브입니다.</p>
-    <div class="search"><input id="q" placeholder="자료 제목, 내용, 작성자 검색" onkeydown="if(event.key==='Enter')search()"><button onclick="search()">검색</button></div><div id="heroResultCount" style="margin-top:12px;font-size:13px;opacity:.85">전체 자료를 불러오는 중...</div>
+    <div class="search"><input id="q" placeholder="자료 제목, 내용, 작성자 검색" onkeydown="if(event.key==='Enter')search()"><button onclick="search()">검색</button></div><div id="heroResultCount" style="margin-top:13px;font-size:12px;opacity:.82;letter-spacing:.01em">전체 자료를 불러오는 중...</div>
   </div></section>
   <div class="container">
     <div class="category-bar-wrap"><div class="category-bar-title">자료 분야</div><div class="category-bar" id="cats"></div></div>
