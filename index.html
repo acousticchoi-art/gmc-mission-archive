@@ -26,14 +26,11 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
 @media (max-width:900px){header{padding:12px 20px;align-items:flex-start}.logo{padding-top:8px}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:700px){header{display:block;padding:14px 16px}.logo{text-align:center;padding:2px 0 9px}.logo span{font-size:11px}nav{justify-content:center;overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px}nav button{font-size:13px;padding:9px 8px;white-space:nowrap}.hero{padding:42px 16px 34px}.hero h1{font-size:34px}.hero p{font-size:14px}.search{flex-direction:column;border-radius:11px}.search input{padding:15px 14px;min-height:50px}.search button{width:100%;padding:14px;min-height:48px}.container{padding:26px 14px}.title h2{font-size:21px}.cards,.grid{grid-template-columns:1fr;gap:10px}.card,.cat{padding:16px}.panel{padding:17px}.row{display:block}.row>*{margin-bottom:10px}.form input,.form select,.form textarea{font-size:16px;min-height:46px}.btn{min-height:44px}.login{padding:20px 14px;align-items:start;padding-top:48px}.loginbox{padding:24px 18px}}
 </style></head><body><header><div class="logo">GMC <span>MISSION ARCHIVE</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><script>
-const API='https://gmc-api-proxy.pages.dev/api';
-const API_TIMEOUT=15000;
+const API='https://gmc-mission-archive.tyzm.workers.dev/api';
 let T=localStorage.getItem('gmc_token')||'',ME=null,CATS=[];
 
 async function A(action,args=[]){
-  const ctl=new AbortController(); const timer=setTimeout(()=>ctl.abort(),API_TIMEOUT);
-  let r;
-  try{r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,args}),signal:ctl.signal,cache:'no-store'});}catch(e){if(e.name==='AbortError')throw new Error('서버 연결 시간이 초과되었습니다. 현재 네트워크에서 GMC 서버에 접속할 수 없습니다.'); throw new Error('GMC 서버에 연결할 수 없습니다. 인터넷 연결 또는 서버 접속을 확인해 주세요.');}finally{clearTimeout(timer)}
+  const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,args})});
   const text=await r.text(); let data;
   try{data=JSON.parse(text)}catch(e){throw new Error('서버 응답을 읽을 수 없습니다.')}
   if(!r.ok||data.ok===false)throw new Error(data.message||'요청 처리 중 오류가 발생했습니다.');
@@ -103,6 +100,14 @@ async function loadCats(){
   }catch(e){document.getElementById('cats').innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
 }
 
+function openMaterial(m){
+  const url=m?.url||m?.viewUrl||m?.driveUrl||m?.webViewLink||m?.webContentLink;
+  if(url){window.open(url,'_blank','noopener');return}
+  const id=m?.fileId||m?.driveFileId||m?.id;
+  if(id){window.open('https://drive.google.com/file/d/'+encodeURIComponent(id)+'/view','_blank','noopener');return}
+  alert('이 자료의 연결된 파일 주소를 찾을 수 없습니다.');
+}
+
 async function search(category=''){
   const q=document.getElementById('q')?.value.trim()||'';
   const cards=document.getElementById('cards'); if(!cards)return;
@@ -114,12 +119,12 @@ async function search(category=''){
     const items=d.items||d.materials||d.data||[];
     if(!Array.isArray(items)||!items.length){cards.innerHTML='<div class="notice">검색 결과가 없습니다.</div>';return}
     cards.innerHTML=items.map(m=>`
-      <article class="card">
+      <article class="card" style="cursor:pointer" onclick="openMaterial(${JSON.stringify(m).replace(/\\/g,'\\\\').replace(/'/g,'&#039;')})">
         <div class="tag">${E(m.category||'기타')}</div>
         <h3>${E(m.title||m.name||'제목 없음')}</h3>
         <p>${E(m.description||m.content||'')}</p>
         <div class="meta">${E(m.author||m.writer||'')} ${m.year?'· '+E(m.year):''}</div>
-        ${m.url||m.viewUrl||m.driveUrl?`<a class="btn light" style="margin-top:12px" href="${E(m.url||m.viewUrl||m.driveUrl)}" target="_blank" rel="noopener">자료 열기</a>`:''}
+        ${m.url||m.viewUrl||m.driveUrl?`<a class="btn light" style="margin-top:12px" href="${E(m.url||m.viewUrl||m.driveUrl)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">자료 열기</a>`:'<div class="meta" style="margin-top:12px">자료 보기</div>'}
       </article>`).join('');
   }catch(e){cards.innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
 }
