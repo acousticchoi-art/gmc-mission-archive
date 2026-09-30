@@ -80,14 +80,14 @@ async function home(){
   <section class="hero"><div class="hero-inner">
     <div class="eyebrow">GMC · MYANMAR MISSION</div><h1>Mission Archive</h1>
     <p>미얀마 선교의 기록과 지식을 함께 보존하고 나누는 자료 아카이브입니다.</p>
-    <div class="search"><input id="q" placeholder="자료 제목, 내용, 작성자 검색" onkeydown="if(event.key==='Enter')search()"><button onclick="search()">검색</button></div>
+    <div class="search"><input id="q" placeholder="자료 제목, 내용, 작성자 검색" onkeydown="if(event.key==='Enter')search()"><button onclick="search()">검색</button></div><div id="heroResultCount" style="margin-top:12px;font-size:13px;opacity:.85">전체 자료를 불러오는 중...</div>
   </div></section>
   <div class="container">
-    <div class="title"><h2>자료 검색</h2></div>
-    <div id="resultCount" class="meta" style="margin:-8px 0 14px">전체 자료를 불러오는 중...</div>
     <div class="grid" id="cats"></div>
-    <div class="title" style="margin-top:34px"><h2>검색 결과</h2></div>
+    <div class="title"><h2>검색 결과</h2></div>
     <div class="cards" id="cards"><div class="notice">자료를 불러오는 중...</div></div>
+    <div class="title" style="margin-top:40px"><h2>자료 분야</h2></div>
+    <div class="grid" id="cats"></div>
   </div>`;
   await loadCats();
   await search();
@@ -108,7 +108,7 @@ async function loadCats(){
 
 async function search(category=''){
   const q=document.getElementById('q')?.value.trim()||'';
-  const cards=document.getElementById('cards'), count=document.getElementById('resultCount');
+  const cards=document.getElementById('cards'), count=document.getElementById('heroResultCount');
   if(!cards)return;
   cards.innerHTML='<div class="notice">검색 중...</div>';
   try{
