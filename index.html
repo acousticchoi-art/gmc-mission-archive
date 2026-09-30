@@ -1,177 +1,57 @@
-<!doctype html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GMC Mission Archive</title><style>
+<!doctype html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GMC Mission Archive</title>
+<style>
 :root{--n:#17344f;--a:#b18a55;--bg:#f5f7f9;--line:#e1e7ec;--muted:#6d7883;--white:#fff;--danger:#a33d3d}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html{font-size:16px;scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:#1d2a35;font-family:Arial,"Noto Sans KR",sans-serif;line-height:1.45;overflow-x:hidden}
-button,input,select,textarea{font:inherit}button{cursor:pointer;touch-action:manipulation}
-header{min-height:70px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 clamp(16px,5vw,72px);gap:16px}
-.logo{font-weight:800;letter-spacing:.08em;color:var(--n);white-space:nowrap}.logo span{font-weight:400;color:#77828d}
-nav{display:flex;align-items:center;gap:4px;flex-wrap:wrap;justify-content:flex-end}
-nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border-radius:8px}.primary{color:var(--n);font-weight:700}
-.hero{background:linear-gradient(135deg,#17344f,#2a4e6b);color:#fff;padding:clamp(48px,7vw,82px) 20px}
-.hero-inner,.container{width:min(1120px,100%);margin:auto}.eyebrow{font-size:11px;letter-spacing:.2em;opacity:.7}
-.hero h1{font-size:clamp(36px,5vw,48px);line-height:1.1;margin:12px 0}.hero p{max-width:650px;opacity:.8}
-.search{display:flex;width:100%;max-width:850px;background:#fff;border-radius:12px;overflow:hidden;margin-top:28px;box-shadow:0 8px 24px #0002}
-.search input{flex:1;min-width:0;border:0;padding:18px;outline:0;color:#1d2a35}.search button{border:0;background:var(--a);color:#fff;padding:0 28px;font-weight:bold;min-height:52px}
-.container{padding:38px 20px}.title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}.title h2{margin:0;font-size:clamp(20px,3vw,26px)}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}.cat,.card,.panel{background:#fff;border:1px solid var(--line);border-radius:13px}
-.cat{padding:20px;text-align:left;min-height:92px}.cat b{display:block;margin-bottom:7px}.cat small,.meta{color:var(--muted);font-size:12px}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:15px}.card{padding:20px;transition:transform .12s ease,box-shadow .12s ease}.card h3{margin:9px 0;line-height:1.35}.card p{color:var(--muted);font-size:14px;line-height:1.55}.tag{font-size:12px;color:var(--a);font-weight:bold}
-.panel{padding:24px;margin-bottom:18px}.form{max-width:700px}.form label{display:block;font-size:13px;font-weight:bold;margin:13px 0 6px}
-.form input,.form select,.form textarea{width:100%;padding:11px;border:1px solid #ccd5dc;border-radius:8px;background:#fff;color:#1d2a35}.form textarea{min-height:90px;resize:vertical}
-.btn{border:0;border-radius:8px;background:var(--n);color:#fff;padding:11px 16px;font-weight:bold;display:inline-block;text-decoration:none;text-align:center}.btn.light{background:#edf2f5;color:#27343e}.btn.danger{background:var(--danger)}
-.row{display:flex;gap:10px}.row>*{flex:1;min-width:0}.notice{padding:12px;border-radius:8px;background:#eef3f6;margin:12px 0}.error{background:#fff0f0;color:#8f3030}.ok{background:#edf8f0;color:#24653b}
-.login{min-height:calc(100vh - 145px);display:grid;place-items:center;padding:30px 20px}.loginbox{background:#fff;border:1px solid var(--line);border-radius:15px;padding:34px;width:min(440px,100%);box-shadow:0 12px 35px #17344f12}
-.loginbox h1{margin-top:0;color:var(--n)}footer{text-align:center;padding:45px 20px;color:#8b959e;font-size:13px}
-@media (max-width:900px){header{padding:12px 20px;align-items:flex-start}.logo{padding-top:8px}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:700px){header{display:block;padding:14px 16px}.logo{text-align:center;padding:2px 0 9px}.logo span{font-size:11px}nav{justify-content:center;overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px}nav button{font-size:13px;padding:9px 8px;white-space:nowrap}.hero{padding:42px 16px 34px}.hero h1{font-size:34px}.hero p{font-size:14px}.search{flex-direction:column;border-radius:11px}.search input{padding:15px 14px;min-height:50px}.search button{width:100%;padding:14px;min-height:48px}.container{padding:26px 14px}.title h2{font-size:21px}.cards,.grid{grid-template-columns:1fr;gap:10px}.card,.cat{padding:16px}.panel{padding:17px}.row{display:block}.row>*{margin-bottom:10px}.form input,.form select,.form textarea{font-size:16px;min-height:46px}.btn{min-height:44px}.login{padding:20px 14px;align-items:start;padding-top:48px}.loginbox{padding:24px 18px}}
-</style></head><body><header><div class="logo">GMC <span>MISSION ARCHIVE</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><script>
-const API='https://gmc-mission-archive.tyzm.workers.dev/api';
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#1d2a35;font-family:Arial,"Noto Sans KR",sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}
+header{height:70px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 5%;position:sticky;top:0;z-index:5}.logo{font-weight:800;letter-spacing:.08em;color:var(--n)}.logo span{font-weight:400;color:#77828d}nav button{border:0;background:transparent;margin-left:14px;color:#56616b}.primary{color:var(--n);font-weight:700}
+.hero{background:linear-gradient(135deg,#17344f,#2a4e6b);color:#fff;padding:70px 7vw}.hero-inner,.container{max-width:1120px;margin:auto}.eyebrow{font-size:11px;letter-spacing:.2em;opacity:.7}.hero h1{font-size:48px;margin:12px 0}.hero p{max-width:650px;opacity:.8}.search{display:flex;max-width:850px;background:#fff;border-radius:12px;overflow:hidden;margin-top:28px}.search input{flex:1;border:0;padding:18px;outline:0}.search button{border:0;background:var(--a);color:#fff;padding:0 28px;font-weight:bold}
+.container{padding:38px 20px}.title{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.title h2{margin:0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}.cat,.card,.panel{background:#fff;border:1px solid var(--line);border-radius:13px}.cat{padding:20px;text-align:left}.cat b{display:block;margin-bottom:7px}.cat small,.meta{color:var(--muted);font-size:12px}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:15px}.card{padding:20px}.card h3{margin:9px 0}.card p{color:var(--muted);font-size:14px;line-height:1.55}.tag{font-size:12px;color:var(--a);font-weight:bold}
+.panel{padding:24px;margin-bottom:18px}.form{max-width:700px}.form label{display:block;font-size:13px;font-weight:bold;margin:13px 0 6px}.form input,.form select,.form textarea{width:100%;padding:11px;border:1px solid #ccd5dc;border-radius:8px}.form textarea{min-height:90px}.btn{border:0;border-radius:8px;background:var(--n);color:#fff;padding:11px 16px;font-weight:bold}.btn.light{background:#edf2f5;color:#27343e}.btn.danger{background:var(--danger)}.row{display:flex;gap:10px}.row>*{flex:1}.notice{padding:12px;border-radius:8px;background:#eef3f6;margin:12px 0}.error{background:#fff0f0;color:#8f3030}.ok{background:#edf8f0;color:#24653b}
+table{width:100%;border-collapse:collapse}th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}th{background:#f7f9fa}.statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px}.stat b{display:block;font-size:28px;color:var(--n);margin-top:6px}
+.login{min-height:calc(100vh - 70px);display:grid;place-items:center;padding:30px}.loginbox{background:#fff;border:1px solid var(--line);border-radius:15px;padding:34px;width:min(440px,100%);box-shadow:0 12px 35px #17344f12}footer{text-align:center;padding:45px;color:#8b959e}
+@media(max-width:700px){.hero h1{font-size:36px}.hero{padding:52px 22px}.search{display:block}.search button{width:100%;padding:14px}.row{display:block}.row>*{margin-bottom:8px}.statgrid{grid-template-columns:repeat(2,1fr)}header{padding:0 16px}nav button{margin-left:5px}}
+</style></head><body><header><div class="logo">GMC <span>MISSION ARCHIVE</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer>
+<script>
 let T=localStorage.getItem('gmc_token')||'',ME=null,CATS=[];
-
-async function A(action,args=[]){
-  const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,args})});
-  const text=await r.text(); let data;
+const API='https://gmc-mission-archive.tyzm.workers.dev/api';
+const A=async(action,args=[])=>{
+  const r=await fetch(API,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action,args})
+  });
+  const text=await r.text();
+  let data;
   try{data=JSON.parse(text)}catch(e){throw new Error('서버 응답을 읽을 수 없습니다.')}
-  if(!r.ok||data.ok===false)throw new Error(data.message||'요청 처리 중 오류가 발생했습니다.');
+  if(!r.ok || data.ok===false) throw new Error(data.message||'요청 처리 중 오류가 발생했습니다.');
   return data;
-}
+};
 const E=x=>String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+function nav(){let x=document.getElementById('nav');if(!ME){x.innerHTML='';return}x.innerHTML=`<button class="primary" onclick="home()">자료실</button>${ME.role==='관리자'?'<button onclick="admin()">관리자</button>':''}<button onclick="pw()">비밀번호</button><button onclick="logout()">로그아웃</button>`}
+function home(){nav();app.innerHTML=`<section class="hero"><div class="hero-inner"><div class="eyebrow">GMC · MYANMAR MISSION</div><h1>Mission Archive</h1><p>미얀마 선교의 기록과 지식을 함께 보존하고 나누는 자료 아카이브입니다.</p><div class="search"><input id="q" placeholder="자료 제목, 내용, 작성자 검색" onkeydown="if(event.key==='Enter')search()"><button onclick="search()">검색</button></div></div></section><div class="container"><div class="title"><h2>검색 결과</h2></div><div class="cards" id="cards"></div><div class="title" style="margin-top:40px"><h2>자료 분야</h2></div><div class="grid" id="cats"></div></div>`;loadCats();search()}
+async function loadCats(){if(!CATS.length)CATS=(await A('categories',[T])).categories;cats.innerHTML=CATS.map(c=>`<button class="cat" onclick="search('${E(c)}')"><b>${E(c)}</b><small>자료 찾아보기 →</small></button>`).join('')}
+async function search(cat=''){try{const r=await A('listMaterials',[T,{q:document.getElementById('q')?.value||'',category:cat}]);cards.innerHTML=r.materials.slice(0,12).map(m=>`<article class="card" onclick="detail('${E(m.id)}')"><div class="tag">${E(m.category)} · ${E(m.fileType)}</div><h3>${E(m.title)}</h3><p>${E(m.description).slice(0,130)}</p><div class="meta">${E(m.author)} · ${E(m.year)} · 조회 ${m.views}</div></article>`).join('')||'<div class="panel">검색 결과가 없습니다.</div>'}catch(e){cards.innerHTML=`<div class="notice error">${E(e.message)}</div>`}}
+async function detail(id){const m=(await A('getMaterial',[T,id])).material;app.innerHTML=`<div class="container"><button class="btn light" onclick="home()">← 자료실</button><div class="panel" style="margin-top:18px"><div class="tag">${E(m.category)}</div><h1>${E(m.title)}</h1><p>${E(m.description)}</p><div class="meta">${E(m.author)} · ${E(m.year)} · ${E(m.language)}</div><div class="row" style="margin-top:22px"><a class="btn" href="${E(m.viewUrl)}" target="_blank">Google Drive에서 열람</a><a class="btn light" href="${E(m.downloadUrl)}" target="_blank">다운로드</a></div></div></div>`}
+function loginView(){app.innerHTML=`<div class="login"><div class="loginbox"><div class="eyebrow">GMC MISSION ARCHIVE</div><h1>로그인</h1><p class="meta">회원가입은 없으며 관리자가 발급한 계정으로 로그인합니다.</p><div id="lm"></div><div class="form"><label>아이디</label><input id="un" autocomplete="username"><label>비밀번호</label><input id="pw0" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter'){event.preventDefault();login();}"><button class="btn" style="width:100%;margin-top:18px" onclick="login()">로그인</button></div></div></div>`}
+async function login(){try{const r=await A('login',[un.value,pw0.value]);if(!r.ok){lm.innerHTML=`<div class="notice error">${E(r.message)}</div>`;return}T=r.token;ME=r.user;localStorage.setItem('gmc_token',T);r.user.firstLogin?pw(true):home()}catch(e){lm.innerHTML=`<div class="notice error">${E(e.message)}</div>`}}
+function pw(first=false){app.innerHTML=`<div class="login"><div class="loginbox"><h1>비밀번호 변경</h1>${first?'<div class="notice">첫 로그인입니다. 새 비밀번호를 설정해야 합니다.</div>':''}<div id="pm"></div><div class="form"><label>새 비밀번호</label><input id="p1" type="password" placeholder="6자 이상"><label>확인</label><input id="p2" type="password"><button class="btn" style="width:100%;margin-top:18px" onclick="savepw()">변경</button></div></div></div>`}
+async function savepw(){if(p1.value!==p2.value){pm.innerHTML='<div class="notice error">비밀번호가 일치하지 않습니다.</div>';return}try{await A('changePassword',[T,p1.value]);home()}catch(e){pm.innerHTML=`<div class="notice error">${E(e.message)}</div>`}}
+function admin(){app.innerHTML=`<div class="container"><div class="title"><h2>관리자 대시보드</h2></div><div class="statgrid" id="stats"></div><div class="grid" style="margin-top:20px"><button class="cat" onclick="users()">회원 관리</button><button class="cat" onclick="materialsAdmin()">자료 관리</button><button class="cat" onclick="uploadView()">자료 등록</button></div></div>`;dashboard()}
+async function dashboard(){const s=(await A('dashboard',[T])).stats;stats.innerHTML=[['전체 회원',s.users],['활성 회원',s.activeUsers],['공개 자료',s.materials],['자료 조회',s.views]].map(x=>`<div class="stat"><small>${x[0]}</small><b>${x[1]}</b></div>`).join('')}
+function users(){app.innerHTML=`<div class="container"><div class="title"><h2>회원 관리</h2><button class="btn light" onclick="admin()">← 관리자</button></div><div class="panel form"><h3>회원 등록</h3><div class="row"><div><label>이름</label><input id="a1"></div><div><label>아이디</label><input id="a2"></div></div><div class="row"><div><label>이메일</label><input id="a3"></div><div><label>소속 지부</label><input id="a4"></div></div><label>권한</label><select id="a5"><option>코디네이터</option><option>지역대표</option><option>지부장</option><option>지부원</option></select><label>초기 비밀번호</label><input id="a6" type="password"><button class="btn" style="margin-top:16px" onclick="addUser()">등록</button><div id="um"></div></div><div class="panel"><div id="ul"></div></div></div>`;loadUsers()}
+async function loadUsers(){const r=await A('listUsers',[T]);ul.innerHTML=`<table><tr><th>이름</th><th>아이디</th><th>권한</th><th>지부</th><th>상태</th><th>작업</th></tr>${r.users.map(u=>`<tr><td>${E(u.name)}</td><td>${E(u.username)}</td><td>${E(u.role)}</td><td>${E(u.branch)}</td><td>${E(u.status)}</td><td><button class="btn light" onclick="editUser('${E(u.id)}')">수정</button> <button class="btn light" onclick="resetpw('${E(u.id)}')">초기화</button></td></tr>`).join('')}</table>`}
+async function addUser(){try{await A('createUser',[T,{name:a1.value,username:a2.value,email:a3.value,branch:a4.value,role:a5.value,initialPassword:a6.value}]);um.innerHTML='<div class="notice ok">등록되었습니다.</div>';loadUsers()}catch(e){um.innerHTML=`<div class="notice error">${E(e.message)}</div>`}}
+async function editUser(id){const r=await A('listUsers',[T]),u=r.users.find(x=>x.id===id);app.innerHTML=`<div class="container"><div class="panel form"><h2>회원 수정</h2><label>이름</label><input id="e1" value="${E(u.name)}"><label>아이디</label><input id="e2" value="${E(u.username)}"><label>이메일</label><input id="e3" value="${E(u.email)}"><label>소속 지부</label><input id="e4" value="${E(u.branch)}"><label>권한</label><select id="e5">${['코디네이터','지역대표','지부장','지부원'].map(x=>`<option ${x===u.role?'selected':''}>${x}</option>`).join('')}</select><label>상태</label><select id="e6"><option ${u.status==='활성'?'selected':''}>활성</option><option ${u.status==='비활성'?'selected':''}>비활성</option></select><button class="btn" style="margin-top:16px" onclick="saveUser('${E(id)}')">저장</button></div></div>`}
+async function saveUser(id){try{await A('updateUser',[T,{id:id,name:e1.value,username:e2.value,email:e3.value,branch:e4.value,role:e5.value,status:e6.value}]);users()}catch(e){alert(e.message)}}
+async function resetpw(id){const p=prompt('새 초기 비밀번호를 입력하세요. (6자 이상)');if(!p)return;try{await A('resetUserPassword',[T,id,p]);alert('비밀번호가 초기화되었습니다. 다음 로그인 시 변경이 필요합니다.')}catch(e){alert(e.message)}}
+async function materialsAdmin(){const r=await A('adminMaterials',[T]);app.innerHTML=`<div class="container"><div class="title"><h2>자료 관리</h2><button class="btn light" onclick="admin()">← 관리자</button></div><div class="panel"><table><tr><th>제목</th><th>분야</th><th>작성자</th><th>상태</th><th>조회</th><th>작업</th></tr>${r.materials.map(m=>`<tr><td>${E(m.title)}</td><td>${E(m.category)}</td><td>${E(m.author)}</td><td>${E(m.status)}</td><td>${m.views}</td><td><button class="btn light" onclick="editMaterial('${E(m.id)}')">수정</button>${['관리자','코디네이터'].includes(ME.role)?` <button class="btn danger" onclick="delMaterial('${E(m.id)}')">삭제</button>`:''}</td></tr>`).join('')}</table></div></div>`}
+async function editMaterial(id){const r=await A('adminMaterials',[T]),m=r.materials.find(x=>x.id===id);app.innerHTML=`<div class="container"><div class="panel form"><h2>자료 수정</h2><label>제목</label><input id="x1" value="${E(m.title)}"><label>설명</label><textarea id="x2"></textarea><label>카테고리</label><select id="x3">${CATS.map(c=>`<option ${c===m.category?'selected':''}>${E(c)}</option>`).join('')}</select><label>작성자</label><input id="x4" value="${E(m.author)}"><label>연도</label><input id="x5" value="${E(m.year)}"><label>자료형식</label><input id="x6" value="${E(m.fileType)}"><label>상태</label><select id="x7"><option ${m.status==='공개'?'selected':''}>공개</option><option>비공개</option></select><button class="btn" style="margin-top:16px" onclick="saveMaterial('${E(id)}')">저장</button></div></div>`}
+async function saveMaterial(id){try{await A('updateMaterial',[T,id,{title:x1.value,description:x2.value,category:x3.value,language:'한국어',author:x4.value,year:x5.value,fileType:x6.value,status:x7.value}]);materialsAdmin()}catch(e){alert(e.message)}}
+async function delMaterial(id){if(!confirm('자료를 삭제 처리할까요? Google Drive 파일도 휴지통으로 이동합니다.'))return;try{await A('deleteMaterial',[T,id]);materialsAdmin()}catch(e){alert(e.message)}}
+function uploadView(){app.innerHTML=`<div class="container"><div class="panel form"><h2>자료 등록</h2><label>제목</label><input id="t1"><label>설명</label><textarea id="t2"></textarea><label>카테고리</label><select id="t3">${CATS.map(c=>`<option>${E(c)}</option>`).join('')}</select><div class="row"><div><label>언어</label><input id="t4" value="한국어"></div><div><label>작성자</label><input id="t5"></div></div><div class="row"><div><label>연도</label><input id="t6" value="${new Date().getFullYear()}"></div><div><label>자료형식</label><input id="t7" placeholder="PDF / PPT / DOC / 사진 / 영상"></div></div><label>파일 (최대 ${45}MB)</label><input id="t8" type="file"><button class="btn" style="margin-top:16px" onclick="upload()">Google Drive에 저장하고 등록</button><div id="upm"></div></div></div>`}
+function b64(f){return new Promise((ok,no)=>{let r=new FileReader();r.onload=()=>ok(r.result.split(',')[1]);r.onerror=no;r.readAsDataURL(f)})}
+async function upload(){const f=t8.files[0];if(!f){upm.innerHTML='<div class="notice error">파일을 선택하세요.</div>';return}upm.innerHTML='<div class="notice">업로드 중...</div>';try{await A('uploadMaterial',[T,{title:t1.value,description:t2.value,category:t3.value,language:t4.value,author:t5.value,year:t6.value,fileType:t7.value||f.type,fileName:f.name,mimeType:f.type,base64:await b64(f)}]);upm.innerHTML='<div class="notice ok">등록되었습니다.</div>'}catch(e){upm.innerHTML=`<div class="notice error">${E(e.message)}</div>`}}
+async function logout(){await A('logout',[T]);T='';ME=null;localStorage.removeItem('gmc_token');loginView()}
+async function init(){if(T){try{let r=await A('me',[T]);if(r.ok){ME=r.user;nav();return ME.firstLogin?pw(true):home()}}catch(e){}}loginView()}init();
+</script></body></html>`;
 
-function nav(){
-  const x=document.getElementById('nav');
-  if(!ME){x.innerHTML='';return}
-  x.innerHTML='<button class="primary" onclick="home()">자료실</button>'+
-    (ME.role==='관리자'?'<button onclick="admin()">관리자</button>':'')+
-    '<button onclick="pw()">비밀번호</button><button onclick="logout()">로그아웃</button>';
-}
-
-function loginPage(message=''){
-  document.getElementById('nav').innerHTML='';
-  document.getElementById('app').innerHTML=`
-    <div class="login"><div class="loginbox">
-      <div class="eyebrow" style="color:#b18a55">GMC · MYANMAR MISSION</div>
-      <h1>Mission Archive</h1>
-      <p style="color:#6d7883">GMC 미얀마 선교 자료 아카이브</p>
-      ${message?`<div class="notice error">${E(message)}</div>`:''}
-      <form class="form" onsubmit="event.preventDefault();login()">
-        <label>아이디</label><input id="username" autocomplete="username" required>
-        <label>비밀번호</label><input id="password" type="password" autocomplete="current-password" required>
-        <button class="btn" style="width:100%;margin-top:18px" id="loginBtn">로그인</button>
-      </form>
-    </div></div>`;
-  setTimeout(()=>document.getElementById('username')?.focus(),50);
-}
-
-async function login(){
-  const btn=document.getElementById('loginBtn'); btn.disabled=true; btn.textContent='로그인 중...';
-  try{
-    const d=await A('login',[document.getElementById('username').value.trim(),document.getElementById('password').value]);
-    T=d.token||''; ME=d.user||null; localStorage.setItem('gmc_token',T);
-    if(ME && (ME.firstLogin===true || ME.firstLogin==='Y' || ME.firstLogin==='예')){
-      pw(true); return;
-    }
-    await home();
-  }catch(e){loginPage(e.message)}
-  finally{if(document.getElementById('loginBtn')){document.getElementById('loginBtn').disabled=false;document.getElementById('loginBtn').textContent='로그인'}}
-}
-
-async function home(){
-  nav();
-  document.getElementById('app').innerHTML=`
-  <section class="hero"><div class="hero-inner">
-    <div class="eyebrow">GMC · MYANMAR MISSION</div><h1>Mission Archive</h1>
-    <p>미얀마 선교의 기록과 지식을 함께 보존하고 나누는 자료 아카이브입니다.</p>
-    <div class="search"><input id="q" placeholder="자료 제목, 내용, 작성자 검색" onkeydown="if(event.key==='Enter')search()"><button onclick="search()">검색</button></div>
-  </div></section>
-  <div class="container"><div class="title"><h2>검색 결과</h2></div><div class="cards" id="cards"><div class="notice">자료를 검색하거나 분야를 선택해 주세요.</div></div>
-  <div class="title" style="margin-top:40px"><h2>자료 분야</h2></div><div class="grid" id="cats"></div></div>`;
-  await loadCats();
-}
-
-async function loadCats(){
-  try{
-    const d=await A('categories',[T]); CATS=d.categories||d.items||d.data||[];
-    if(!Array.isArray(CATS))CATS=[];
-    document.getElementById('cats').innerHTML=CATS.map(c=>{
-      const name=typeof c==='string'?c:(c.name||c.category||'');
-      return `<button class="cat" onclick="search('${E(name).replace(/'/g,"&#039;")}')"><b>${E(name)}</b><small>자료 보기</small></button>`;
-    }).join('')||'<div class="notice">등록된 자료 분야가 없습니다.</div>';
-  }catch(e){document.getElementById('cats').innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
-}
-
-let SEARCH_ITEMS=[];
-
-async function search(category=''){
-  const q=document.getElementById('q')?.value||'';
-  const cards=document.getElementById('cards'); if(!cards)return;
-  cards.innerHTML='<div class="notice">검색 중...</div>';
-  try{
-    const r=await A('listMaterials',[T,{q:q,category:category}]);
-    const items=r.materials||r.items||r.data||[];
-    cards.innerHTML=items.slice(0,12).map(m=>`
-      <article class="card" style="cursor:pointer" onclick="detail('${E(m.id)}')">
-        <div class="tag">${E(m.category||'기타')} · ${E(m.fileType||'')}</div>
-        <h3>${E(m.title||'제목 없음')}</h3>
-        <p>${E(m.description||'').slice(0,130)}</p>
-        <div class="meta">${E(m.author||'')} · ${E(m.year||'')} · 조회 ${E(m.views||0)}</div>
-      </article>`).join('')||'<div class="notice">검색 결과가 없습니다.</div>';
-  }catch(e){cards.innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
-}
-
-async function detail(id){
-  try{
-    const r=await A('getMaterial',[T,id]);
-    const m=r.material||r.item||r.data||r;
-    const app=document.getElementById('app');
-    app.innerHTML=`
-      <div class="container">
-        <button class="btn light" onclick="home()">← 자료실</button>
-        <div class="panel" style="margin-top:18px">
-          <div class="tag">${E(m.category||'기타')}</div>
-          <h1>${E(m.title||'제목 없음')}</h1>
-          <p>${E(m.description||'')}</p>
-          <div class="meta">${E(m.author||'')} · ${E(m.year||'')} · ${E(m.language||'')}</div>
-          <div class="row" style="margin-top:22px">
-            <a class="btn" href="${E(m.viewUrl||m.url||m.driveUrl||'#')}" target="_blank" rel="noopener">Google Drive에서 열람</a>
-            ${m.downloadUrl?`<a class="btn light" href="${E(m.downloadUrl)}" target="_blank" rel="noopener">다운로드</a>`:''}
-          </div>
-        </div>
-      </div>`;
-  }catch(e){
-    alert(e.message);
-  }
-}
-
-async function pw(force=false){
-  nav();
-  document.getElementById('app').innerHTML=`<div class="container"><div class="panel"><div class="form">
-  <h2>비밀번호 변경</h2>${force?'<div class="notice">첫 로그인입니다. 새 비밀번호를 설정해 주세요.</div>':''}
-  <label>현재 비밀번호</label><input id="oldpw" type="password">
-  <label>새 비밀번호</label><input id="newpw" type="password" minlength="6">
-  <label>새 비밀번호 확인</label><input id="newpw2" type="password" minlength="6">
-  <button class="btn" style="margin-top:16px" onclick="changePw()">변경하기</button>
-  </div></div></div>`;
-}
-
-async function changePw(){
-  const a=document.getElementById('oldpw').value,b=document.getElementById('newpw').value,c=document.getElementById('newpw2').value;
-  if(b.length<6)return alert('새 비밀번호는 6자 이상이어야 합니다.');
-  if(b!==c)return alert('새 비밀번호가 서로 다릅니다.');
-  try{await A('changePassword',[T,a,b]);alert('비밀번호가 변경되었습니다.');await home()}catch(e){alert(e.message)}
-}
-
-async function logout(){
-  try{if(T)await A('logout',[T])}catch(e){}
-  T='';ME=null;localStorage.removeItem('gmc_token');loginPage();
-}
-
-async function boot(){
-  if(!T){loginPage();return}
-  try{
-    const d=await A('me',[T]);
-    ME=d.user||d; await home();
-  }catch(e){T='';ME=null;localStorage.removeItem('gmc_token');loginPage();}
-}
-window.addEventListener('DOMContentLoaded',boot);
-</script></body></html>
+let CFG = null;
