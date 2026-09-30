@@ -100,14 +100,6 @@ async function loadCats(){
   }catch(e){document.getElementById('cats').innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
 }
 
-function openMaterial(m){
-  const url=m?.url||m?.viewUrl||m?.driveUrl||m?.webViewLink||m?.webContentLink;
-  if(url){window.open(url,'_blank','noopener');return}
-  const id=m?.fileId||m?.driveFileId||m?.id;
-  if(id){window.open('https://drive.google.com/file/d/'+encodeURIComponent(id)+'/view','_blank','noopener');return}
-  alert('이 자료의 연결된 파일 주소를 찾을 수 없습니다.');
-}
-
 let SEARCH_ITEMS=[];
 
 async function search(category=''){
@@ -116,12 +108,17 @@ async function search(category=''){
   cards.innerHTML='<div class="notice">검색 중...</div>';
   try{
     let d;
-    try{d=await A('listMaterials',[T,q,category])}
-    catch(e){d=await A('listMaterials',[T,q])}
+    try{
+      d=await A('listMaterials',[T,{q:q,category:category}]);
+    }catch(e){
+      try{d=await A('listMaterials',[T,q,category])}
+      catch(e2){d=await A('listMaterials',[T,q])}
+    }
     const items=d.items||d.materials||d.data||[];
     if(!Array.isArray(items)||!items.length){
       SEARCH_ITEMS=[];
-      cards.innerHTML='<div class="notice">검색 결과가 없습니다.</div>';return
+      cards.innerHTML='<div class="notice">검색 결과가 없습니다.</div>';
+      return;
     }
     SEARCH_ITEMS=items;
     cards.innerHTML=items.map((m,i)=>`
@@ -130,15 +127,35 @@ async function search(category=''){
         <h3>${E(m.title||m.name||'제목 없음')}</h3>
         <p>${E(m.description||m.content||'')}</p>
         <div class="meta">${E(m.author||m.writer||'')} ${m.year?'· '+E(m.year):''}</div>
-        ${m.url||m.viewUrl||m.driveUrl||m.webViewLink||m.webContentLink?`<a class="btn light" style="margin-top:12px" href="${E(m.url||m.viewUrl||m.driveUrl||m.webViewLink||m.webContentLink)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">자료 열기</a>`:'<div class="meta" style="margin-top:12px">자료 보기</div>'}
+        <div class="meta" style="margin-top:12px;color:var(--n);font-weight:bold">자료 열기 →</div>
       </article>`).join('');
   }catch(e){cards.innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
 }
 
-function openMaterialByIndex(i){
+async function openMaterialByIndex(i){
   const m=SEARCH_ITEMS[i];
   if(!m){alert('자료 정보를 찾을 수 없습니다.');return}
-  openMaterial(m);
+  try{
+    const d=await A('getMaterial',[T,m.id]);
+    const x=d.material||d.item||d.data||d;
+    const viewUrl=x.viewUrl||x.url||x.driveUrl;
+    const downloadUrl=x.downloadUrl||x.webContentLink;
+    if(!viewUrl){alert('이 자료의 Google Drive 주소를 찾을 수 없습니다.');return}
+    document.getElementById('app').innerHTML=`
+      <div class="container">
+        <button class="btn light" onclick="home()">← 자료실</button>
+        <div class="panel" style="margin-top:18px">
+          <div class="tag">${E(x.category||m.category||'기타')}</div>
+          <h2>${E(x.title||m.title||'제목 없음')}</h2>
+          <p>${E(x.description||m.description||'')}</p>
+          <div class="meta">${E(x.author||m.author||'')} ${x.year||m.year?'· '+E(x.year||m.year):''} ${x.language?'· '+E(x.language):''}</div>
+          <div class="row" style="margin-top:22px">
+            <a class="btn" href="${E(viewUrl)}" target="_blank" rel="noopener">Google Drive에서 열람</a>
+            ${downloadUrl?`<a class="btn light" href="${E(downloadUrl)}" target="_blank" rel="noopener">다운로드</a>`:''}
+          </div>
+        </div>
+      </div>`;
+  }catch(e){alert(e.message)}
 }
 
 async function pw(force=false){
