@@ -8,18 +8,18 @@ header{min-height:72px;background:#fff;border-bottom:1px solid var(--line);displ
 .logo{font-weight:800;letter-spacing:.09em;font-size:15px;color:var(--n);white-space:nowrap}.logo span{font-weight:400;color:#77828d}
 nav{display:flex;align-items:center;gap:4px;flex-wrap:wrap;justify-content:flex-end}
 nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border-radius:8px}.primary{color:var(--n);font-weight:700}
-.hero{background:linear-gradient(135deg,#17344f 0%,#244761 100%);color:#fff;padding:clamp(54px,7vw,78px) 20px 42px}
+.hero{background:linear-gradient(135deg,#17344f 0%,#244761 100%);color:#fff;padding:34px 20px 24px}
 .hero-inner,.container{width:min(1120px,100%);margin:auto}.eyebrow{font-size:11px;letter-spacing:.2em;opacity:.7}
 .hero h1{font-size:clamp(36px,5vw,48px);line-height:1.08;margin:13px 0 10px;letter-spacing:-.025em}.hero p{max-width:650px;opacity:.82;margin:0;line-height:1.7}
-.search{display:flex;width:100%;max-width:850px;background:#fff;border-radius:14px;overflow:hidden;margin-top:30px;box-shadow:0 12px 30px rgba(0,0,0,.16)}
+.search{display:flex;width:100%;max-width:850px;background:#fff;border-radius:14px;overflow:hidden;margin-top:20px;box-shadow:0 10px 24px rgba(0,0,0,.14)}
 .search input{flex:1;min-width:0;border:0;padding:17px 19px;outline:0;color:#1d2a35;font-size:15px}.search button{border:0;background:var(--a);color:#fff;padding:0 27px;font-weight:bold;min-height:52px;transition:filter .15s}.search button:hover{filter:brightness(.96)}
 .container{padding:38px 20px 56px}.title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:15px}.title h2{margin:0;font-size:clamp(20px,3vw,25px);letter-spacing:-.02em}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}.cat,.card,.panel{background:#fff;border:1px solid var(--line);border-radius:15px;box-shadow:var(--shadow)}
 .cat{padding:20px;text-align:left;min-height:92px}.cat b{display:block;margin-bottom:7px}.cat small,.meta{color:var(--muted);font-size:12px}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px}.category-bar-wrap{margin-top:14px;border-top:0!important;padding-top:0!important}.hero-categories{max-width:850px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px}.category-bar-wrap{margin-top:9px;border-top:0!important;padding-top:0!important}.hero-categories{max-width:850px}
 
-.category-bar{display:flex;flex-wrap:nowrap;gap:0;align-items:center;overflow-x:auto;white-space:nowrap;padding:2px 0 3px;scrollbar-width:none}.category-bar::-webkit-scrollbar{display:none}
-.category-bar button{flex:0 0 auto;border:0;background:transparent;color:rgba(255,255,255,.72);border-radius:0;padding:3px 9px;font-size:12px;line-height:1.3;transition:color .15s;text-decoration:none}.category-bar button:first-child{padding-left:0}
+.category-bar{display:flex;flex-wrap:nowrap;gap:0;align-items:center;overflow-x:auto;white-space:nowrap;padding:0;scrollbar-width:none}.category-bar::-webkit-scrollbar{display:none}
+.category-bar button{flex:0 0 auto;border:0;background:transparent;color:rgba(255,255,255,.72);border-radius:0;padding:2px 9px;font-size:12px;line-height:1.2;transition:color .15s;text-decoration:none}.category-bar button:first-child{padding-left:0}
 .category-bar button{white-space:nowrap}.category-bar button:hover{color:#fff}
 .category-bar button.active{background:transparent;border-color:transparent;color:#fff;box-shadow:none;font-weight:700}
 .card{padding:21px;transition:transform .16s ease,box-shadow .16s ease}.card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(23,52,79,.10)}.card h3{margin:9px 0 8px;line-height:1.4;letter-spacing:-.01em}.card p{color:var(--muted);font-size:14px;line-height:1.65;margin:0 0 12px}.tag{font-size:11px;color:var(--a);font-weight:800;letter-spacing:.02em}
@@ -91,14 +91,13 @@ async function home(){
     <div class="eyebrow">GMC · MYANMAR MISSION</div><h1>Mission Archive</h1>
     <p>미얀마 선교의 기록과 지식을 함께 보존하고 나누는 자료 아카이브입니다.</p>
     <div class="search"><input id="q" placeholder="자료 제목, 내용, 작성자 검색" onkeydown="if(event.key==='Enter')search()"><button onclick="search()">검색</button></div><div class="category-bar-wrap hero-categories"><div class="category-bar" id="cats"></div></div>
-    <div id="heroResultCount" style="margin-top:13px;font-size:12px;opacity:.82;letter-spacing:.01em">전체 자료를 불러오는 중...</div>
+    <div id="heroResultCount" style="margin-top:7px;font-size:12px;opacity:.78;letter-spacing:.01em">전체 자료를 불러오는 중...</div>
   </div></section>
   <div class="container">
     
     <div class="title"><h2>검색 결과</h2></div>
     <div class="cards" id="cards"><div class="notice">자료를 불러오는 중...</div></div>
     
-    <div class="grid" id="cats"></div>
   </div>`;
   await Promise.all([loadCats(),search()]);
 }
@@ -107,13 +106,13 @@ async function loadCats(){
   try{
     const d=await A('categories',[T]); CATS=d.categories||d.items||d.data||[];
     if(!Array.isArray(CATS))CATS=[];
-    document.getElementById('cats').innerHTML=
-      '<button class="cat" onclick="search()"><b>전체 자료</b></button>'+
-      CATS.map(c=>{
-        const name=typeof c==='string'?c:(c.name||c.category||'');
-        return `<button class="cat" onclick="search('${E(name).replace(/'/g,"&#039;")}')"><b>${E(name)}</b></button>`;
-      }).join('');
-  }catch(e){document.getElementById('cats').innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
+    const names=CATS.map(c=>typeof c==='string'?c:(c.name||c.category||'')).filter(Boolean);
+    document.getElementById('cats').innerHTML=names.map(name=>
+      `<button onclick="search('${E(name).replace(/'/g,"&#039;")}')">${E(name)}</button>`
+    ).join('');
+  }catch(e){
+    document.getElementById('cats').innerHTML='<div class="notice error">'+E(e.message)+'</div>';
+  }
 }
 
 function selectCategory(btn,category=''){
