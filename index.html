@@ -16,7 +16,7 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
 .container{padding:38px 20px 56px}.title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:15px}.title h2{margin:0;font-size:clamp(20px,3vw,25px);letter-spacing:-.02em}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}.cat,.card,.panel{background:#fff;border:1px solid var(--line);border-radius:15px;box-shadow:var(--shadow)}
 .cat{padding:20px;text-align:left;min-height:92px}.cat b{display:block;margin-bottom:7px}.cat small,.meta{color:var(--muted);font-size:12px}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px}.category-bar-wrap{margin-top:14px}.hero-categories{max-width:850px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px}.category-bar-wrap{margin-top:14px;border-top:0!important;padding-top:0!important}.hero-categories{max-width:850px}
 
 .category-bar{display:flex;gap:0;align-items:center;overflow-x:auto;white-space:nowrap;padding:2px 0 3px;scrollbar-width:none}.category-bar::-webkit-scrollbar{display:none}
 .category-bar button{flex:0 0 auto;border:0;background:transparent;color:rgba(255,255,255,.72);border-radius:0;padding:3px 9px;font-size:12px;line-height:1.3;transition:color .15s;text-decoration:none}.category-bar button:first-child{padding-left:0}.category-bar button:not(:last-child)::after{content:"·";color:rgba(255,255,255,.35);margin-left:18px}
@@ -119,9 +119,15 @@ function selectCategory(btn,category=''){
   search(category);
 }
 
-function openMaterial(url){
-  if(!url)return;
-  window.open(url,'_blank','noopener');
+async function openMaterialById(id){
+  if(!id)return;
+  try{
+    const d=await A('getMaterial',[T,id]);
+    const m=d.material||d.item||d.data||d;
+    const url=m.url||m.viewUrl||m.driveUrl||m.webViewLink||m.downloadUrl||'';
+    if(url)window.open(url,'_blank','noopener');
+    else alert('이 자료의 열기 링크를 찾을 수 없습니다.');
+  }catch(e){alert(e.message||'자료를 열 수 없습니다.');}
 }
 
 async function search(category=''){
@@ -142,7 +148,7 @@ async function search(category=''){
     }
     if(!Array.isArray(items)||!items.length){cards.innerHTML='<div class="notice">검색 결과가 없습니다.</div>';return}
     cards.innerHTML=items.map(m=>`
-      <article class="card" style="cursor:pointer" onclick="openMaterial('${E(m.url||m.viewUrl||m.driveUrl||'').replace(/'/g,"&#039;")}')">
+      <article class="card" style="cursor:pointer" onclick="openMaterialById('${E(m.id||m.materialId||m.ID||'').replace(/'/g,"&#039;")}')">
         <div class="tag">${E(m.category||'기타')}</div>
         <h3>${E(m.title||m.name||'제목 없음')}</h3>
         <p>${E(m.description||m.content||'')}</p>
