@@ -103,59 +103,44 @@ async function loadCats(){
 let SEARCH_ITEMS=[];
 
 async function search(category=''){
-  const q=document.getElementById('q')?.value.trim()||'';
+  const q=document.getElementById('q')?.value||'';
   const cards=document.getElementById('cards'); if(!cards)return;
   cards.innerHTML='<div class="notice">검색 중...</div>';
   try{
-    let d;
-    try{
-      d=await A('listMaterials',[T,{q:q,category:category}]);
-    }catch(e){
-      try{d=await A('listMaterials',[T,q,category])}
-      catch(e2){d=await A('listMaterials',[T,q])}
-    }
-    const items=d.items||d.materials||d.data||[];
-    if(!Array.isArray(items)||!items.length){
-      SEARCH_ITEMS=[];
-      cards.innerHTML='<div class="notice">검색 결과가 없습니다.</div>';
-      return;
-    }
-    SEARCH_ITEMS=items;
-    cards.innerHTML=items.map((m,i)=>`
-      <article class="card" style="cursor:pointer" onclick="openMaterialByIndex(${i})">
-        <div class="tag">${E(m.category||'기타')}</div>
-        <h3>${E(m.title||m.name||'제목 없음')}</h3>
-        <p>${E(m.description||m.content||'')}</p>
-        <div class="meta">${E(m.author||m.writer||'')} ${m.year?'· '+E(m.year):''}</div>
-        <div class="meta" style="margin-top:12px;color:var(--n);font-weight:bold">자료 열기 →</div>
-      </article>`).join('');
+    const r=await A('listMaterials',[T,{q:q,category:category}]);
+    const items=r.materials||r.items||r.data||[];
+    cards.innerHTML=items.slice(0,12).map(m=>`
+      <article class="card" style="cursor:pointer" onclick="detail('${E(m.id)}')">
+        <div class="tag">${E(m.category||'기타')} · ${E(m.fileType||'')}</div>
+        <h3>${E(m.title||'제목 없음')}</h3>
+        <p>${E(m.description||'').slice(0,130)}</p>
+        <div class="meta">${E(m.author||'')} · ${E(m.year||'')} · 조회 ${E(m.views||0)}</div>
+      </article>`).join('')||'<div class="notice">검색 결과가 없습니다.</div>';
   }catch(e){cards.innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
 }
 
-async function openMaterialByIndex(i){
-  const m=SEARCH_ITEMS[i];
-  if(!m){alert('자료 정보를 찾을 수 없습니다.');return}
+async function detail(id){
   try{
-    const d=await A('getMaterial',[T,m.id]);
-    const x=d.material||d.item||d.data||d;
-    const viewUrl=x.viewUrl||x.url||x.driveUrl;
-    const downloadUrl=x.downloadUrl||x.webContentLink;
-    if(!viewUrl){alert('이 자료의 Google Drive 주소를 찾을 수 없습니다.');return}
-    document.getElementById('app').innerHTML=`
+    const r=await A('getMaterial',[T,id]);
+    const m=r.material||r.item||r.data||r;
+    const app=document.getElementById('app');
+    app.innerHTML=`
       <div class="container">
         <button class="btn light" onclick="home()">← 자료실</button>
         <div class="panel" style="margin-top:18px">
-          <div class="tag">${E(x.category||m.category||'기타')}</div>
-          <h2>${E(x.title||m.title||'제목 없음')}</h2>
-          <p>${E(x.description||m.description||'')}</p>
-          <div class="meta">${E(x.author||m.author||'')} ${x.year||m.year?'· '+E(x.year||m.year):''} ${x.language?'· '+E(x.language):''}</div>
+          <div class="tag">${E(m.category||'기타')}</div>
+          <h1>${E(m.title||'제목 없음')}</h1>
+          <p>${E(m.description||'')}</p>
+          <div class="meta">${E(m.author||'')} · ${E(m.year||'')} · ${E(m.language||'')}</div>
           <div class="row" style="margin-top:22px">
-            <a class="btn" href="${E(viewUrl)}" target="_blank" rel="noopener">Google Drive에서 열람</a>
-            ${downloadUrl?`<a class="btn light" href="${E(downloadUrl)}" target="_blank" rel="noopener">다운로드</a>`:''}
+            <a class="btn" href="${E(m.viewUrl||m.url||m.driveUrl||'#')}" target="_blank" rel="noopener">Google Drive에서 열람</a>
+            ${m.downloadUrl?`<a class="btn light" href="${E(m.downloadUrl)}" target="_blank" rel="noopener">다운로드</a>`:''}
           </div>
         </div>
       </div>`;
-  }catch(e){alert(e.message)}
+  }catch(e){
+    alert(e.message);
+  }
 }
 
 async function pw(force=false){
