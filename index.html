@@ -16,7 +16,13 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
 .container{padding:38px 20px}.title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}.title h2{margin:0;font-size:clamp(20px,3vw,26px)}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}.cat,.card,.panel{background:#fff;border:1px solid var(--line);border-radius:13px}
 .cat{padding:20px;text-align:left;min-height:92px}.cat b{display:block;margin-bottom:7px}.cat small,.meta{color:var(--muted);font-size:12px}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:15px}.card{padding:20px;transition:transform .12s ease,box-shadow .12s ease}.card h3{margin:9px 0;line-height:1.35}.card p{color:var(--muted);font-size:14px;line-height:1.55}.tag{font-size:12px;color:var(--a);font-weight:bold}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:15px}.category-bar-wrap{margin-top:34px;padding-top:18px;border-top:1px solid var(--line)}
+.category-bar-title{font-size:13px;font-weight:700;color:#56616b;margin-bottom:10px}
+.category-bar{display:flex;gap:7px;overflow-x:auto;white-space:nowrap;padding:2px 1px 8px;scrollbar-width:thin}
+.category-bar button{flex:0 0 auto;border:1px solid var(--line);background:#fff;color:#56616b;border-radius:999px;padding:7px 12px;font-size:12px;line-height:1.2}
+.category-bar button:hover{border-color:var(--a);color:var(--a)}
+.category-bar button.active{background:var(--n);border-color:var(--n);color:#fff}
+.card{padding:20px;transition:transform .12s ease,box-shadow .12s ease}.card h3{margin:9px 0;line-height:1.35}.card p{color:var(--muted);font-size:14px;line-height:1.55}.tag{font-size:12px;color:var(--a);font-weight:bold}
 .panel{padding:24px;margin-bottom:18px}.form{max-width:700px}.form label{display:block;font-size:13px;font-weight:bold;margin:13px 0 6px}
 .form input,.form select,.form textarea{width:100%;padding:11px;border:1px solid #ccd5dc;border-radius:8px;background:#fff;color:#1d2a35}.form textarea{min-height:90px;resize:vertical}
 .btn{border:0;border-radius:8px;background:var(--n);color:#fff;padding:11px 16px;font-weight:bold;display:inline-block;text-decoration:none;text-align:center}.btn.light{background:#edf2f5;color:#27343e}.btn.danger{background:var(--danger)}
@@ -83,7 +89,7 @@ async function home(){
     <div class="search"><input id="q" placeholder="자료 제목, 내용, 작성자 검색" onkeydown="if(event.key==='Enter')search()"><button onclick="search()">검색</button></div><div id="heroResultCount" style="margin-top:12px;font-size:13px;opacity:.85">전체 자료를 불러오는 중...</div>
   </div></section>
   <div class="container">
-    <div class="grid" id="cats"></div>
+    <div class="category-bar-wrap"><div class="category-bar-title">자료 분야</div><div class="category-bar" id="cats"></div></div>
     <div class="title"><h2>검색 결과</h2></div>
     <div class="cards" id="cards"><div class="notice">자료를 불러오는 중...</div></div>
     <div class="title" style="margin-top:40px"><h2>자료 분야</h2></div>
@@ -104,6 +110,12 @@ async function loadCats(){
         return `<button class="cat" onclick="search('${E(name).replace(/'/g,"&#039;")}')"><b>${E(name)}</b><small>자료 보기</small></button>`;
       }).join('');
   }catch(e){document.getElementById('cats').innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
+}
+
+function selectCategory(btn,category=''){
+  document.querySelectorAll('#cats button').forEach(x=>x.classList.remove('active'));
+  btn.classList.add('active');
+  search(category);
 }
 
 async function search(category=''){
