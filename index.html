@@ -208,18 +208,33 @@ function uploadView(){
   <div class="panel form"><label>제목</label><input id="mt"><label>설명</label><textarea id="md"></textarea>
   <div class="row"><div><label>카테고리</label><select id="mc">${CATS.map(c=>`<option>${E(typeof c==='string'?c:(c.name||c.category||''))}</option>`).join('')}</select></div><div><label>언어</label><input id="ml" value="한국어"></div></div>
   <div class="row"><div><label>작성자</label><input id="ma"></div><div><label>작성연도</label><input id="my" value="${new Date().getFullYear()}"></div></div>
-  <label>자료 형식</label><input id="mf" placeholder="PDF / PPT / DOC / 사진 / 영상"><label>파일</label><input id="file" type="file">
+  <label>파일</label><input id="file" type="file">
+  <div style="margin-top:8px;font-size:12px;color:#6b7280">파일 형식은 선택한 파일에서 자동으로 인식됩니다.</div>
   <button class="btn" style="margin-top:18px" onclick="upload()">Drive에 저장하고 등록</button><div id="uploadmsg"></div></div></div>`;
 }
 function fileToBase64(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result).split(',')[1]);r.onerror=reject;r.readAsDataURL(file)})}
+function detectFileType(file){
+  const mime=(file?.type||'').toLowerCase(), ext=(file?.name||'').split('.').pop().toLowerCase();
+  if(mime==='application/pdf'||ext==='pdf')return 'PDF';
+  if(mime.includes('presentation')||['ppt','pptx','key'].includes(ext))return 'PPT';
+  if(mime.includes('word')||['doc','docx','hwp','hwpx'].includes(ext))return 'DOC';
+  if(mime.includes('spreadsheet')||['xls','xlsx','csv'].includes(ext))return 'Excel';
+  if(mime.startsWith('image/')||['jpg','jpeg','png','gif','webp','svg'].includes(ext))return '사진';
+  if(mime.startsWith('video/')||['mp4','mov','avi','mkv','webm'].includes(ext))return '영상';
+  if(mime.startsWith('audio/')||['mp3','wav','m4a','aac'].includes(ext))return '음성';
+  if(mime.includes('zip')||['zip','rar','7z'].includes(ext))return '압축파일';
+  return ext?ext.toUpperCase():'기타';
+}
 async function upload(){
   const f=document.getElementById('file').files[0],msg=document.getElementById('uploadmsg');
   if(!f){msg.innerHTML='<div class="notice error">파일을 선택하세요.</div>';return}
   msg.innerHTML='<div class="notice">업로드 중입니다. 파일 크기에 따라 시간이 걸릴 수 있습니다.</div>';
   try{
     const base64=await fileToBase64(f);
-    await A('uploadMaterial',[T,{title:document.getElementById('mt').value,description:document.getElementById('md').value,category:document.getElementById('mc').value,language:document.getElementById('ml').value,author:document.getElementById('ma').value,year:document.getElementById('my').value,fileType:document.getElementById('mf').value||f.type,fileName:f.name,mimeType:f.type,base64}]);
-    msg.innerHTML='<div class="notice ok">자료가 Google Drive에 저장되고 등록되었습니다.</div>';
+    await A('uploadMaterial',[T,{title:document.getElementById('mt').value,description:document.getElementById('md').value,category:document.getElementById('mc').value,language:document.getElementById('ml').value,author:document.getElementById('ma').value,year:document.getElementById('my').value,fileType:detectFileType(f),fileName:f.name,mimeType:f.type,base64}]);
+    msg.innerHTML='';
+    alert('자료가 등록되었습니다.');
+    await home();
   }catch(e){msg.innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
 }
 
