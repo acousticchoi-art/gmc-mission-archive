@@ -110,7 +110,7 @@ async function loadCats(){
   try{
     const d=await A('categories',[T]); CATS=d.categories||d.items||d.data||[];
     if(!Array.isArray(CATS))CATS=[];
-    const names=CATS.map(c=>typeof c==='string'?c:(c.name||c.category||'')).filter(Boolean);
+    const names=CATS.map(c=>typeof c==='string'?c:(c.name||c.category||'')).filter(Boolean); if(!names.includes('BAM')) names.push('BAM');
     document.getElementById('cats').innerHTML='<button class="active" onclick="selectCategory(this,\'\')">전체</button>'+names.map(name=>
       `<button onclick="selectCategory(this,'${E(name).replace(/'/g,"&#039;")}')">${E(categoryLabel(name))}</button>`
     ).join('');
