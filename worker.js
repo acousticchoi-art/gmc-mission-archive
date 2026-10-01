@@ -76,7 +76,7 @@ const SESSION_TTL = 6 * 60 * 60;
 let accessTokenCache = {token:'', exp:0};
 
 function jsonResponse(data, status=200){
-  return new Response(JSON.stringify(data), {status, headers:{'content-type':'application/json; charset=UTF-8','cache-control':'no-store','access-control-allow-origin':'https://acousticchoi-art.github.io','access-control-allow-methods':'POST, OPTIONS','access-control-allow-headers':'Content-Type'}});
+  return new Response(JSON.stringify(data), {status, headers:{'content-type':'application/json; charset=UTF-8','cache-control':'no-store','access-control-allow-origin':'https://gmc-mission-archive-mm.netlify.app','access-control-allow-methods':'POST, OPTIONS','access-control-allow-headers':'Content-Type'}});
 }
 function b64u(bytes){
   let s='';
@@ -333,7 +333,7 @@ export default {
     if(url.pathname==='/oauth/start')return oauthStart(request);
     if(url.pathname==='/oauth/callback')return oauthCallback(request);
     if(url.pathname==='/api/health')return jsonResponse({ok:true,service:'gmc-worker',version:'v33-direct-drive-upload'});
-    if(url.pathname==='/api'){if(request.method==='OPTIONS')return new Response(null,{status:204,headers:{'access-control-allow-origin':'https://acousticchoi-art.github.io','access-control-allow-methods':'POST, OPTIONS','access-control-allow-headers':'Content-Type'}});if(request.method!=='POST')return jsonResponse({ok:false,message:'POST only'},405);return handleApi(request,env);}
+    if(url.pathname==='/api'){if(request.method==='OPTIONS')return new Response(null,{status:204,headers:{'access-control-allow-origin':'https://gmc-mission-archive-mm.netlify.app','access-control-allow-methods':'POST, OPTIONS','access-control-allow-headers':'Content-Type'}});if(request.method!=='POST')return jsonResponse({ok:false,message:'POST only'},405);return handleApi(request,env);}
     return new Response('Not Found',{status:404});
   }
 };
