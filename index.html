@@ -18,10 +18,12 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
 .cat{padding:20px;text-align:left;min-height:92px}.cat b{display:block;margin-bottom:7px}.cat small,.meta{color:var(--muted);font-size:12px}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px}.category-bar-wrap{margin-top:9px;border-top:0!important;padding-top:0!important}.hero-categories{max-width:850px}
 
-.category-bar{display:flex;flex-wrap:nowrap;gap:0;align-items:center;overflow-x:auto;white-space:nowrap;padding:0;scrollbar-width:none}.category-bar::-webkit-scrollbar{display:none}
-.category-bar button{flex:0 0 auto;border:0;background:transparent;color:rgba(255,255,255,.72);border-radius:0;padding:2px 9px;font-size:12px;line-height:1.2;transition:color .15s;text-decoration:none}.category-bar button:first-child{padding-left:0}
-.category-bar button{white-space:nowrap}.category-bar button:hover{color:#fff}
-.category-bar button.active{background:transparent;border-color:transparent;color:#fff;box-shadow:none;font-weight:700}
+.category-bar{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-top:10px}
+.category-bar button{flex:0 0 auto;border:1px solid rgba(255,255,255,.24);background:rgba(255,255,255,.07);color:rgba(255,255,255,.82);border-radius:999px;padding:7px 12px;font-size:12px;line-height:1.2;transition:all .15s}
+.category-bar button:hover{border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.13);color:#fff}
+.category-bar button.active{background:var(--a);border-color:var(--a);color:#fff;font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,.12)}
+.category-label{font-size:13px;font-weight:700;letter-spacing:.02em;margin-top:18px;color:#fff}
+.category-bar-wrap{margin-top:0}
 .card{padding:21px;transition:transform .16s ease,box-shadow .16s ease}.card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(23,52,79,.10)}.card h3{margin:9px 0 8px;line-height:1.4;letter-spacing:-.01em}.card p{color:var(--muted);font-size:14px;line-height:1.65;margin:0 0 12px}.tag{font-size:11px;color:var(--a);font-weight:800;letter-spacing:.02em}
 .panel{padding:24px;margin-bottom:18px}.form{max-width:700px}.form label{display:block;font-size:13px;font-weight:bold;margin:13px 0 6px}
 .form input,.form select,.form textarea{width:100%;padding:11px;border:1px solid #ccd5dc;border-radius:8px;background:#fff;color:#1d2a35}.form textarea{min-height:90px;resize:vertical}
@@ -91,8 +93,9 @@ async function home(){
   <section class="hero"><div class="hero-inner">
     <div class="eyebrow">GMC · MYANMAR MISSION</div><h1>Mission Archive</h1>
     <p>미얀마 선교의 기록과 지식을 함께 보존하고 나누는 자료 아카이브입니다.</p>
-    <div class="search"><input id="q" placeholder="자료 제목, 내용, 작성자 검색" onkeydown="if(event.key==='Enter')search()"><button onclick="search()">검색</button></div><div class="category-bar-wrap hero-categories"><div class="category-label">카테고리</div><div class="category-bar" id="cats"></div></div>
-    <div id="heroResultCount" style="margin-top:7px;font-size:12px;opacity:.78;letter-spacing:.01em">전체 자료를 불러오는 중...</div>
+    <div class="search"><input id="q" placeholder="자료 제목, 내용, 작성자 검색" onkeydown="if(event.key==='Enter')search()"><button onclick="search()">검색</button></div>
+    <div class="category-bar-wrap hero-categories"><div class="category-label">자료 분야</div><div class="category-bar" id="cats"></div></div>
+    <div id="heroResultCount" style="margin-top:12px;font-size:12px;opacity:.72;letter-spacing:.01em">전체 자료를 불러오는 중...</div>
   </div></section>
   <div class="container">
     
@@ -108,8 +111,8 @@ async function loadCats(){
     const d=await A('categories',[T]); CATS=d.categories||d.items||d.data||[];
     if(!Array.isArray(CATS))CATS=[];
     const names=CATS.map(c=>typeof c==='string'?c:(c.name||c.category||'')).filter(Boolean);
-    document.getElementById('cats').innerHTML=names.map(name=>
-      `<button onclick="search('${E(name).replace(/'/g,"&#039;")}')">${E(categoryLabel(name))}</button>`
+    document.getElementById('cats').innerHTML='<button class="active" onclick="selectCategory(this,\'\')">전체</button>'+names.map(name=>
+      `<button onclick="selectCategory(this,'${E(name).replace(/'/g,"&#039;")}')">${E(categoryLabel(name))}</button>`
     ).join('');
   }catch(e){
     document.getElementById('cats').innerHTML='<div class="notice error">'+E(e.message)+'</div>';
