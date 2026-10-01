@@ -53,9 +53,8 @@ async function logout(){await A('logout',[T]);T='';ME=null;localStorage.removeIt
 async function init(){if(T){try{let r=await A('me',[T]);if(r.ok){ME=r.user;nav();return ME.firstLogin?pw(true):home()}}catch(e){}}loginView()}init();
 </script></body></html>`;
 
-let CFG = null;
 function config(env){
-  return CFG || (CFG={
+  return {
     SHEET_ID: env.GMC_SHEET_ID || '',
     ROOT_FOLDER_ID: env.GMC_ROOT_FOLDER_ID || '',
     SA_EMAIL: env.GMC_SA_EMAIL || '',
