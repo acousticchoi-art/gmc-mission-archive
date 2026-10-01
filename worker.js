@@ -338,4 +338,4 @@ export default {
   }
 };
 
-// GitHub Actions deployment test marker
+// GitHub Actions deployment test marker - keep vars
