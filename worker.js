@@ -63,7 +63,7 @@ function config(env){
     GOOGLE_CLIENT_ID: env.GMC_GOOGLE_CLIENT_ID || '',
     GOOGLE_CLIENT_SECRET: env.GMC_GOOGLE_CLIENT_SECRET || '',
     DRIVE_REFRESH_TOKEN: env.GMC_DRIVE_REFRESH_TOKEN || ''
-  });
+  };
 }
 
 const ROLES = ['관리자','일반회원'];
