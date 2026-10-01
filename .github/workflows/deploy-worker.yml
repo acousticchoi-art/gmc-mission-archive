@@ -22,4 +22,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy worker.js --name gmc-mission-archive --compatibility-date 2026-10-01
+          command: deploy worker.js --name gmc-mission-archive --compatibility-date 2026-10-01 --keep-vars
