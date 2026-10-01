@@ -235,7 +235,7 @@ async function api(action,args){
     case 'login':{const u=await findUserByUsername(args[0]);if(!u||u.status!=='활성')return {ok:false,message:'아이디 또는 비밀번호가 올바르지 않습니다.'};const h=await hashPassword(args[1],u.salt);if(!constEq(h,u.hash))return {ok:false,message:'아이디 또는 비밀번호가 올바르지 않습니다.'};await sheetUpdate('회원!M'+u.row+':M'+u.row,[[nowText()]]);return {ok:true,token:await makeSession(u),user:publicUser(u)};}
     case 'logout':return {ok:true};
     case 'me':{const s=await session(args[0]),u=await findUserById(s.uid);if(!u)throw new Error('회원 정보를 찾을 수 없습니다.');return {ok:true,user:publicUser(u)};}
-    case 'changePassword':{const s=await session(args[0]);validatePassword(args[1]);const u=await findUserById(s.uid),salt=randomHex(16),hash=await hashPassword(args[1],salt);await sheetUpdate('회원!H'+u.row+':J'+u.row,[[hash,salt,false]]);return {ok:true};}
+    case 'changePassword':{const s=await session(args[0]);const u=await findUserById(s.uid);if(!u)throw new Error('회원 정보를 찾을 수 없습니다.');validatePassword(args[1]);validatePassword(args[2]);const oldHash=await hashPassword(args[1],u.salt);if(!constEq(oldHash,u.hash))throw new Error('현재 비밀번호가 올바르지 않습니다.');const salt=randomHex(16),hash=await hashPassword(args[2],salt);await sheetUpdate('회원!H'+u.row+':J'+u.row,[[hash,salt,false]]);return {ok:true};}
     case 'categories':{await session(args[0]);const rows=await sheetGet('카테고리!A:D');return {ok:true,categories:rows.slice(1).filter(r=>r[0]&&String(r[3]).toLowerCase()==='true').map(r=>String(r[1]))};}
     case 'listMaterials':{
       await session(args[0]);
