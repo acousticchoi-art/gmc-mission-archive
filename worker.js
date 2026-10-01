@@ -53,6 +53,7 @@ async function logout(){await A('logout',[T]);T='';ME=null;localStorage.removeIt
 async function init(){if(T){try{let r=await A('me',[T]);if(r.ok){ME=r.user;nav();return ME.firstLogin?pw(true):home()}}catch(e){}}loginView()}init();
 </script></body></html>`;
 
+let CFG = null;
 function config(env){
   return {
     SHEET_ID: env.GMC_SHEET_ID || '',
@@ -326,7 +327,7 @@ async function handleApi(request,env){
 
 export default {
   async fetch(request,env){
-    config(env);
+    CFG=config(env);
     const url=new URL(request.url);
     if(url.pathname==='/'||url.pathname==='/index.html')return new Response(INDEX_HTML,{headers:{'content-type':'text/html; charset=UTF-8','cache-control':'no-store'}});
     if(url.pathname==='/oauth/start')return oauthStart(request);
