@@ -110,7 +110,7 @@ async function loadCats(){
   try{
     const d=await A('categories',[T]); CATS=d.categories||d.items||d.data||[];
     if(!Array.isArray(CATS))CATS=[];
-    const names=CATS.map(c=>typeof c==='string'?c:(c.name||c.category||'')).filter(Boolean); if(!names.includes('BAM')) names.push('BAM'); if(!names.includes('서적')) names.push('서적');
+    const names=CATS.map(c=>typeof c==='string'?c:(c.name||c.category||'')).filter(Boolean); if(!names.includes('BAM')) names.push('BAM');
     document.getElementById('cats').innerHTML='<button class="active" onclick="selectCategory(this,\'\')">전체</button>'+names.map(name=>
       `<button onclick="selectCategory(this,'${E(name).replace(/'/g,"&#039;")}')">${E(categoryLabel(name))}</button>`
     ).join('');
@@ -119,7 +119,7 @@ async function loadCats(){
   }
 }
 
-function categoryLabel(name){if(name==='교육')return '유아교육'; if(name==='기타')return '서적'; return name;}
+function categoryLabel(name){if(name==='교육')return '유아교육'; return name;}
 
 function selectCategory(btn,category=''){
   document.querySelectorAll('#cats button').forEach(x=>x.classList.remove('active'));
