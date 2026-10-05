@@ -309,8 +309,16 @@ async function toggleFavorite(id,btn){
   try{if(FAVS.has(String(id))){await A('removeFavorite',[T,id]);FAVS.delete(String(id))}else{await A('addFavorite',[T,id]);FAVS.add(String(id))}const active=FAVS.has(String(id));if(btn){btn.textContent=active?'★':'☆';btn.classList.toggle('active',active);btn.title=active?'내 자료에서 제거':'내 자료에 저장'}}catch(e){alert(e.message||'저장 처리 중 오류가 발생했습니다.')}
 }
 async function myPage(){
-  nav();document.getElementById('app').innerHTML='<div class="container"><div class="title"><h2>내 자료</h2><span class="meta" id="favCount"></span></div><div class="cards" id="favoriteCards"><div class="notice">불러오는 중...</div></div></div>';
-  try{const d=await A('listFavorites',[T]),items=d.materials||[];FAVS=new Set((d.ids||[]).map(String));document.getElementById('favCount').textContent=items.length+'개 저장';const box=document.getElementById('favoriteCards');if(!items.length){box.innerHTML='<div class="panel favorite-empty"><b>저장한 자료가 없습니다.</b><p>마음에 드는 자료의 ☆를 눌러 내 자료에 저장해보세요.</p></div>';return}box.innerHTML=items.map(m=>'<article class="card" style="cursor:pointer" onclick="openMaterialById(\''+E(m.id).replace(/\'/g,"&#039;")+'\',\'\',this)"><div class="card-top"><div class="tag">'+E(m.category||'기타')+'</div><button class="favorite-btn active" title="내 자료에서 제거" onclick="event.stopPropagation();toggleFavorite(\''+E(m.id).replace(/\'/g,"&#039;")+'\',this).then(()=>myPage())">★</button></div><h3>'+E(m.title||'제목 없음')+'</h3><p>'+E(m.description||'')+'</p><div class="meta">'+E(m.author||'')+(m.year?' · '+E(m.year):'')+' · 조회 '+Number(m.views||0)+'</div></article>').join('')}catch(e){document.getElementById('favoriteCards').innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
+  nav();
+  document.getElementById('app').innerHTML='<div class="container"><div class="title"><h2>내 자료</h2><span class="meta" id="favCount"></span></div><div class="cards" id="favoriteCards"><div class="notice">불러오는 중...</div></div></div>';
+  try{
+    const d=await A('listFavorites',[T]),items=d.materials||[];
+    FAVS=new Set((d.ids||[]).map(String));
+    document.getElementById('favCount').textContent=items.length+'개 저장';
+    const box=document.getElementById('favoriteCards');
+    if(!items.length){box.innerHTML='<div class="panel favorite-empty"><b>저장한 자료가 없습니다.</b><p>마음에 드는 자료의 ☆를 눌러 내 자료에 저장해보세요.</p></div>';return}
+    box.innerHTML=items.map(m=>'<article class="card" style="cursor:pointer" onclick="openMaterialById(\''+E(m.id).replace(/'/g,"&#039;")+'\',\'',this)"><div class="card-top"><div class="tag">'+E(m.category||'기타')+'</div><button class="favorite-btn active" title="내 자료에서 제거" onclick="event.stopPropagation();toggleFavorite(\''+E(m.id).replace(/'/g,"&#039;")+'\',this).then(()=>myPage())">★</button></div><h3>'+E(m.title||'제목 없음')+'</h3><p>'+E(m.description||'')+'</p><div class="meta">'+E(m.author||'')+(m.year?' · '+E(m.year):'')+' · 조회 '+Number(m.views||0)+'</div></article>').join('');
+  }catch(e){document.getElementById('favoriteCards').innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
 }
 async function search(category=''){
   const q=document.getElementById('q')?.value.trim()||'';
