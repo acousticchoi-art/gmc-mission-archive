@@ -339,7 +339,7 @@ async function search(category=''){
     if(!Array.isArray(items)||!items.length){cards.innerHTML='<div class="notice">검색 결과가 없습니다.</div>';return}
     cards.innerHTML=items.map(m=>`
       <article class="card" style="cursor:pointer" onclick="openMaterialById('${E(m.id||m.materialId||m.ID||'').replace(/'/g,"&#039;")}','${E(m.url||m.viewUrl||m.driveUrl||m.webViewLink||'').replace(/'/g,"&#039;")}',this)">
-        <div class="card-top"><div class="tag">${E(m.category||'기타')}</div><button class="favorite-btn ${FAVS.has(String(m.id||m.materialId||m.ID||''))?'active':''}" title="${FAVS.has(String(m.id||m.materialId||m.ID||''))?'내 자료에서 제거':'내 자료에 저장'}" onclick="event.stopPropagation();toggleFavorite('${E(m.id||m.materialId||m.ID||'').replace(/'/g,"&#039;')}',this)">${FAVS.has(String(m.id||m.materialId||m.ID||''))?'★':'☆'}</button></div>
+        <div class="card-top"><div class="tag">${E(m.category||'기타')}</div><button class="favorite-btn ${FAVS.has(String(m.id||m.materialId||m.ID||''))?'active':''}" title="${FAVS.has(String(m.id||m.materialId||m.ID||''))?'내 자료에서 제거':'내 자료에 저장'}" onclick="event.stopPropagation();toggleFavorite('${E(m.id||m.materialId||m.ID||'').replace(/'/g,"&#039;")}',this)">${FAVS.has(String(m.id||m.materialId||m.ID||''))?'★':'☆'}</button></div>
         <h3>${E(m.title||m.name||'제목 없음')}</h3>
         <p>${E(m.description||m.content||'')}</p>
         <div class="meta">${E(m.author||m.writer||'')} ${m.year?'· '+E(m.year):''} · 조회 ${Number(m.views||0)} · 댓글 ${Number(m.commentCount||0)}</div>
