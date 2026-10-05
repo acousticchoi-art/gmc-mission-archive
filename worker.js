@@ -333,7 +333,6 @@ export default {
     if(url.pathname==='/oauth/start')return oauthStart(request);
     if(url.pathname==='/oauth/callback')return oauthCallback(request);
     if(url.pathname==='/api/health')return jsonResponse({ok:true,service:'gmc-worker',version:'v33-direct-drive-upload'});
-    if(url.pathname==='/api/login-test'){return new Response('<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><div id="r">테스트 중...</div><script>fetch("/api",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"login",args:["",""]})}).then(async r=>document.getElementById("r").textContent="HTTP "+r.status+" / "+await r.text()).catch(e=>document.getElementById("r").textContent="FETCH ERROR: "+e.message)<\/script>',{headers:{'content-type':'text/html; charset=UTF-8','cache-control':'no-store'}});}
     if(url.pathname==='/api'){if(request.method==='OPTIONS')return new Response(null,{status:204,headers:{'access-control-allow-origin':'https://gmc-mission-archive-mm.netlify.app','access-control-allow-methods':'POST, OPTIONS','access-control-allow-headers':'Content-Type'}});if(request.method!=='POST')return jsonResponse({ok:false,message:'POST only'},405);return handleApi(request,env);}
     return new Response('Not Found',{status:404});
   }
