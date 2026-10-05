@@ -272,7 +272,7 @@ async function prepareDriveUpload(data){
 }
 
 
-async function api(action,args){
+async function api(action,args,ctx=null){
   switch(action){
     case 'login':{const u=await findUserByUsername(args[0]);if(!u||u.status!=='활성')return {ok:false,message:'아이디 또는 비밀번호가 올바르지 않습니다.'};const h=await hashPassword(args[1],u.salt);if(!constEq(h,u.hash))return {ok:false,message:'아이디 또는 비밀번호가 올바르지 않습니다.'};const loginAt=nowText();await sheetUpdate('회원!M'+u.row+':M'+u.row,[[loginAt]]);const lrows=await loginHistoryRows();const lid=maxNextId(lrows,'L');await sheetAppend('로그인이력',[lid,u.id,safe(u.name),safe(u.username),u.role,safe(u.branch),loginAt]);return {ok:true,token:await makeSession(u),user:publicUser(u)};}
     case 'logout':return {ok:true};
@@ -310,7 +310,7 @@ async function api(action,args){
       out.reverse();
       return {ok:true,materials:out};
     }
-    case 'getMaterial':{const s=await session(args[0]),m=await findMaterial(args[1]);if(!m||m.status!=='공개')throw new Error('자료를 찾을 수 없습니다.');await sheetUpdate('자료!O'+m.row+':O'+m.row,[[m.views+1]]);const rv=await recentViewsRows(),rid=maxNextId(rv,'R');await sheetAppend('최근본자료',[rid,s.uid,m.id,nowText()]);return {ok:true,material:{...m,date:m.date,viewUrl:'https://drive.google.com/file/d/'+encodeURIComponent(m.driveId)+'/view',downloadUrl:'https://drive.google.com/uc?export=download&id='+encodeURIComponent(m.driveId)}};}
+    case 'getMaterial':{const s=await session(args[0]),m=await findMaterial(args[1]);if(!m||m.status!=='공개')throw new Error('자료를 찾을 수 없습니다.');const material={...m,date:m.date,viewUrl:'https://drive.google.com/file/d/'+encodeURIComponent(m.driveId)+'/view',downloadUrl:'https://drive.google.com/uc?export=download&id='+encodeURIComponent(m.driveId)};const log=async()=>{try{await sheetUpdate('자료!O'+m.row+':O'+m.row,[[m.views+1]]);const rv=await recentViewsRows(),rid=maxNextId(rv,'R');await sheetAppend('최근본자료',[rid,s.uid,m.id,nowText()]);}catch(e){}};if(ctx?.waitUntil)ctx.waitUntil(log());else await log();return {ok:true,material};}
     case 'listRecentViews':{
       const s=await session(args[0]),rows=await recentViewsRows(),materials=await materialsRows(),latest=new Map();
       for(let i=1;i<rows.length;i++){const r=rows[i],materialId=String(r[2]||''),viewedAt=String(r[3]||'');if(!materialId||!viewedAt)continue;latest.set(materialId,{viewedAt,row:i});}
@@ -458,7 +458,7 @@ async function handleApi(request,env){
   try{
     config(env);
     if(!CFG.SHEET_ID||!CFG.ROOT_FOLDER_ID||!CFG.SA_EMAIL||!CFG.SA_PRIVATE_KEY||!CFG.SESSION_SECRET)return jsonResponse({ok:false,message:'Cloudflare Worker Secret/Variable 설정이 아직 완료되지 않았습니다.'},500);
-    const body=await request.json();const result=await api(String(body.action||''),Array.isArray(body.args)?body.args:[]);return jsonResponse(result);
+    const body=await request.json();const result=await api(String(body.action||''),Array.isArray(body.args)?body.args:[],ctx);return jsonResponse(result);
   }catch(e){return jsonResponse({ok:false,message:String(e?.message||e)},400);}
 }
 
@@ -470,7 +470,7 @@ export default {
     if(url.pathname==='/oauth/start')return oauthStart(request);
     if(url.pathname==='/oauth/callback')return oauthCallback(request);
     if(url.pathname==='/api/health')return jsonResponse({ok:true,service:'gmc-worker',version:'v33-direct-drive-upload'});
-    if(url.pathname==='/api'){if(request.method==='OPTIONS')return new Response(null,{status:204,headers:{'access-control-allow-origin':'https://gmc-mission-archive-mm.netlify.app','access-control-allow-methods':'POST, OPTIONS','access-control-allow-headers':'Content-Type'}});if(request.method!=='POST')return jsonResponse({ok:false,message:'POST only'},405);return handleApi(request,env);}
+    if(url.pathname==='/api'){if(request.method==='OPTIONS')return new Response(null,{status:204,headers:{'access-control-allow-origin':'https://gmc-mission-archive-mm.netlify.app','access-control-allow-methods':'POST, OPTIONS','access-control-allow-headers':'Content-Type'}});if(request.method!=='POST')return jsonResponse({ok:false,message:'POST only'},405);return handleApi(request,env,ctx);}
     return new Response('Not Found',{status:404});
   }
 };
