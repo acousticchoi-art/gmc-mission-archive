@@ -369,7 +369,7 @@ function userAdmin(){
   <div class="row"><div><label>이름</label><input id="un"></div><div><label>아이디</label><input id="uid"></div></div>
   <div class="row"><div><label>이메일</label><input id="ue"></div><div><label>소속 지부</label><input id="ub"></div></div>
   <label>권한</label><select id="ur"><option>일반회원</option></select>
-  <label>초기 비밀번호</label><input id="up" type="password" minlength="6">
+  <label>초기 비밀번호</label><input id="up" type="password" minlength="6" value="gmcgmc">
   <button class="btn" style="margin-top:16px" onclick="createUser()">회원 등록</button><div id="umsg"></div></div>
   <div class="panel"><h3>회원 목록</h3><div id="users"><div class="notice">불러오는 중...</div></div></div></div>`;
   loadUsers();
