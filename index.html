@@ -134,6 +134,22 @@ function selectCategory(btn,category=''){
   search(category);
 }
 
+async function openMaterialById(id,url=''){
+  try{
+    let link=decodeURIComponent(url||'');
+    const materialId=decodeURIComponent(id||'');
+    if(materialId){
+      const d=await A('getMaterial',[T,materialId]);
+      const m=d.material||d.item||d.data||d;
+      link=m.url||m.viewUrl||m.driveUrl||m.webViewLink||m.downloadUrl||link||'';
+    }
+    if(!link)return alert('이 자료의 열기 링크를 찾을 수 없습니다.');
+    window.location.href=link;
+  }catch(e){
+    alert(e.message||'자료를 열 수 없습니다.');
+  }
+}
+
 async function search(category=''){
   const q=document.getElementById('q')?.value.trim()||'';
   const cards=document.getElementById('cards'), count=document.getElementById('heroResultCount');
@@ -151,14 +167,18 @@ async function search(category=''){
         : (category ? `${category} 자료 ${Array.isArray(items)?items.length:0}건` : `전체 자료 ${Array.isArray(items)?items.length:0}건`);
     }
     if(!Array.isArray(items)||!items.length){cards.innerHTML='<div class="notice">검색 결과가 없습니다.</div>';return}
-    cards.innerHTML=items.map(m=>`
-      <article class="card" style="cursor:pointer" onclick="location.href='${E(m.url||m.viewUrl||m.driveUrl||m.webViewLink||'').replace(/'/g,"&#039;")}">
+    cards.innerHTML=items.map(m=>{
+      const materialId=encodeURIComponent(String(m.id||m.materialId||m.ID||''));
+      const materialUrl=encodeURIComponent(String(m.url||m.viewUrl||m.driveUrl||m.webViewLink||''));
+      return `
+      <article class="card" style="cursor:pointer" onclick="openMaterialById('${materialId}','${materialUrl}')">
         <div class="tag">${E(m.category||'기타')}</div>
         <h3>${E(m.title||m.name||'제목 없음')}</h3>
         <p>${E(m.description||m.content||'')}</p>
         <div class="meta">${E(m.author||m.writer||'')} ${m.year?'· '+E(m.year):''} · 조회 ${Number(m.views||0)}</div>
-        ${m.url||m.viewUrl||m.driveUrl||m.webViewLink?`<a class="btn light" style="display:block;text-align:center;margin-top:12px;text-decoration:none" href="${E(m.url||m.viewUrl||m.driveUrl||m.webViewLink)}" onclick="event.stopPropagation()" target="_blank" rel="noopener">자료 열기</a>`:''}
-      </article>`).join('');
+        ${materialId?\`<button class="btn light" style="margin-top:12px;width:100%" onclick="event.stopPropagation();openMaterialById('${materialId}','${materialUrl}')">자료 열기</button>\`:''}
+      </article>`;
+    }).join('');
   }catch(e){if(count)count.textContent='';cards.innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
 }
 
