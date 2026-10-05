@@ -90,6 +90,8 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
 .logo{display:flex;align-items:baseline;gap:8px}.logo strong{display:block;font-family:Georgia,"Times New Roman",serif;font-size:22px;line-height:1;color:#17344f;font-weight:700;letter-spacing:.035em}.logo span{display:block;font-family:Arial,Helvetica,sans-serif;font-size:10px;line-height:1;color:#607181;font-weight:700;letter-spacing:.035em;text-transform:uppercase}.logo:after{content:"";display:block;width:18px;height:1px;background:#b18a55;margin-left:1px;margin-bottom:2px}@media(max-width:700px){.logo{justify-content:center;gap:7px}.logo strong{font-size:20px}.logo span{font-size:9px;letter-spacing:.03em}.logo:after{width:14px}}
 
 .card-top{display:flex;align-items:center;justify-content:space-between;gap:12px}.favorite-btn{border:0;background:transparent;color:#9aa6af;font-size:21px;line-height:1;padding:0 3px;cursor:pointer;transition:transform .12s,color .12s}.favorite-btn:hover{transform:scale(1.08);color:#b18a55}.favorite-btn.active{color:#b18a55}.favorite-empty{max-width:720px;margin:18px 0;background:#f7f9fb;border-color:#e3e8ed}.favorite-empty p{margin:7px 0 0;color:#74818d;font-size:13px}@media(max-width:700px){nav button{padding:8px 7px}.favorite-btn{font-size:20px}}
+
+.admin-page{padding-top:34px}.admin-head{border-bottom:2px solid #17344f;padding:0 4px 18px;margin-bottom:22px}.admin-kicker{font-size:10px;letter-spacing:.16em;color:#8a98a5;font-weight:800;margin-bottom:6px}.admin-head h2{margin:0;color:#172b3d;font-size:25px;letter-spacing:-.04em}.admin-head p{margin:7px 0 0;color:#74818d;font-size:13px}.admin-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;max-width:760px}.admin-card{position:relative;text-align:left;min-height:170px;padding:24px;border:1px solid #dfe6ec;border-radius:12px;background:#fff;color:#1c3042;box-shadow:0 4px 14px rgba(23,52,79,.05);cursor:pointer;transition:.15s}.admin-card:hover{border-color:#9fb3c4;background:#fbfcfd;transform:translateY(-1px);box-shadow:0 7px 18px rgba(23,52,79,.08)}.admin-icon{display:block;color:#b18a55;font-size:11px;font-weight:800;letter-spacing:.08em;margin-bottom:32px}.admin-card b{display:block;font-size:18px;margin-bottom:7px}.admin-card small{display:block;color:#71808d;font-size:12px;line-height:1.5}.admin-arrow{position:absolute;right:22px;bottom:20px;color:#17344f;font-size:18px}@media(max-width:700px){.admin-page{padding-top:24px}.admin-grid{grid-template-columns:1fr}.admin-card{min-height:145px}.admin-icon{margin-bottom:22px}}
 </style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
@@ -351,11 +353,15 @@ async function search(category=''){
 
 async function admin(){
   if(!ME || ME.role!=='관리자')return;
-  document.getElementById('app').innerHTML=`<div class="container"><div class="title"><h2>관리자</h2></div>
-  <div class="grid">
-    <button class="cat" onclick="userAdmin()"><b>회원 관리</b><small>회원 등록·권한·상태·비밀번호 초기화</small></button>
-    <button class="cat" onclick="uploadView()"><b>자료 등록</b><small>Google Drive에 파일 저장 후 자료 등록</small></button>
-  </div></div>`;
+  document.getElementById('app').innerHTML=`<div class="container admin-page">
+    <div class="admin-head">
+      <div><div class="admin-kicker">GMC MISSION ARCHIVE</div><h2>관리자</h2><p>자료와 회원을 관리합니다.</p></div>
+    </div>
+    <div class="admin-grid">
+      <button class="admin-card" onclick="userAdmin()"><span class="admin-icon">01</span><b>회원 관리</b><small>회원 등록 · 권한 · 상태 관리</small><span class="admin-arrow">→</span></button>
+      <button class="admin-card" onclick="uploadView()"><span class="admin-icon">02</span><b>자료 등록</b><small>선교 자료를 등록하고 아카이브에 추가</small><span class="admin-arrow">→</span></button>
+    </div>
+  </div>`;
 }
 function userAdmin(){
   document.getElementById('app').innerHTML=`<div class="container"><div class="title"><h2>회원 관리</h2><button class="btn light" onclick="admin()">← 관리자</button></div>
@@ -432,7 +438,7 @@ function uploadView(){
   document.getElementById('app').innerHTML=`<div class="container"><div class="title"><h2>자료 등록</h2><button class="btn light" onclick="admin()">← 관리자</button></div>
   <div class="panel form"><label>제목</label><input id="mt"><label>설명</label><textarea id="md"></textarea>
   <div class="row"><div><label>카테고리</label><select id="mc">${CATS.map(c=>{const raw=typeof c==='string'?c:(c.name||c.category||'');return `<option value="${E(raw)}">${E(categoryLabel(raw))}</option>`}).join('')}</select></div><div><label>언어</label><input id="ml" value="한국어"></div></div>
-  <div class="row"><div><label>작성자</label><input id="ma"></div><div><label>작성연도</label><input id="my" value="${new Date().getFullYear()}"></div></div>
+  <div class="row"><div><label>저자</label><input id="ma"></div><div><label>작성연도</label><input id="my" value="${new Date().getFullYear()}"></div></div>
   <label>파일</label><input id="file" type="file">
   <div style="margin-top:8px;font-size:12px;color:#6b7280">파일 형식은 선택한 파일에서 자동으로 인식됩니다.</div>
   <button class="btn" style="margin-top:18px" onclick="upload()">Drive에 저장하고 등록</button><div id="uploadmsg"></div></div></div>`;
