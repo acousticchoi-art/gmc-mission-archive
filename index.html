@@ -92,7 +92,7 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
 .card-top{display:flex;align-items:center;justify-content:space-between;gap:12px}.favorite-btn{border:0;background:transparent;color:#9aa6af;font-size:21px;line-height:1;padding:0 3px;cursor:pointer;transition:transform .12s,color .12s}.favorite-btn:hover{transform:scale(1.08);color:#b18a55}.favorite-btn.active{color:#b18a55}.favorite-empty{max-width:720px;margin:18px 0;background:#f7f9fb;border-color:#e3e8ed}.favorite-empty p{margin:7px 0 0;color:#74818d;font-size:13px}@media(max-width:700px){nav button{padding:8px 7px}.favorite-btn{font-size:20px}}
 
 .admin-page{padding-top:34px}.admin-head{border-bottom:2px solid #17344f;padding:0 4px 18px;margin-bottom:22px}.admin-kicker{font-size:10px;letter-spacing:.16em;color:#8a98a5;font-weight:800;margin-bottom:6px}.admin-head h2{margin:0;color:#172b3d;font-size:25px;letter-spacing:-.04em}.admin-head p{margin:7px 0 0;color:#74818d;font-size:13px}.admin-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;max-width:760px}.admin-card{position:relative;text-align:left;min-height:170px;padding:24px;border:1px solid #dfe6ec;border-radius:12px;background:#fff;color:#1c3042;box-shadow:0 4px 14px rgba(23,52,79,.05);cursor:pointer;transition:.15s}.admin-card:hover{border-color:#9fb3c4;background:#fbfcfd;transform:translateY(-1px);box-shadow:0 7px 18px rgba(23,52,79,.08)}.admin-icon{display:block;color:#b18a55;font-size:11px;font-weight:800;letter-spacing:.08em;margin-bottom:32px}.admin-card b{display:block;font-size:18px;margin-bottom:7px}.admin-card small{display:block;color:#71808d;font-size:12px;line-height:1.5}.admin-arrow{position:absolute;right:22px;bottom:20px;color:#17344f;font-size:18px}@media(max-width:700px){.admin-page{padding-top:24px}.admin-grid{grid-template-columns:1fr}.admin-card{min-height:145px}.admin-icon{margin-bottom:22px}}
-</style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><script>
+</style><style id="admin-material-style">.admin-material-tools{display:flex;gap:8px;margin-bottom:18px}.admin-material-tools input,.admin-material-tools select{border:1px solid #ccd5dc;border-radius:8px;padding:10px 12px;background:#fff}.admin-material-tools input{flex:1}.admin-material-row{display:flex;justify-content:space-between;gap:20px;padding:18px 4px;border-bottom:1px solid #e1e6eb}.admin-material-main{min-width:0}.admin-material-main h3{margin:7px 0 5px;font-size:17px;color:#182c3d}.admin-material-main p{margin:0 0 4px;color:#71808d;font-size:12px}.admin-material-main small{color:#9aa4ad;font-size:11px;word-break:break-all}.admin-material-meta{display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;gap:12px;min-width:230px}.admin-status{font-size:11px;font-weight:700;padding:4px 8px;border-radius:999px;background:#eef3f6;color:#63717d}.admin-status.is-public{background:#edf5ef;color:#2f6943}.admin-status.is-private{background:#fff5e8;color:#8a6429}.admin-status.is-deleted{background:#f9eded;color:#9b3d3d}.admin-material-actions{display:flex;gap:6px}.admin-material-actions .btn{padding:7px 10px;font-size:12px}.admin-edit{max-width:850px}.admin-edit-head{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #dfe6ec;padding-bottom:14px;margin-bottom:16px}.admin-edit-head h3{margin:0;color:#17344f}@media(max-width:700px){.admin-material-tools{display:block}.admin-material-tools>*{width:100%;box-sizing:border-box;margin-bottom:7px}.admin-material-row{display:block;padding:16px 2px}.admin-material-meta{display:flex;flex-direction:row;align-items:center;margin-top:12px;min-width:0}.admin-material-actions{flex-wrap:wrap}.admin-edit .row{display:block}.admin-edit .row>*{margin-bottom:10px}}</style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
 let T=localStorage.getItem('gmc_token')||'',ME=null,CATS=[],FAVS=new Set();
@@ -364,27 +364,47 @@ async function admin(){
   </div>`;
 }
 function materialAdmin(){
-  document.getElementById('app').innerHTML=`<div class="container"><div class="title"><h2>자료 관리</h2><button class="btn light" onclick="admin()">← 관리자</button></div>
-  <div class="panel"><div id="adminMaterials"><div class="notice">자료를 불러오는 중...</div></div></div></div>`;
+  document.getElementById('app').innerHTML=`<div class="container admin-page"><div class="title"><h2>자료 관리</h2><button class="btn light" onclick="admin()">← 관리자</button></div>
+  <div class="panel"><div class="admin-material-tools"><input id="adminMaterialQ" placeholder="제목, 저자, 파일명 검색" oninput="filterAdminMaterials()"><select id="adminMaterialStatus" onchange="filterAdminMaterials()"><option value="">전체 상태</option><option value="공개">공개</option><option value="비공개">비공개</option><option value="삭제">삭제</option></select></div><div id="adminMaterials"><div class="notice">자료를 불러오는 중...</div></div></div></div>`;
   loadAdminMaterials();
 }
+let ADMIN_MATERIALS=[];
 async function loadAdminMaterials(){
   const box=document.getElementById('adminMaterials'); if(!box)return;
-  try{
-    const d=await A('adminMaterials',[T]);
-    if(!d.materials?.length){box.innerHTML='<div class="notice">등록된 자료가 없습니다.</div>';return;}
-    box.innerHTML='<div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="border-bottom:2px solid #dfe6ec;text-align:left"><th style="padding:10px">제목</th><th style="padding:10px">저자</th><th style="padding:10px">카테고리</th><th style="padding:10px">상태</th><th style="padding:10px">작업</th></tr></thead><tbody>'+
-      d.materials.map(m=>`<tr style="border-bottom:1px solid #e7ebef"><td style="padding:11px 10px;min-width:220px"><b>${E(m.title||'')}</b><div class="meta">${E(m.fileName||'')}</div></td><td style="padding:11px 10px">${E(m.author||'')}</td><td style="padding:11px 10px">${E(m.category||'')}</td><td style="padding:11px 10px">${E(m.status||'')}</td><td style="padding:11px 10px"><button class="btn danger" style="padding:7px 10px;font-size:12px" onclick="deleteMaterialAdmin('${E(String(m.id||'')).replace(/'/g,"&#039;")}','${E(m.title||'').replace(/'/g,"&#039;")}')">삭제</button></td></tr>`).join('')+
-      '</tbody></table></div>';
-  }catch(e){box.innerHTML='<div class="notice error">'+E(e.message)+'</div>';}
+  try{const d=await A('adminMaterials',[T]);ADMIN_MATERIALS=d.materials||[];renderAdminMaterials(ADMIN_MATERIALS);}
+  catch(e){box.innerHTML='<div class="notice error">'+E(e.message)+'</div>';}
+}
+function filterAdminMaterials(){
+  const q=(document.getElementById('adminMaterialQ')?.value||'').trim().toLowerCase(),st=document.getElementById('adminMaterialStatus')?.value||'';
+  renderAdminMaterials(ADMIN_MATERIALS.filter(m=>(!q||[m.title,m.author,m.fileName].join(' ').toLowerCase().includes(q))&&(!st||m.status===st)));
+}
+function renderAdminMaterials(list){
+  const box=document.getElementById('adminMaterials');if(!box)return;
+  if(!list.length){box.innerHTML='<div class="notice">조건에 맞는 자료가 없습니다.</div>';return;}
+  box.innerHTML=list.map(m=>`<div class="admin-material-row">
+    <div class="admin-material-main"><div class="tag">${E(m.category||'기타')}</div><h3>${E(m.title||'제목 없음')}</h3><p>${E(m.author||'저자 미상')} · ${E(m.year||'연도 미상')} · 조회 ${Number(m.views||0)}</p><small>${E(m.fileName||'')}</small></div>
+    <div class="admin-material-meta"><span class="admin-status ${m.status==='공개'?'is-public':m.status==='비공개'?'is-private':'is-deleted'}">${E(m.status||'')}</span><div class="admin-material-actions"><button class="btn light" onclick="editMaterialAdmin('${E(String(m.id||'')).replace(/'/g,"&#039;")}')">수정</button>${m.driveId?'<a class="btn light" target="_blank" rel="noopener" href="https://drive.google.com/file/d/'+encodeURIComponent(m.driveId)+'/view">원본</a>':''}<button class="btn danger" onclick="deleteMaterialAdmin('${E(String(m.id||'')).replace(/'/g,"&#039;")}','${E(m.title||'').replace(/'/g,"&#039;")}')">삭제</button></div></div>
+  </div>`).join('');
+}
+function editMaterialAdmin(id){
+  const m=ADMIN_MATERIALS.find(x=>String(x.id)===String(id));if(!m)return;
+  const box=document.getElementById('adminMaterials');
+  box.innerHTML=`<div class="admin-edit"><div class="admin-edit-head"><div><div class="admin-kicker">MATERIAL EDIT</div><h3>자료 정보 수정</h3></div><button class="btn light" onclick="renderAdminMaterials(ADMIN_MATERIALS)">← 목록</button></div>
+    <div class="row"><div><label>제목</label><input id="ame_title" value="${E(m.title||'')}"></div><div><label>저자</label><input id="ame_author" value="${E(m.author||'')}"></div></div>
+    <label>설명</label><textarea id="ame_desc">${E(m.description||'')}</textarea>
+    <div class="row"><div><label>카테고리</label><select id="ame_cat">${(CATS||[]).map(c=>`<option ${c===m.category?'selected':''}>${E(c)}</option>`).join('')}</select></div><div><label>언어</label><input id="ame_lang" value="${E(m.language||'')}"></div><div><label>작성연도</label><input id="ame_year" value="${E(m.year||'')}"></div></div>
+    <div class="row"><div><label>파일 형식</label><input id="ame_type" value="${E(m.fileType||'')}"></div><div><label>공개 상태</label><select id="ame_status"><option ${m.status==='공개'?'selected':''}>공개</option><option ${m.status==='비공개'?'selected':''}>비공개</option><option ${m.status==='삭제'?'selected':''}>삭제</option></select></div></div>
+    <div style="margin-top:18px"><button class="btn" onclick="saveMaterialAdmin('${E(String(m.id||'')).replace(/'/g,"&#039;")}')">변경사항 저장</button></div><div id="ame_msg"></div></div>`;
+}
+async function saveMaterialAdmin(id){
+  const data={title:document.getElementById('ame_title').value,description:document.getElementById('ame_desc').value,category:document.getElementById('ame_cat').value,language:document.getElementById('ame_lang').value,author:document.getElementById('ame_author').value,year:document.getElementById('ame_year').value,fileType:document.getElementById('ame_type').value,status:document.getElementById('ame_status').value};
+  try{await A('updateMaterial',[T,id,data]);document.getElementById('ame_msg').innerHTML='<div class="notice ok">변경사항이 저장되었습니다.</div>';await loadAdminMaterials();}
+  catch(e){document.getElementById('ame_msg').innerHTML='<div class="notice error">'+E(e.message)+'</div>';}
 }
 async function deleteMaterialAdmin(id,title){
-  if(!confirm('자료를 삭제하시겠습니까?\n\n'+title+'\n\n삭제하면 아카이브에서 더 이상 공개되지 않습니다.'))return;
-  try{
-    await A('deleteMaterial',[T,id]);
-    alert('자료가 삭제되었습니다.');
-    loadAdminMaterials();
-  }catch(e){alert(e.message);}
+  if(!confirm('자료를 삭제하시겠습니까?\\n\\n'+title+'\\n\\n삭제하면 Google Drive 원본도 휴지통으로 이동합니다.'))return;
+  try{await A('deleteMaterial',[T,id]);alert('자료가 삭제되었습니다.');await loadAdminMaterials();}
+  catch(e){alert(e.message);}
 }
 
 function userAdmin(){
