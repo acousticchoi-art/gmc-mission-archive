@@ -231,7 +231,7 @@ function closeMaterialViewer(){
 }
 function formatCommentDate(v){
   const s=String(v??'').trim(); if(!s)return '';
-  if(/^\\d+(?:\\.\\d+)?$/.test(s)){
+  if(/^\d+(?:\.\d+)?$/.test(s)){
     const n=Number(s); if(Number.isFinite(n)){
       const d=new Date(Date.UTC(1899,11,30)+n*86400000);
       const p=x=>String(x).padStart(2,'0');
