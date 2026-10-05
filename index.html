@@ -129,7 +129,8 @@ function selectCategory(btn,category=''){
 
 async function openMaterialById(id,url=''){
   if(url){
-    window.open(url,'_blank','noopener');
+    const proxy='/api?url='+encodeURIComponent(url);
+    window.open(proxy,'_blank','noopener');
     return;
   }
   if(!id)return;
