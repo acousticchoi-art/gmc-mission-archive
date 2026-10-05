@@ -39,15 +39,25 @@ module.exports = async (req, res) => {
       const contentRange = req.headers['content-range'];
       if (!contentRange) return res.status(400).json({ ok: false, message: 'Content-Range is required' });
 
+      const chunks = [];
+      let total = 0;
+      for await (const chunk of req) {
+        chunks.push(Buffer.from(chunk));
+        total += chunk.length;
+        if (total > 4 * 1024 * 1024) {
+          return res.status(413).json({ ok: false, message: 'Upload chunk is too large' });
+        }
+      }
+      const body = Buffer.concat(chunks, total);
+
       const upstream = await fetch(url.toString(), {
         method: 'PUT',
         headers: {
           'Content-Range': String(contentRange),
-          'Content-Type': req.headers['content-type'] || 'application/octet-stream',
-          ...(req.headers['content-length'] ? { 'Content-Length': String(req.headers['content-length']) } : {})
+          'Content-Type': 'application/octet-stream',
+          'Content-Length': String(body.length)
         },
-        body: req,
-        duplex: 'half'
+        body
       });
 
       const text = await upstream.text();
