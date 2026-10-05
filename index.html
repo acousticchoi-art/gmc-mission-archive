@@ -359,10 +359,34 @@ async function admin(){
     </div>
     <div class="admin-grid">
       <button class="admin-card" onclick="userAdmin()"><span class="admin-icon">01</span><b>회원 관리</b><small>회원 등록 · 권한 · 상태 관리</small><span class="admin-arrow">→</span></button>
-      <button class="admin-card" onclick="uploadView()"><span class="admin-icon">02</span><b>자료 등록</b><small>선교 자료를 등록하고 아카이브에 추가</small><span class="admin-arrow">→</span></button>
+      <button class="admin-card" onclick="uploadView()"><span class="admin-icon">02</span><b>자료 등록</b><small>선교 자료를 등록하고 아카이브에 추가</small><span class="admin-arrow">→</span></button><button class="admin-card" onclick="materialAdmin()"><span class="admin-icon">03</span><b>자료 관리</b><small>등록 자료 확인 · 수정 · 삭제</small><span class="admin-arrow">→</span></button>
     </div>
   </div>`;
 }
+function materialAdmin(){
+  document.getElementById('app').innerHTML=`<div class="container"><div class="title"><h2>자료 관리</h2><button class="btn light" onclick="admin()">← 관리자</button></div>
+  <div class="panel"><div id="adminMaterials"><div class="notice">자료를 불러오는 중...</div></div></div></div>`;
+  loadAdminMaterials();
+}
+async function loadAdminMaterials(){
+  const box=document.getElementById('adminMaterials'); if(!box)return;
+  try{
+    const d=await A('adminMaterials',[T]);
+    if(!d.materials?.length){box.innerHTML='<div class="notice">등록된 자료가 없습니다.</div>';return;}
+    box.innerHTML='<div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="border-bottom:2px solid #dfe6ec;text-align:left"><th style="padding:10px">제목</th><th style="padding:10px">저자</th><th style="padding:10px">카테고리</th><th style="padding:10px">상태</th><th style="padding:10px">작업</th></tr></thead><tbody>'+
+      d.materials.map(m=>`<tr style="border-bottom:1px solid #e7ebef"><td style="padding:11px 10px;min-width:220px"><b>${E(m.title||'')}</b><div class="meta">${E(m.fileName||'')}</div></td><td style="padding:11px 10px">${E(m.author||'')}</td><td style="padding:11px 10px">${E(m.category||'')}</td><td style="padding:11px 10px">${E(m.status||'')}</td><td style="padding:11px 10px"><button class="btn danger" style="padding:7px 10px;font-size:12px" onclick="deleteMaterialAdmin('${E(String(m.id||'')).replace(/'/g,"&#039;")}','${E(m.title||'').replace(/'/g,"&#039;")}')">삭제</button></td></tr>`).join('')+
+      '</tbody></table></div>';
+  }catch(e){box.innerHTML='<div class="notice error">'+E(e.message)+'</div>';}
+}
+async function deleteMaterialAdmin(id,title){
+  if(!confirm('자료를 삭제하시겠습니까?\n\n'+title+'\n\n삭제하면 아카이브에서 더 이상 공개되지 않습니다.'))return;
+  try{
+    await A('deleteMaterial',[T,id]);
+    alert('자료가 삭제되었습니다.');
+    loadAdminMaterials();
+  }catch(e){alert(e.message);}
+}
+
 function userAdmin(){
   document.getElementById('app').innerHTML=`<div class="container"><div class="title"><h2>회원 관리</h2><button class="btn light" onclick="admin()">← 관리자</button></div>
   <div class="panel form"><h3>회원 등록</h3>
