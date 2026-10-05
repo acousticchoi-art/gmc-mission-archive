@@ -204,6 +204,23 @@ async function ensureCommentsSheet(){
   await sheetAppend('댓글',['ID','자료ID','작성자ID','작성자','댓글','작성일','수정일']);
 }
 async function commentsRows(){await ensureCommentsSheet();return await sheetGet('댓글!A:G');}
+let RECENT_VIEWS_READY=false;
+async function ensureRecentViewsSheet(){
+  if(RECENT_VIEWS_READY)return;
+  const d=await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.SHEET_ID)+'?fields=sheets.properties.title');
+  const exists=(d.sheets||[]).some(s=>s.properties?.title==='최근본자료');
+  if(!exists){
+    await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.SHEET_ID)+':batchUpdate',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({requests:[{addSheet:{properties:{title:'최근본자료'}}}]})
+    });
+    await sheetAppend('최근본자료',['ID','사용자ID','자료ID','본시간']);
+  }
+  RECENT_VIEWS_READY=true;
+}
+async function recentViewsRows(){await ensureRecentViewsSheet();return await sheetGet('최근본자료!A:D');}
+
 async function ensureLoginHistorySheet(){
   const d=await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.SHEET_ID)+'?fields=sheets.properties.title');
   const exists=(d.sheets||[]).some(s=>s.properties?.title==='로그인이력');
@@ -293,7 +310,15 @@ async function api(action,args){
       out.reverse();
       return {ok:true,materials:out};
     }
-    case 'getMaterial':{const s=await session(args[0]),m=await findMaterial(args[1]);if(!m||m.status!=='공개')throw new Error('자료를 찾을 수 없습니다.');await ensurePublic(m.driveId);await sheetUpdate('자료!O'+m.row+':O'+m.row,[[m.views+1]]);return {ok:true,material:{...m,date:m.date,viewUrl:'https://drive.google.com/file/d/'+encodeURIComponent(m.driveId)+'/view',downloadUrl:'https://drive.google.com/uc?export=download&id='+encodeURIComponent(m.driveId)}};}
+    case 'getMaterial':{const s=await session(args[0]),m=await findMaterial(args[1]);if(!m||m.status!=='공개')throw new Error('자료를 찾을 수 없습니다.');await ensurePublic(m.driveId);await sheetUpdate('자료!O'+m.row+':O'+m.row,[[m.views+1]]);const rv=await recentViewsRows(),rid=maxNextId(rv,'R');await sheetAppend('최근본자료',[rid,s.uid,m.id,nowText()]);return {ok:true,material:{...m,date:m.date,viewUrl:'https://drive.google.com/file/d/'+encodeURIComponent(m.driveId)+'/view',downloadUrl:'https://drive.google.com/uc?export=download&id='+encodeURIComponent(m.driveId)}};}
+    case 'listRecentViews':{
+      const s=await session(args[0]),rows=await recentViewsRows(),materials=await materialsRows(),latest=new Map();
+      for(let i=1;i<rows.length;i++){const r=rows[i],materialId=String(r[2]||''),viewedAt=String(r[3]||'');if(!materialId||!viewedAt)continue;latest.set(materialId,{viewedAt,row:i});}
+      const out=[];
+      for(const [materialId,v] of latest){const m=await findMaterial(materialId);if(!m||m.status!=='공개')continue;out.push({id:m.id,title:m.title,description:m.description,category:m.category,language:m.language,author:m.author,year:m.year,fileName:m.fileName,fileType:m.fileType,date:m.date,views:m.views,viewedAt:v.viewedAt});}
+      out.sort((a,b)=>String(b.viewedAt).localeCompare(String(a.viewedAt)));
+      return {ok:true,materials:out.slice(0,30)};
+    }
     case 'listFavorites':{
       const s=await session(args[0]),rows=await favoritesRows(),materials=await materialsRows(),ids=new Set();
       for(let i=1;i<rows.length;i++)if(String(rows[i][2]||'')===String(s.uid)&&rows[i][1])ids.add(String(rows[i][1]));
