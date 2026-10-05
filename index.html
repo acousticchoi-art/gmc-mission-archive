@@ -37,20 +37,6 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
 /* v26: remove the old secondary category line */
 .category-bar small:empty{display:none!important}
 .category-bar .category-sub,.category-bar .category-more,.category-bar .category-note{display:none!important}
-</style><style id="internal-material-viewer">
-#materialViewer{position:fixed;inset:0;z-index:9999}
-#materialViewer .viewer-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.68)}
-#materialViewer .viewer-panel{position:absolute;inset:4vh 4vw;background:#fff;border-radius:18px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.35)}
-#materialViewer .viewer-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid #e8edf2}
-#materialViewer .viewer-kicker{font-size:12px;font-weight:800;color:#6b7280;margin-bottom:4px}
-#materialViewer h2{margin:0;font-size:20px}
-#materialViewer .viewer-close{border:0;background:#f2f4f7;border-radius:50%;width:38px;height:38px;font-size:25px;cursor:pointer}
-#materialViewer .viewer-desc{padding:10px 22px;color:#66717c;font-size:14px}
-#materialViewer .viewer-frame{flex:1;min-height:0;background:#f4f6f8}
-#materialViewer .viewer-frame iframe{width:100%;height:100%;border:0;display:block}
-#materialViewer .viewer-empty{height:100%;display:grid;place-items:center;text-align:center;color:#66717c;padding:30px}
-#materialViewer .viewer-actions{display:flex;gap:10px;padding:14px 22px;border-top:1px solid #e8edf2}
-@media(max-width:700px){#materialViewer .viewer-panel{inset:2vh 2vw;border-radius:14px}.viewer-desc{max-height:60px;overflow:auto}.viewer-frame{min-height:55vh}#materialViewer .viewer-head{padding:14px 16px}#materialViewer .viewer-actions{padding:12px 16px}}
 </style></head><body><header><div class="logo">GMC <span>MISSION ARCHIVE</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
@@ -148,63 +134,6 @@ function selectCategory(btn,category=''){
   search(category);
 }
 
-function driveFileId(url){
-  const s=String(url||'');
-  const m=s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)||s.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-  return m?m[1]:'';
-}
-function isPdfUrl(url,m){
-  const type=String(m?.fileType||m?.mimeType||'').toLowerCase();
-  const name=String(m?.fileName||'').toLowerCase();
-  const u=String(url||'').toLowerCase();
-  return type==='pdf'||type.includes('pdf')||name.endsWith('.pdf')||/\.pdf(?:[?#]|$)/i.test(u);
-}
-function closeMaterialViewer(){
-  const el=document.getElementById('materialViewer');
-  if(el)el.remove();
-  document.body.style.overflow='';
-}
-function showMaterialViewer(m,link){
-  const id=driveFileId(link);
-  const pdf=isPdfUrl(link,m)&&id;
-  const title=E(m.title||m.name||'자료');
-  const desc=E(m.description||m.content||'');
-  const directPdfUrl='https://drive.google.com/uc?export=download&id='+encodeURIComponent(id);
-  const proxyPdfUrl='/api?url='+encodeURIComponent(directPdfUrl);
-  const content=pdf
-    ? '<iframe src="'+proxyPdfUrl+'" title="'+title+' PDF 미리보기" allow="fullscreen"></iframe>'
-    : '<div class="viewer-empty"><strong>이 자료 형식은 아직 내부 미리보기를 지원하지 않습니다.</strong><p>아래 버튼으로 원본 자료를 열어주세요.</p></div>';
-  const old=document.getElementById('materialViewer'); if(old)old.remove();
-  const wrap=document.createElement('div');
-  wrap.id='materialViewer';
-  wrap.innerHTML='<div class="viewer-backdrop" onclick="closeMaterialViewer()"></div>'+
-    '<section class="viewer-panel" role="dialog" aria-modal="true">'+
-    '<div class="viewer-head"><div><div class="viewer-kicker">자료 보기</div><h2>'+title+'</h2></div>'+
-    '<button class="viewer-close" onclick="closeMaterialViewer()" aria-label="닫기">×</button></div>'+
-    '<div class="viewer-desc">'+desc+'</div>'+
-    '<div class="viewer-frame">'+content+'</div>'+
-    '<div class="viewer-actions">'+
-    (link?'<a class="btn primary" href="'+E(link)+'" target="_blank" rel="noopener">원본 열기 / 다운로드</a>':'')+
-    '<button class="btn light" onclick="closeMaterialViewer()">뒤로가기</button></div>'+
-    '</section>';
-  document.body.appendChild(wrap);
-  document.body.style.overflow='hidden';
-}
-async function openMaterialById(id,url=''){
-  if(!id && !url)return;
-  try{
-    let m={url:url};
-    if(id){
-      const d=await A('getMaterial',[T,id]);
-      m=d.material||d.item||d.data||d;
-    }
-    const link=m.url||m.viewUrl||m.driveUrl||m.webViewLink||m.downloadUrl||url||'';
-    if(link)showMaterialViewer(m,link);
-    else alert('이 자료의 열기 링크를 찾을 수 없습니다.');
-  }catch(e){alert(e.message||'자료를 열 수 없습니다.');}
-}
-
-
 async function search(category=''){
   const q=document.getElementById('q')?.value.trim()||'';
   const cards=document.getElementById('cards'), count=document.getElementById('heroResultCount');
@@ -222,14 +151,14 @@ async function search(category=''){
         : (category ? `${category} 자료 ${Array.isArray(items)?items.length:0}건` : `전체 자료 ${Array.isArray(items)?items.length:0}건`);
     }
     if(!Array.isArray(items)||!items.length){cards.innerHTML='<div class="notice">검색 결과가 없습니다.</div>';return}
-    cards.innerHTML=items.map(m=>`
-      <article class="card" style="cursor:pointer" onclick="openMaterialById('${E(m.id||m.materialId||m.ID||'').replace(/'/g,"&#039;")}','${E(m.url||m.viewUrl||m.driveUrl||m.webViewLink||'').replace(/'/g,"&#039;")}')">
-        <div class="tag">${E(m.category||'기타')}</div>
-        <h3>${E(m.title||m.name||'제목 없음')}</h3>
-        <p>${E(m.description||m.content||'')}</p>
-        <div class="meta">${E(m.author||m.writer||'')} ${m.year?'· '+E(m.year):''} · 조회 ${Number(m.views||0)}</div>
-        ${m.url||m.viewUrl||m.driveUrl?`<button class="btn light" style="margin-top:12px;width:100%" onclick="event.stopPropagation();this.closest('.card').click()">자료 보기</button>`:''}
-      </article>`).join('');
+    cards.innerHTML=items.map(m=>\`
+      <article class="card">
+        <div class="tag">\${E(m.category||'기타')}</div>
+        <h3>\${E(m.title||m.name||'제목 없음')}</h3>
+        <p>\${E(m.description||m.content||'')}</p>
+        <div class="meta">\${E(m.author||m.writer||'')} \${m.year?'· '+E(m.year):''} · 조회 \${Number(m.views||0)}</div>
+        \${m.url||m.viewUrl||m.driveUrl||m.webViewLink?\`<a class="btn light" style="display:block;text-align:center;margin-top:12px;text-decoration:none" href="\${E(m.url||m.viewUrl||m.driveUrl||m.webViewLink)}" target="_blank" rel="noopener">자료 열기</a>\`:''}
+      </article>\`).join('');
   }catch(e){if(count)count.textContent='';cards.innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
 }
 
