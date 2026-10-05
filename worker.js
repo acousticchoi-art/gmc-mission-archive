@@ -187,6 +187,15 @@ async function sheetAppend(sheet,values){
 async function sheetUpdate(range,values){return googleJson(sheetUrl(range)+'?valueInputOption=USER_ENTERED',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({range,majorDimension:'ROWS',values})});}
 function normalizeRole(v){return String(v||'')==='관리자'?'관리자':'일반회원';}
 function rowObj(r,row){return {id:String(r[0]||''),name:String(r[1]||''),username:String(r[2]||''),email:String(r[3]||''),phone:String(r[4]||''),branch:String(r[5]||''),role:normalizeRole(r[6]),hash:String(r[7]||''),salt:String(r[8]||''),firstLogin:String(r[9]).toLowerCase()==='true',status:String(r[10]||''),created:String(r[11]||''),lastLogin:String(r[12]||''),row};}
+async function ensureFavoritesSheet(){
+  const d=await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.SHEET_ID)+'?fields=sheets.properties.title');
+  const exists=(d.sheets||[]).some(s=>s.properties?.title==='즐겨찾기');
+  if(exists)return;
+  await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.SHEET_ID)+':batchUpdate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requests:[{addSheet:{properties:{title:'즐겨찾기'}}}]})});
+  await sheetAppend('즐겨찾기',['ID','자료ID','사용자ID','등록일']);
+}
+async function favoritesRows(){await ensureFavoritesSheet();return await sheetGet('즐겨찾기!A:D');}
+
 async function ensureCommentsSheet(){
   const d=await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.SHEET_ID)+'?fields=sheets.properties.title');
   const exists=(d.sheets||[]).some(s=>s.properties?.title==='댓글');
@@ -277,6 +286,42 @@ async function api(action,args){
       return {ok:true,materials:out};
     }
     case 'getMaterial':{const s=await session(args[0]),m=await findMaterial(args[1]);if(!m||m.status!=='공개')throw new Error('자료를 찾을 수 없습니다.');await ensurePublic(m.driveId);await sheetUpdate('자료!O'+m.row+':O'+m.row,[[m.views+1]]);return {ok:true,material:{...m,date:m.date,viewUrl:'https://drive.google.com/file/d/'+encodeURIComponent(m.driveId)+'/view',downloadUrl:'https://drive.google.com/uc?export=download&id='+encodeURIComponent(m.driveId)}};}
+    case 'listFavorites':{
+      const s=await session(args[0]),rows=await favoritesRows(),materials=await materialsRows(),ids=new Set();
+      for(let i=1;i<rows.length;i++)if(String(rows[i][2]||'')===String(s.uid)&&rows[i][1])ids.add(String(rows[i][1]));
+      const out=[];
+      for(let i=1;i<materials.length;i++){
+        const r=materials[i],id=String(r[0]||'');
+        if(!id||!ids.has(id))continue;
+        const status=String(r[12]||'').trim();
+        if(status!=='공개')continue;
+        out.push({id,title:String(r[1]||''),description:String(r[2]||''),category:String(r[3]||''),language:String(r[4]||''),author:String(r[5]||''),year:String(r[6]||''),fileName:String(r[8]||''),fileType:String(r[9]||''),date:String(r[10]||''),views:Number(r[14]||0)});
+      }
+      return {ok:true,materials:out.reverse(),ids:[...ids]};
+    }
+    case 'addFavorite':{
+      const s=await session(args[0]),materialId=String(args[1]||'');
+      if(!materialId)throw new Error('자료 정보가 없습니다.');
+      const m=await findMaterial(materialId);if(!m||m.status!=='공개')throw new Error('자료를 찾을 수 없습니다.');
+      const rows=await favoritesRows();
+      const exists=rows.slice(1).some(r=>String(r[1]||'')===materialId&&String(r[2]||'')===String(s.uid));
+      if(exists)return {ok:true,exists:true};
+      const id=maxNextId(rows,'F');
+      await sheetAppend('즐겨찾기',[id,materialId,s.uid,nowText()]);
+      return {ok:true,exists:false,id};
+    }
+    case 'removeFavorite':{
+      const s=await session(args[0]),materialId=String(args[1]||'');
+      if(!materialId)throw new Error('자료 정보가 없습니다.');
+      const rows=await favoritesRows();
+      for(let i=1;i<rows.length;i++){
+        if(String(rows[i][1]||'')===materialId&&String(rows[i][2]||'')===String(s.uid)){
+          await sheetUpdate('즐겨찾기!A'+(i+1)+':D'+(i+1),[['','','','']]);
+          break;
+        }
+      }
+      return {ok:true};
+    }
     case 'listComments':{
       const s=await session(args[0]),materialId=String(args[1]||'');
       if(!materialId)throw new Error('자료 정보가 없습니다.');
