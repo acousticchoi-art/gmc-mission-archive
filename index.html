@@ -245,9 +245,10 @@ function renderComments(comments,materialId){
   const list=Array.isArray(comments)?comments:[];
   box.innerHTML=list.length?list.map(c=>{
     const mine=ME&&String(c.userId)===String(ME.id);
+    const admin=ME&&ME.role==='관리자';
     const when=formatCommentDate(c.updatedAt||c.createdAt);
     return '<div class="comment-item"><div class="comment-top"><span class="comment-author">'+E(c.author||'회원')+'</span><span class="comment-date">'+E(when+(c.updatedAt?' (수정됨)':''))+'</span></div><div class="comment-text">'+E(c.text)+'</div>'+
-      (mine?'<div class="comment-actions"><button onclick="editComment(\''+E(c.id).replace(/'/g,"&#039;")+'\',\''+E(c.text).replace(/'/g,"&#039;")+'\',\''+E(materialId).replace(/'/g,"&#039;")+'\')">수정</button><button class="comment-delete" onclick="deleteComment(\''+E(c.id).replace(/'/g,"&#039;")+'\',\''+E(materialId).replace(/'/g,"&#039;")+'\')">삭제</button></div>':'')+
+      (mine||admin)?'<div class="comment-actions">'+(mine?'<button onclick="editComment(\''+E(c.id).replace(/'/g,"&#039;")+'\',\''+E(c.text).replace(/'/g,"&#039;")+'\',\''+E(materialId).replace(/'/g,"&#039;")+'\')">수정</button>':'')+'<button class="comment-delete" onclick="deleteComment(\''+E(c.id).replace(/'/g,"&#039;")+'\',\''+E(materialId).replace(/'/g,"&#039;")+'\')">삭제</button></div>':'')+
       '</div>';
   }).join(''):'<div class="meta">아직 댓글이 없습니다.</div>';
 }
