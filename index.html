@@ -86,7 +86,9 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
 .category-panel .category-bar button.active{background:#17344f;border-color:#17344f;color:#fff;box-shadow:0 3px 8px rgba(23,52,79,.15)}
 .heroResult{max-width:620px;margin:0 auto;padding:0 2px 12px;color:#587189;font-size:12px;font-weight:600}
 @media(max-width:700px){.hero{padding:14px 14px 0}.hero h1{font-size:24px;margin-bottom:10px}.search{height:40px;margin-bottom:8px}.search button{min-height:40px;padding:0 16px}.container{padding:18px 14px 48px}.cards{grid-template-columns:1fr;gap:12px}.card{padding:17px}}
-@media(max-width:700px){.hero{padding:15px 14px 0}.hero h1{font-size:24px}.search{width:100%}.container{padding:21px 14px 42px}.title{padding-bottom:9px}.title h2{font-size:19px}.card{padding:15px 4px}.card h3{font-size:16px}.card p{font-size:12.5px}}</style></head><body><header><div class="logo">GMC <span>MISSION ARCHIVE</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><script>
+@media(max-width:700px){.hero{padding:15px 14px 0}.hero h1{font-size:24px}.search{width:100%}.container{padding:21px 14px 42px}.title{padding-bottom:9px}.title h2{font-size:19px}.card{padding:15px 4px}.card h3{font-size:16px}.card p{font-size:12.5px}}
+.logo{display:flex;align-items:center;gap:9px}.logo-mark{display:grid;place-items:center;width:29px;height:29px;border:2px solid #17344f;border-radius:7px;color:#17344f;font-size:15px;font-weight:900;letter-spacing:-.05em}.logo strong{display:block;font-size:15px;line-height:1;color:#17344f;letter-spacing:.08em}.logo span:not(.logo-mark){display:block;margin-top:4px;font-size:8px;line-height:1;color:#84919d;letter-spacing:.13em;font-weight:700}@media(max-width:700px){.logo{justify-content:center}.logo-mark{width:27px;height:27px}}
+</style></head><body><header><div class="logo"><span class="logo-mark">G</span><div><strong>GMC</strong><span>MISSION ARCHIVE</span></div></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
 let T=localStorage.getItem('gmc_token')||'',ME=null,CATS=[];
@@ -120,7 +122,7 @@ function loginPage(message=''){
   document.getElementById('app').innerHTML=`
     <div class="login"><div class="loginbox">
       <div class="eyebrow" style="color:#b18a55">GMC · MYANMAR MISSION</div>
-      <h1>Mission Archive</h1>
+      <h1>GMC 선교자료 검색</h1>
       <p style="color:#6d7883">GMC 미얀마 선교 자료 아카이브</p>
       ${message?`<div class="notice error">${E(message)}</div>`:''}
       <form class="form" onsubmit="event.preventDefault();login()">
