@@ -229,12 +229,24 @@ function closeMaterialViewer(){
   if(el)el.remove();
   document.body.style.overflow='';
 }
+function formatCommentDate(v){
+  const s=String(v??'').trim(); if(!s)return '';
+  if(/^\\d+(?:\\.\\d+)?$/.test(s)){
+    const n=Number(s); if(Number.isFinite(n)){
+      const d=new Date(Date.UTC(1899,11,30)+n*86400000);
+      const p=x=>String(x).padStart(2,'0');
+      return d.getUTCFullYear()+'-'+p(d.getUTCMonth()+1)+'-'+p(d.getUTCDate())+' '+p(d.getUTCHours())+':'+p(d.getUTCMinutes())+':'+p(d.getUTCSeconds());
+    }
+  }
+  return s;
+}
 function renderComments(comments,materialId){
   const box=document.getElementById('commentList'); if(!box)return;
   const list=Array.isArray(comments)?comments:[];
   box.innerHTML=list.length?list.map(c=>{
     const mine=ME&&String(c.userId)===String(ME.id);
-    return '<div class="comment-item"><div class="comment-top"><span class="comment-author">'+E(c.author||'회원')+'</span><span class="comment-date">'+E(c.updatedAt?c.updatedAt+' (수정됨)':c.createdAt||'')+'</span></div><div class="comment-text">'+E(c.text)+'</div>'+
+    const when=formatCommentDate(c.updatedAt||c.createdAt);
+    return '<div class="comment-item"><div class="comment-top"><span class="comment-author">'+E(c.author||'회원')+'</span><span class="comment-date">'+E(when+(c.updatedAt?' (수정됨)':''))+'</span></div><div class="comment-text">'+E(c.text)+'</div>'+
       (mine?'<div class="comment-actions"><button onclick="editComment(\''+E(c.id).replace(/'/g,"&#039;")+'\',\''+E(c.text).replace(/'/g,"&#039;")+'\',\''+E(materialId).replace(/'/g,"&#039;")+'\')">수정</button><button class="comment-delete" onclick="deleteComment(\''+E(c.id).replace(/'/g,"&#039;")+'\',\''+E(materialId).replace(/'/g,"&#039;")+'\')">삭제</button></div>':'')+
       '</div>';
   }).join(''):'<div class="meta">아직 댓글이 없습니다.</div>';
