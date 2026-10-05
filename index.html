@@ -186,18 +186,25 @@ function showMaterialViewer(m,link){
   document.body.appendChild(wrap);
   document.body.style.overflow='hidden';
 }
-async function openMaterialById(id,url=''){
+function openMaterialById(id,url='',cardEl=null){
   if(!id && !url)return;
-  try{
-    let m={url:url};
-    if(id){
-      const d=await A('getMaterial',[T,id]);
-      m=d.material||d.item||d.data||d;
-    }
-    const link=m.url||m.viewUrl||m.driveUrl||m.webViewLink||m.downloadUrl||url||'';
-    if(link)showMaterialViewer(m,link);
-    else alert('이 자료의 열기 링크를 찾을 수 없습니다.');
-  }catch(e){alert(e.message||'자료를 열 수 없습니다.');}
+  const card=cardEl?.closest?.('.card')||cardEl;
+  const title=card?.querySelector?.('h3')?.textContent||'자료';
+  const desc=card?.querySelector?.('p')?.textContent||'';
+  const link=url||'';
+  if(link){
+    showMaterialViewer({title,description:desc},link);
+    if(id) A('getMaterial',[T,id]).catch(()=>{});
+    return;
+  }
+  if(id){
+    A('getMaterial',[T,id]).then(d=>{
+      const m=d.material||d.item||d.data||d;
+      const resolved=m.url||m.viewUrl||m.driveUrl||m.webViewLink||m.downloadUrl||'';
+      if(resolved)showMaterialViewer(m,resolved);
+      else alert('이 자료의 열기 링크를 찾을 수 없습니다.');
+    }).catch(e=>alert(e.message||'자료를 열 수 없습니다.'));
+  }
 }
 
 
@@ -219,7 +226,7 @@ async function search(category=''){
     }
     if(!Array.isArray(items)||!items.length){cards.innerHTML='<div class="notice">검색 결과가 없습니다.</div>';return}
     cards.innerHTML=items.map(m=>`
-      <article class="card" style="cursor:pointer" onclick="openMaterialById('${E(m.id||m.materialId||m.ID||'').replace(/'/g,"&#039;")}','${E(m.url||m.viewUrl||m.driveUrl||m.webViewLink||'').replace(/'/g,"&#039;")}')">
+      <article class="card" style="cursor:pointer" onclick="openMaterialById('${E(m.id||m.materialId||m.ID||'').replace(/'/g,"&#039;")}','${E(m.url||m.viewUrl||m.driveUrl||m.webViewLink||'').replace(/'/g,"&#039;")}',this)">
         <div class="tag">${E(m.category||'기타')}</div>
         <h3>${E(m.title||m.name||'제목 없음')}</h3>
         <p>${E(m.description||m.content||'')}</p>
