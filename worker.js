@@ -310,7 +310,7 @@ async function api(action,args){
       out.reverse();
       return {ok:true,materials:out};
     }
-    case 'getMaterial':{const s=await session(args[0]),m=await findMaterial(args[1]);if(!m||m.status!=='공개')throw new Error('자료를 찾을 수 없습니다.');await ensurePublic(m.driveId);await sheetUpdate('자료!O'+m.row+':O'+m.row,[[m.views+1]]);const rv=await recentViewsRows(),rid=maxNextId(rv,'R');await sheetAppend('최근본자료',[rid,s.uid,m.id,nowText()]);return {ok:true,material:{...m,date:m.date,viewUrl:'https://drive.google.com/file/d/'+encodeURIComponent(m.driveId)+'/view',downloadUrl:'https://drive.google.com/uc?export=download&id='+encodeURIComponent(m.driveId)}};}
+    case 'getMaterial':{const s=await session(args[0]),m=await findMaterial(args[1]);if(!m||m.status!=='공개')throw new Error('자료를 찾을 수 없습니다.');await sheetUpdate('자료!O'+m.row+':O'+m.row,[[m.views+1]]);const rv=await recentViewsRows(),rid=maxNextId(rv,'R');await sheetAppend('최근본자료',[rid,s.uid,m.id,nowText()]);return {ok:true,material:{...m,date:m.date,viewUrl:'https://drive.google.com/file/d/'+encodeURIComponent(m.driveId)+'/view',downloadUrl:'https://drive.google.com/uc?export=download&id='+encodeURIComponent(m.driveId)}};}
     case 'listRecentViews':{
       const s=await session(args[0]),rows=await recentViewsRows(),materials=await materialsRows(),latest=new Map();
       for(let i=1;i<rows.length;i++){const r=rows[i],materialId=String(r[2]||''),viewedAt=String(r[3]||'');if(!materialId||!viewedAt)continue;latest.set(materialId,{viewedAt,row:i});}
