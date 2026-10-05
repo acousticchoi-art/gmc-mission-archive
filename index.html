@@ -151,14 +151,14 @@ async function search(category=''){
         : (category ? `${category} 자료 ${Array.isArray(items)?items.length:0}건` : `전체 자료 ${Array.isArray(items)?items.length:0}건`);
     }
     if(!Array.isArray(items)||!items.length){cards.innerHTML='<div class="notice">검색 결과가 없습니다.</div>';return}
-    cards.innerHTML=items.map(m=>\`
+    cards.innerHTML=items.map(m=>`
       <article class="card">
-        <div class="tag">\${E(m.category||'기타')}</div>
-        <h3>\${E(m.title||m.name||'제목 없음')}</h3>
-        <p>\${E(m.description||m.content||'')}</p>
-        <div class="meta">\${E(m.author||m.writer||'')} \${m.year?'· '+E(m.year):''} · 조회 \${Number(m.views||0)}</div>
-        \${m.url||m.viewUrl||m.driveUrl||m.webViewLink?\`<a class="btn light" style="display:block;text-align:center;margin-top:12px;text-decoration:none" href="\${E(m.url||m.viewUrl||m.driveUrl||m.webViewLink)}" target="_blank" rel="noopener">자료 열기</a>\`:''}
-      </article>\`).join('');
+        <div class="tag">${E(m.category||'기타')}</div>
+        <h3>${E(m.title||m.name||'제목 없음')}</h3>
+        <p>${E(m.description||m.content||'')}</p>
+        <div class="meta">${E(m.author||m.writer||'')} ${m.year?'· '+E(m.year):''} · 조회 ${Number(m.views||0)}</div>
+        ${m.url||m.viewUrl||m.driveUrl||m.webViewLink?`<a class="btn light" style="display:block;text-align:center;margin-top:12px;text-decoration:none" href="${E(m.url||m.viewUrl||m.driveUrl||m.webViewLink)}" target="_blank" rel="noopener">자료 열기</a>`:''}
+      </article>`).join('');
   }catch(e){if(count)count.textContent='';cards.innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
 }
 
