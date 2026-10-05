@@ -454,7 +454,7 @@ async function api(action,args,ctx=null){
   }
 }
 
-async function handleApi(request,env){
+async function handleApi(request,env,ctx){
   try{
     config(env);
     if(!CFG.SHEET_ID||!CFG.ROOT_FOLDER_ID||!CFG.SA_EMAIL||!CFG.SA_PRIVATE_KEY||!CFG.SESSION_SECRET)return jsonResponse({ok:false,message:'Cloudflare Worker Secret/Variable 설정이 아직 완료되지 않았습니다.'},500);
