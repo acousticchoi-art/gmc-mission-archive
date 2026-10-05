@@ -283,31 +283,34 @@ function detectFileType(file){
 }
 async function directDriveUpload(file,uploadUrl,msg){
   if(!uploadUrl)throw new Error('Google Drive 업로드 주소를 받지 못했습니다.');
-  const chunkSize=8*1024*1024;
+  const chunkSize=3*1024*1024;
   let start=0;
   while(start<file.size){
     const end=Math.min(start+chunkSize,file.size),chunk=file.slice(start,end);
     msg.innerHTML=`<div class="notice">Google Drive에 업로드 중입니다... ${Math.round(start/file.size*100)}%</div>`;
-    const r=await fetch(uploadUrl,{
-      method:'PUT',
-      headers:{
-        'Content-Range':`bytes ${start}-${end-1}/${file.size}`
-      },
-      body:chunk
-    });
+    const proxy='/api?upload=1&url='+encodeURIComponent(uploadUrl);
+    const ctl=new AbortController();
+    const timer=setTimeout(()=>ctl.abort(),90000);
+    let r;
+    try{
+      r=await fetch(proxy,{method:'POST',headers:{'Content-Range':`bytes ${start}-${end-1}/${file.size}`},body:chunk,signal:ctl.signal});
+    }catch(err){
+      if(err?.name==='AbortError')throw new Error('파일 업로드 응답이 없습니다. 네트워크 연결을 확인해 주세요.');
+      throw err;
+    }finally{clearTimeout(timer)}
     if(r.status===200||r.status===201){
-      let d=null;
-      try{d=await r.json()}catch(_){}
+      let d=null;try{d=await r.json()}catch(_){}
+      msg.innerHTML='<div class="notice">Google Drive 업로드 완료</div>';
       return d;
     }
     if(r.status!==308){
-      let t='';
-      try{t=await r.text()}catch(_){}
+      let t='';try{t=await r.text()}catch(_){}
       throw new Error(t||`Google Drive 업로드 오류 (HTTP ${r.status})`);
     }
     const range=r.headers.get('Range')||r.headers.get('range')||'';
     const m=range.match(/-(\\d+)$/);
     start=m?Number(m[1])+1:end;
+    msg.innerHTML=`<div class="notice">Google Drive에 업로드 중입니다... ${Math.round(start/file.size*100)}%</div>`;
   }
   return null;
 }
