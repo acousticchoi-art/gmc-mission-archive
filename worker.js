@@ -253,7 +253,12 @@ async function api(action,args){
       const q=norm(f.q), qCompact=compact(q);
       const terms=q?q.split(' ').filter(Boolean):[];
       const cat=norm(f.category), lang=norm(f.language);
-      const rows=await materialsRows(), out=[];
+      const rows=await materialsRows(), commentRows=await commentsRows(), counts={};
+      for(let i=1;i<commentRows.length;i++){
+        const mid=String(commentRows[i][1]||'');
+        if(mid)counts[mid]=(counts[mid]||0)+1;
+      }
+      const out=[];
       for(let i=1;i<rows.length;i++){
         const r=rows[i];
         if(!r[0]) continue;
@@ -265,7 +270,8 @@ async function api(action,args){
         if(q && !(terms.every(t=>hay.includes(t)) || (qCompact && hayCompact.includes(qCompact)))) continue;
         if(cat && norm(r[3])!==cat) continue;
         if(lang && norm(r[4])!==lang) continue;
-        out.push({id:String(r[0]),title:String(r[1]||''),description:String(r[2]||''),category:String(r[3]||''),language:String(r[4]||''),author:String(r[5]||''),year:String(r[6]||''),fileName:String(r[8]||''),fileType:String(r[9]||''),date:String(r[10]||''),views:Number(r[14]||0)});
+        const id=String(r[0]);
+        out.push({id,title:String(r[1]||''),description:String(r[2]||''),category:String(r[3]||''),language:String(r[4]||''),author:String(r[5]||''),year:String(r[6]||''),fileName:String(r[8]||''),fileType:String(r[9]||''),date:String(r[10]||''),views:Number(r[14]||0),commentCount:counts[id]||0});
       }
       out.reverse();
       return {ok:true,materials:out};
@@ -305,6 +311,16 @@ async function api(action,args){
       const updated=nowText();
       await sheetUpdate('댓글!E'+row+':G'+row,[[safe(text),String(rows[row-1][5]||''),updated]]);
       return {ok:true,comment:{id,text,updatedAt:updated}};
+    }
+    case 'deleteComment':{
+      const s=await session(args[0]),id=String(args[1]||'');
+      if(!id)throw new Error('댓글 정보가 없습니다.');
+      const rows=await commentsRows();let row=0,owner='';
+      for(let i=1;i<rows.length;i++)if(String(rows[i][0]||'')===id){row=i+1;owner=String(rows[i][2]||'');break;}
+      if(!row)throw new Error('댓글을 찾을 수 없습니다.');
+      if(owner!==s.uid)throw new Error('본인이 작성한 댓글만 삭제할 수 있습니다.');
+      await sheetUpdate('댓글!A'+row+':G'+row,[['','','','','','', '']]);
+      return {ok:true};
     }
     case 'prepareUpload':{const s=await requireRole(args[0],['관리자']),data=args[1]||{};if(!data.fileName||!data.size)throw new Error('파일 정보가 없습니다.');if(Number(data.size)>MAX_UPLOAD_BYTES)throw new Error('Google Drive가 허용하는 최대 파일 크기를 초과했습니다.');return {ok:true,...await prepareDriveUpload(data)};}
     case 'findUploadedFile':{
