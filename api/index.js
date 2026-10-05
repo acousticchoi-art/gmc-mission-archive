@@ -27,6 +27,7 @@ module.exports = async (req, res) => {
       const contentLength = upstream.headers.get('content-length');
       res.status(upstream.status);
       res.setHeader('content-type', contentType);
+      res.setHeader('content-disposition', 'inline');
       if (contentLength) res.setHeader('content-length', contentLength);
       res.setHeader('cache-control', 'private, max-age=300');
       return res.send(Buffer.from(await upstream.arrayBuffer()));
