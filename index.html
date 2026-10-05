@@ -134,6 +134,7 @@ function nav(){
   if(!ME){x.innerHTML='';return}
   x.innerHTML='<button class="primary" onclick="home()">자료실</button>'+
     '<button class="my-material-nav" onclick="myPage()">내 자료</button>'+
+    '<button onclick="recentPage()">최근 본 자료</button>'+
     (ME.role==='관리자'?'<button onclick="admin()">관리자</button>':'')+
     '<button onclick="pw()">비밀번호</button><button onclick="logout()">로그아웃</button>';
 }
@@ -319,6 +320,17 @@ function openMaterialById(id,url='',cardEl=null){
 }
 
 
+async function recentPage(){
+  nav();
+  document.getElementById('app').innerHTML='<div class="container"><div class="title"><h2>최근 본 자료</h2><span class="meta" id="recentCount"></span></div><div class="cards" id="recentCards"><div class="notice">불러오는 중...</div></div></div>';
+  try{
+    const d=await A('listRecentViews',[T]),items=d.materials||[];
+    document.getElementById('recentCount').textContent=items.length+'개';
+    const box=document.getElementById('recentCards');
+    if(!items.length){box.innerHTML='<div class="panel favorite-empty"><b>최근 본 자료가 없습니다.</b><p>자료를 열어보면 여기에 최근 본 순서대로 표시됩니다.</p></div>';return}
+    box.innerHTML=items.map(m=>'<article class="card" style="cursor:pointer" onclick="openMaterialById(\''+E(m.id).replace(/'/g,"&#039;")+'\',\'\',this)"><div class="card-top"><div class="tag">'+E(m.category||'기타')+'</div><span class="meta">'+E(m.viewedAt||'')+'</span></div><h3>'+E(m.title||'제목 없음')+'</h3><p>'+E(m.description||'')+'</p><div class="meta">'+E(m.author||'')+(m.year?' · '+E(m.year):'')+' · 조회 '+Number(m.views||0)+'</div></article>').join('');
+  }catch(e){document.getElementById('recentCards').innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
+}
 async function loadFavorites(){
   try{const d=await A('listFavorites',[T]);FAVS=new Set((d.ids||[]).map(String))}catch(e){FAVS=new Set()}
 }
