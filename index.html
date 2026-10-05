@@ -387,8 +387,16 @@ async function loadAdminMaterials(){
   catch(e){box.innerHTML='<div class="notice error">'+E(e.message)+'</div>';}
 }
 function filterAdminMaterials(){
-  const q=(document.getElementById('adminMaterialQ')?.value||'').trim().toLowerCase(),st=document.getElementById('adminMaterialStatus')?.value||'';
-  renderAdminMaterials(ADMIN_MATERIALS.filter(m=>(!q||[m.title,m.author,m.fileName].join(' ').toLowerCase().includes(q))&&(!st||m.status===st)));
+  const q=(document.getElementById('adminMaterialQ')?.value||'').trim().toLowerCase();
+  const cat=document.getElementById('adminMaterialCategory')?.value||'',st=document.getElementById('adminMaterialStatus')?.value||'',sort=document.getElementById('adminMaterialSort')?.value||'date';
+  const list=ADMIN_MATERIALS.filter(m=>(!q||[m.title,m.author,m.fileName].join(' ').toLowerCase().includes(q))&&(!cat||m.category===cat)&&(!st||m.status===st));
+  list.sort((a,b)=>{
+    if(sort==='title')return String(a.title||'').localeCompare(String(b.title||''),'ko');
+    if(sort==='views')return Number(b.views||0)-Number(a.views||0);
+    if(sort==='year')return Number(b.year||0)-Number(a.year||0);
+    return String(b.date||'').localeCompare(String(a.date||''));
+  });
+  renderAdminMaterials(list);
 }
 function renderAdminMaterials(list){
   const box=document.getElementById('adminMaterials');if(!box)return;
@@ -517,7 +525,12 @@ function renderMaterialRegister(){
 }
 function renderMaterialManager(){
   document.getElementById('materialWorkspace').innerHTML=`<div class="panel">
-    <div class="admin-material-tools"><input id="adminMaterialQ" placeholder="제목, 저자, 파일명 검색" oninput="filterAdminMaterials()"><select id="adminMaterialStatus" onchange="filterAdminMaterials()"><option value="">전체 상태</option><option value="공개">공개</option><option value="비공개">비공개</option><option value="삭제">삭제</option></select></div>
+    <div class="admin-material-tools">
+      <input id="adminMaterialQ" placeholder="제목, 저자, 파일명 검색" oninput="filterAdminMaterials()">
+      <select id="adminMaterialCategory" onchange="filterAdminMaterials()"><option value="">전체 분야</option>${(CATS||[]).map(c=>`<option value="${E(c)}">${E(c)}</option>`).join('')}</select>
+      <select id="adminMaterialStatus" onchange="filterAdminMaterials()"><option value="">전체 상태</option><option value="공개">공개</option><option value="비공개">비공개</option></select>
+      <select id="adminMaterialSort" onchange="filterAdminMaterials()"><option value="date">최신 등록순</option><option value="title">제목순</option><option value="views">조회수순</option><option value="year">작성연도순</option></select>
+    </div>
     <div id="adminMaterials"><div class="notice">자료를 불러오는 중...</div></div>
   </div>`;
 }
