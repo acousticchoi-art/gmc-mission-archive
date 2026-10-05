@@ -187,6 +187,14 @@ async function sheetAppend(sheet,values){
 async function sheetUpdate(range,values){return googleJson(sheetUrl(range)+'?valueInputOption=USER_ENTERED',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({range,majorDimension:'ROWS',values})});}
 function normalizeRole(v){return String(v||'')==='관리자'?'관리자':'일반회원';}
 function rowObj(r,row){return {id:String(r[0]||''),name:String(r[1]||''),username:String(r[2]||''),email:String(r[3]||''),phone:String(r[4]||''),branch:String(r[5]||''),role:normalizeRole(r[6]),hash:String(r[7]||''),salt:String(r[8]||''),firstLogin:String(r[9]).toLowerCase()==='true',status:String(r[10]||''),created:String(r[11]||''),lastLogin:String(r[12]||''),row};}
+async function ensureCommentsSheet(){
+  const d=await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.SHEET_ID)+'?fields=sheets.properties.title');
+  const exists=(d.sheets||[]).some(s=>s.properties?.title==='댓글');
+  if(exists)return;
+  await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.SHEET_ID)+':batchUpdate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requests:[{addSheet:{properties:{title:'댓글'}}}]})});
+  await sheetAppend('댓글',['ID','자료ID','작성자ID','작성자','댓글','작성일','수정일']);
+}
+async function commentsRows(){await ensureCommentsSheet();return await sheetGet('댓글!A:G');}
 async function usersRows(){return await sheetGet('회원!A:M');}
 async function materialsRows(){return await sheetGet('자료!A:O');}
 async function findUserByUsername(x){const rows=await usersRows(),q=String(x||'').trim().toLowerCase();for(let i=1;i<rows.length;i++)if(String(rows[i][2]||'').toLowerCase()===q)return rowObj(rows[i],i+1);return null;}
@@ -263,6 +271,41 @@ async function api(action,args){
       return {ok:true,materials:out};
     }
     case 'getMaterial':{const s=await session(args[0]),m=await findMaterial(args[1]);if(!m||m.status!=='공개')throw new Error('자료를 찾을 수 없습니다.');await ensurePublic(m.driveId);await sheetUpdate('자료!O'+m.row+':O'+m.row,[[m.views+1]]);return {ok:true,material:{...m,date:m.date,viewUrl:'https://drive.google.com/file/d/'+encodeURIComponent(m.driveId)+'/view',downloadUrl:'https://drive.google.com/uc?export=download&id='+encodeURIComponent(m.driveId)}};}
+    case 'listComments':{
+      const s=await session(args[0]),materialId=String(args[1]||'');
+      if(!materialId)throw new Error('자료 정보가 없습니다.');
+      const rows=await commentsRows(),out=[];
+      for(let i=1;i<rows.length;i++){
+        const r=rows[i];
+        if(String(r[1]||'')!==materialId)continue;
+        out.push({id:String(r[0]||''),materialId:String(r[1]||''),userId:String(r[2]||''),author:String(r[3]||''),text:String(r[4]||''),createdAt:String(r[5]||''),updatedAt:String(r[6]||'')});
+      }
+      out.reverse();
+      return {ok:true,comments:out};
+    }
+    case 'addComment':{
+      const s=await session(args[0]),materialId=String(args[1]||''),text=String(args[2]||'').trim();
+      if(!materialId||!text)throw new Error('댓글 내용을 입력하세요.');
+      if(text.length>2000)throw new Error('댓글은 2,000자 이하로 입력하세요.');
+      const m=await findMaterial(materialId);if(!m||m.status!=='공개')throw new Error('자료를 찾을 수 없습니다.');
+      const u=await findUserById(s.uid);if(!u)throw new Error('회원 정보를 찾을 수 없습니다.');
+      const rows=await commentsRows(),id=maxNextId(rows,'C');
+      const now=nowText();
+      await sheetAppend('댓글',[id,materialId,s.uid,safe(u.name),safe(text),now,'']);
+      return {ok:true,comment:{id,materialId,userId:s.uid,author:u.name,text,createdAt:now,updatedAt:''}};
+    }
+    case 'updateComment':{
+      const s=await session(args[0]),id=String(args[1]||''),text=String(args[2]||'').trim();
+      if(!id||!text)throw new Error('댓글 내용을 입력하세요.');
+      if(text.length>2000)throw new Error('댓글은 2,000자 이하로 입력하세요.');
+      const rows=await commentsRows();let row=0,owner='';
+      for(let i=1;i<rows.length;i++)if(String(rows[i][0]||'')===id){row=i+1;owner=String(rows[i][2]||'');break;}
+      if(!row)throw new Error('댓글을 찾을 수 없습니다.');
+      if(owner!==s.uid)throw new Error('본인이 작성한 댓글만 수정할 수 있습니다.');
+      const updated=nowText();
+      await sheetUpdate('댓글!E'+row+':G'+row,[[safe(text),String(rows[row-1][5]||''),updated]]);
+      return {ok:true,comment:{id,text,updatedAt:updated}};
+    }
     case 'prepareUpload':{const s=await requireRole(args[0],['관리자']),data=args[1]||{};if(!data.fileName||!data.size)throw new Error('파일 정보가 없습니다.');if(Number(data.size)>MAX_UPLOAD_BYTES)throw new Error('Google Drive가 허용하는 최대 파일 크기를 초과했습니다.');return {ok:true,...await prepareDriveUpload(data)};}
     case 'findUploadedFile':{
       const s=await requireRole(args[0],['관리자']),data=args[1]||{};
