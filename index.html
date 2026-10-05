@@ -24,7 +24,7 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
 .category-bar button.active{background:var(--a);border-color:var(--a);color:#fff;font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,.12)}
 .category-label{font-size:13px;font-weight:700;letter-spacing:.02em;margin-top:18px;color:#fff}
 .category-bar-wrap{margin-top:0}
-.card{padding:21px;border:0;border-bottom:1px solid #e1e6eb;border-radius:0;background:transparent;box-shadow:none;transition:background .15s ease}.card:hover{transform:none;box-shadow:none;background:#fafbfd}.card h3{margin:8px 0 7px;line-height:1.42;letter-spacing:-.025em;color:#182c3d;font-size:18px}.card p{color:#697986;font-size:13px;line-height:1.58;margin:0 0 7px;max-width:900px}.tag{display:inline-block;font-size:10px;color:#35628a;background:#edf4fa;border-radius:4px;padding:3px 7px;font-weight:700;letter-spacing:.01em}
+.card{position:relative;padding:21px;border:0;border-bottom:1px solid #e1e6eb;border-radius:0;background:transparent;box-shadow:none;transition:background .15s ease}.card:hover{transform:none;box-shadow:none;background:#fafbfd}.card.material-opening{pointer-events:none;opacity:.62;background:#f6f9fb}.card.material-opening::after{content:'자료를 불러오는 중...';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.82);color:#17344f;font-size:13px;font-weight:700;letter-spacing:-.01em}.card.material-opening::before{content:'';position:absolute;z-index:1;width:18px;height:18px;left:calc(50% - 9px);top:calc(50% - 27px);border:2px solid #d8e1e8;border-top-color:#17344f;border-radius:50%;animation:gmcSpin .7s linear infinite}@keyframes gmcSpin{to{transform:rotate(360deg)}}.card h3{margin:8px 0 7px;line-height:1.42;letter-spacing:-.025em;color:#182c3d;font-size:18px}.card p{color:#697986;font-size:13px;line-height:1.58;margin:0 0 7px;max-width:900px}.tag{display:inline-block;font-size:10px;color:#35628a;background:#edf4fa;border-radius:4px;padding:3px 7px;font-weight:700;letter-spacing:.01em}
 .panel{padding:24px;margin-bottom:18px}.form{max-width:700px}.form label{display:block;font-size:13px;font-weight:bold;margin:13px 0 6px}
 .form input,.form select,.form textarea{width:100%;padding:11px;border:1px solid #ccd5dc;border-radius:8px;background:#fff;color:#1d2a35}.form textarea{min-height:90px;resize:vertical}
 .btn{border:0;border-radius:8px;background:var(--n);color:#fff;padding:11px 16px;font-weight:bold;display:inline-block;text-decoration:none;text-align:center}.btn.light{background:#edf2f5;color:#27343e}.btn.danger{background:var(--danger)}
@@ -314,12 +314,26 @@ function showMaterialViewer(m,link,materialId=''){
 function openMaterialById(id,url='',cardEl=null){
   if(!id && !url)return;
   const card=cardEl?.closest?.('.card')||cardEl;
+  if(card){
+    if(card.dataset.opening==='1')return;
+    card.dataset.opening='1';
+    card.classList.add('material-opening');
+    card.setAttribute('aria-busy','true');
+  }
+  const done=()=>{
+    if(card){
+      card.dataset.opening='0';
+      card.classList.remove('material-opening');
+      card.removeAttribute('aria-busy');
+    }
+  };
   const title=card?.querySelector?.('h3')?.textContent||'자료';
   const desc=card?.querySelector?.('p')?.textContent||'';
   const link=url||'';
   if(link){
     showMaterialViewer({title,description:desc},link,id);
-    if(id) A('getMaterial',[T,id]).catch(()=>{});
+    if(id)A('getMaterial',[T,id]).catch(()=>{});
+    done();
     return;
   }
   if(id){
@@ -328,7 +342,9 @@ function openMaterialById(id,url='',cardEl=null){
       const resolved=m.url||m.viewUrl||m.driveUrl||m.webViewLink||m.downloadUrl||'';
       if(resolved)showMaterialViewer(m,resolved,id);
       else alert('이 자료의 열기 링크를 찾을 수 없습니다.');
-    }).catch(e=>alert(e.message||'자료를 열 수 없습니다.'));
+    }).catch(e=>alert(e.message||'자료를 열 수 없습니다.')).finally(done);
+  }else{
+    done();
   }
 }
 
