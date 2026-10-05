@@ -331,30 +331,28 @@ function openMaterialById(id,url='',cardEl=null){
   const title=card?.querySelector?.('h3')?.textContent||'자료';
   const desc=card?.querySelector?.('p')?.textContent||'';
   const link=url||'';
+  const loadDetail=()=>{
+    if(!id)return Promise.resolve();
+    return A('getMaterial',[T,id]).then(d=>{
+      const m=d.material||d.item||d.data||d;
+      const viewer=document.getElementById('materialViewer');
+      if(!viewer)return;
+      showMaterialViewer(m,m.url||m.viewUrl||m.driveUrl||m.webViewLink||m.downloadUrl||link,id);
+    }).catch(e=>{
+      if(document.getElementById('materialViewer')&&!link)alert(e.message||'자료 정보를 불러오지 못했습니다.');
+    });
+  };
   if(link){
     showMaterialViewer({title,description:desc},link,id);
-    if(id)A('getMaterial',[T,id]).catch(()=>{});
-    done();
+    loadDetail().finally(done);
     return;
   }
   if(id){
     showMaterialViewer({title,description:desc},'',id);
-    A('getMaterial',[T,id]).then(d=>{
-      const m=d.material||d.item||d.data||d;
-      const resolved=m.url||m.viewUrl||m.driveUrl||m.webViewLink||m.downloadUrl||'';
-      if(resolved){
-        const actions=document.querySelector('#materialViewer .viewer-actions');
-        if(actions && !actions.querySelector('.material-original-link')){
-          const a=document.createElement('a');
-          a.className='btn primary material-original-link';
-          a.href=resolved;
-          a.target='_blank';
-          a.rel='noopener';
-          a.textContent='원본 열기 / 다운로드';
-          actions.insertBefore(a,actions.firstChild);
-        }
-      }else if(document.getElementById('materialViewer')){alert('이 자료의 열기 링크를 찾을 수 없습니다.');}
-    }).catch(e=>{if(document.getElementById('materialViewer'))alert(e.message||'자료를 열 수 없습니다.');}).finally(done);
+    loadDetail().then(()=>{
+      const viewer=document.getElementById('materialViewer');
+      if(viewer&&!viewer.querySelector('.material-original-link')&&viewer.querySelector('.viewer-actions a'))viewer.querySelector('.viewer-actions a').classList.add('material-original-link');
+    }).finally(done);
   }else{
     done();
   }
