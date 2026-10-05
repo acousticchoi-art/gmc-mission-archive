@@ -58,20 +58,21 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
 #materialViewer .viewer-info-item span{display:block;color:#7a858f;font-size:12px;margin-bottom:4px}
 #materialViewer .viewer-info-item b{font-size:14px;word-break:break-word}
 @media(max-width:700px){#materialViewer .viewer-body{padding:16px}#materialViewer .viewer-info{grid-template-columns:1fr!important;border-right:1px solid #e5e9ed}#materialViewer .viewer-info-item{border-right:0!important}}
-#materialViewer .comments{margin-top:22px;border-top:1px solid #e5e9ed;padding-top:18px}
-#materialViewer .comments h3{margin:0 0 12px;font-size:16px}
-#materialViewer .comment-list{display:flex;flex-direction:column;gap:10px}
-#materialViewer .comment-item{border:1px solid #e5e9ed;border-radius:10px;padding:12px 14px;background:#fff}
+#materialViewer .comments{margin-top:24px;padding:18px 16px 16px;background:#f5f8fb;border:1px solid #dfe7ee;border-radius:14px}
+#materialViewer .comments h3{margin:0 0 13px;font-size:16px;color:#17344f}
+#materialViewer .comment-list{display:flex;flex-direction:column;gap:8px}
+#materialViewer .comment-item{border:0;border-left:3px solid #b18a55;border-radius:0;padding:10px 12px;background:#fff;box-shadow:0 1px 3px rgba(23,52,79,.05)}
 #materialViewer .comment-top{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:5px}
 #materialViewer .comment-author{font-weight:700;font-size:13px}
 #materialViewer .comment-date{font-size:11px;color:#89939c}
 #materialViewer .comment-text{font-size:14px;white-space:pre-wrap;word-break:break-word}
 #materialViewer .comment-actions{margin-top:7px;text-align:right}
 #materialViewer .comment-actions button{border:0;background:transparent;color:#66717c;font-size:12px;padding:2px 5px}
-#materialViewer .comment-form{display:flex;gap:8px;margin-top:12px}
-#materialViewer .comment-form textarea{flex:1;min-height:62px;resize:vertical;border:1px solid #ccd5dc;border-radius:9px;padding:10px;outline:0}
+#materialViewer .comment-actions .comment-delete{color:#a33d3d}
+#materialViewer .comment-form{display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px dashed #d5dee6}
+#materialViewer .comment-form textarea{flex:1;min-height:62px;resize:vertical;border:1px solid #ccd5dc;border-radius:9px;padding:10px;outline:0;background:#fff}
 #materialViewer .comment-form button{align-self:flex-end;border:0;border-radius:8px;background:#17344f;color:#fff;padding:10px 14px;font-weight:700}
-@media(max-width:700px){#materialViewer .comment-form{display:block}#materialViewer .comment-form button{width:100%;margin-top:7px}}
+@media(max-width:700px){#materialViewer .comments{padding:15px 12px}#materialViewer .comment-form{display:block}#materialViewer .comment-form button{width:100%;margin-top:7px}}
 
 </style></head><body><header><div class="logo">GMC <span>MISSION ARCHIVE</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
@@ -192,7 +193,7 @@ function renderComments(comments,materialId){
   box.innerHTML=list.length?list.map(c=>{
     const mine=ME&&String(c.userId)===String(ME.id);
     return '<div class="comment-item"><div class="comment-top"><span class="comment-author">'+E(c.author||'회원')+'</span><span class="comment-date">'+E(c.updatedAt?c.updatedAt+' (수정됨)':c.createdAt||'')+'</span></div><div class="comment-text">'+E(c.text)+'</div>'+
-      (mine?'<div class="comment-actions"><button onclick="editComment(\''+E(c.id).replace(/'/g,"&#039;")+'\',\''+E(c.text).replace(/'/g,"&#039;")+'\',\''+E(materialId).replace(/'/g,"&#039;")+'\')">수정</button></div>':'')+
+      (mine?'<div class="comment-actions"><button onclick="editComment(\''+E(c.id).replace(/'/g,"&#039;")+'\',\''+E(c.text).replace(/'/g,"&#039;")+'\',\''+E(materialId).replace(/'/g,"&#039;")+'\')">수정</button><button class="comment-delete" onclick="deleteComment(\''+E(c.id).replace(/'/g,"&#039;")+'\',\''+E(materialId).replace(/'/g,"&#039;")+'\')">삭제</button></div>':'')+
       '</div>';
   }).join(''):'<div class="meta">아직 댓글이 없습니다.</div>';
 }
@@ -212,6 +213,11 @@ async function editComment(id,currentText,materialId){
   if(next===null)return;
   const text=next.trim(); if(!text)return alert('댓글 내용을 입력하세요.');
   try{await A('updateComment',[T,id,text]);await loadComments(materialId)}
+  catch(e){alert(e.message)}
+}
+async function deleteComment(id,materialId){
+  if(!confirm('이 댓글을 삭제할까요?'))return;
+  try{await A('deleteComment',[T,id]);await loadComments(materialId)}
   catch(e){alert(e.message)}
 }
 function showMaterialViewer(m,link,materialId=''){
@@ -294,7 +300,7 @@ async function search(category=''){
         <div class="tag">${E(m.category||'기타')}</div>
         <h3>${E(m.title||m.name||'제목 없음')}</h3>
         <p>${E(m.description||m.content||'')}</p>
-        <div class="meta">${E(m.author||m.writer||'')} ${m.year?'· '+E(m.year):''} · 조회 ${Number(m.views||0)}</div>
+        <div class="meta">${E(m.author||m.writer||'')} ${m.year?'· '+E(m.year):''} · 조회 ${Number(m.views||0)} · 댓글 ${Number(m.commentCount||0)}</div>
         ${m.url||m.viewUrl||m.driveUrl?`<button class="btn light" style="margin-top:12px;width:100%" onclick="event.stopPropagation();this.closest('.card').click()">자료 보기</button>`:''}
       </article>`).join('');
   }catch(e){if(count)count.textContent='';cards.innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
