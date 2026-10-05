@@ -104,7 +104,7 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
 .admin-material-actions{justify-content:flex-end!important;flex-wrap:wrap!important}
 .admin-material-actions .btn{height:38px!important;min-height:38px!important;padding:0 15px!important}
 }
-</style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><script>
+</style><style id="my-material-nav-style">.my-material-nav{color:#17344f!important;font-weight:700!important;background:#f2f6f9!important;border:1px solid #dce5ec!important}.my-material-nav:hover{background:#e8f0f5!important}</style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
 let T=localStorage.getItem('gmc_token')||'',ME=null,CATS=[],FAVS=new Set();
@@ -129,7 +129,7 @@ function nav(){
   const x=document.getElementById('nav');
   if(!ME){x.innerHTML='';return}
   x.innerHTML='<button class="primary" onclick="home()">자료실</button>'+
-    '<button onclick="myPage()">내 자료</button>'+
+    '<button class="my-material-nav" onclick="myPage()">내 자료</button>'+
     (ME.role==='관리자'?'<button onclick="admin()">관리자</button>':'')+
     '<button onclick="pw()">비밀번호</button><button onclick="logout()">로그아웃</button>';
 }
