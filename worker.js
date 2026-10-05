@@ -463,7 +463,7 @@ async function handleApi(request,env,ctx){
 }
 
 export default {
-  async fetch(request,env){
+  async fetch(request,env,ctx){
     CFG=config(env);
     const url=new URL(request.url);
     if(url.pathname==='/'||url.pathname==='/index.html')return new Response(INDEX_HTML,{headers:{'content-type':'text/html; charset=UTF-8','cache-control':'no-store'}});
