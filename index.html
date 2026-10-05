@@ -377,7 +377,7 @@ async function admin(){
 }
 function materialAdmin(){
   document.getElementById('app').innerHTML=`<div class="container admin-page"><div class="title"><h2>자료 관리</h2><button class="btn light" onclick="admin()">← 관리자</button></div>
-  <div class="panel"><div class="admin-material-tools"><input id="adminMaterialQ" placeholder="제목, 저자, 파일명 검색" oninput="filterAdminMaterials()"><select id="adminMaterialStatus" onchange="filterAdminMaterials()"><option value="">전체 상태</option><option value="공개">공개</option><option value="비공개">비공개</option><option value="삭제">삭제</option></select></div><div id="adminMaterials"><div class="notice">자료를 불러오는 중...</div></div></div></div>`;
+  <div class="panel"><div class="admin-material-tools"><input id="adminMaterialQ" placeholder="제목, 저자, 파일명 검색" oninput="filterAdminMaterials()"><select id="adminMaterialStatus" onchange="filterAdminMaterials()"><option value="">전체 상태</option><option value="공개">공개</option><option value="비공개">비공개</option></select></div><div id="adminMaterials"><div class="notice">자료를 불러오는 중...</div></div></div></div>`;
   loadAdminMaterials();
 }
 let ADMIN_MATERIALS=[];
