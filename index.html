@@ -51,6 +51,13 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
 #materialViewer .viewer-empty{height:100%;display:grid;place-items:center;text-align:center;color:#66717c;padding:30px}
 #materialViewer .viewer-actions{display:flex;gap:10px;padding:14px 22px;border-top:1px solid #e8edf2}
 @media(max-width:700px){#materialViewer .viewer-panel{inset:2vh 2vw;border-radius:14px}.viewer-desc{max-height:60px;overflow:auto}.viewer-frame{min-height:55vh}#materialViewer .viewer-head{padding:14px 16px}#materialViewer .viewer-actions{padding:12px 16px}}
+#materialViewer .viewer-body{flex:1;min-height:0;overflow:auto;padding:20px 22px}
+#materialViewer .viewer-info{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:1px solid #e5e9ed;border-radius:12px;overflow:hidden;margin-top:18px}
+#materialViewer .viewer-info-item{padding:14px 16px;border-bottom:1px solid #e5e9ed}
+#materialViewer .viewer-info-item:nth-child(odd){border-right:1px solid #e5e9ed}
+#materialViewer .viewer-info-item span{display:block;color:#7a858f;font-size:12px;margin-bottom:4px}
+#materialViewer .viewer-info-item b{font-size:14px;word-break:break-word}
+@media(max-width:700px){#materialViewer .viewer-body{padding:16px}.viewer-info{grid-template-columns:1fr!important}.viewer-info-item:nth-child(odd){border-right:0}}
 </style></head><body><header><div class="logo">GMC <span>MISSION ARCHIVE</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
@@ -165,20 +172,30 @@ function closeMaterialViewer(){
   document.body.style.overflow='';
 }
 function showMaterialViewer(m,link){
-  const id=driveFileId(link);
-  const pdf=isPdfUrl(link,m)&&id;
   const title=E(m.title||m.name||'자료');
   const desc=E(m.description||m.content||'');
-  const content='';
+  const fields=[
+    ['카테고리',m.category||''],
+    ['언어',m.language||''],
+    ['작성자',m.author||m.writer||''],
+    ['작성연도',m.year||''],
+    ['파일 형식',m.fileType||m.mimeType||''],
+    ['파일명',m.fileName||''],
+    ['등록일',m.date||''],
+    ['조회수',m.views!=null?String(m.views):'']
+  ].filter(x=>x[1]!==''&&x[1]!=null);
+  const meta=fields.map(x=>'<div class="viewer-info-item"><span>'+E(x[0])+'</span><b>'+E(x[1])+'</b></div>').join('');
   const old=document.getElementById('materialViewer'); if(old)old.remove();
   const wrap=document.createElement('div');
   wrap.id='materialViewer';
   wrap.innerHTML='<div class="viewer-backdrop" onclick="closeMaterialViewer()"></div>'+
     '<section class="viewer-panel" role="dialog" aria-modal="true">'+
-    '<div class="viewer-head"><div><div class="viewer-kicker">자료 보기</div><h2>'+title+'</h2></div>'+
+    '<div class="viewer-head"><div><div class="viewer-kicker">자료 정보</div><h2>'+title+'</h2></div>'+
     '<button class="viewer-close" onclick="closeMaterialViewer()" aria-label="닫기">×</button></div>'+
+    '<div class="viewer-body">'+
     '<div class="viewer-desc">'+desc+'</div>'+
-
+    '<div class="viewer-info">'+meta+'</div>'+
+    '</div>'+
     '<div class="viewer-actions">'+
     (link?'<a class="btn primary" href="'+E(link)+'" target="_blank" rel="noopener">원본 열기 / 다운로드</a>':'')+
     '<button class="btn light" onclick="closeMaterialViewer()">뒤로가기</button></div>'+
