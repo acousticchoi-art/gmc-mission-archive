@@ -1,26 +1,31 @@
 const WORKER_API = 'https://gmc-mission-archive.tyzm.workers.dev/api';
 
-module.exports = async function handler(req, res) {
+module.exports = async (req, res) => {
   try {
-    const headers = {
-      'content-type': req.headers['content-type'] || 'application/json'
-    };
+    if (req.method === 'GET') {
+      return res.status(200).json({ ok: true, service: 'gmc-vercel-proxy' });
+    }
 
-    const response = await fetch(WORKER_API, {
-      method: req.method || 'POST',
-      headers,
-      body: ['GET', 'HEAD'].includes(req.method) ? undefined : JSON.stringify(req.body)
+    let body = req.body;
+    if (typeof body === 'string') {
+      try { body = JSON.parse(body); } catch (_) {}
+    }
+
+    const upstream = await fetch(WORKER_API, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body || {})
     });
 
-    const text = await response.text();
+    const text = await upstream.text();
 
-    res.status(response.status);
-    res.setHeader('Content-Type', response.headers.get('content-type') || 'application/json; charset=utf-8');
-    res.send(text);
-  } catch (error) {
-    res.status(502).json({
+    res.status(upstream.status);
+    res.setHeader('content-type', upstream.headers.get('content-type') || 'application/json; charset=UTF-8');
+    return res.end(text);
+  } catch (e) {
+    return res.status(502).json({
       ok: false,
-      error: 'API proxy failed'
+      message: 'Vercel API proxy error'
     });
   }
 };
