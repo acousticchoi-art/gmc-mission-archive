@@ -317,7 +317,7 @@ async function myPage(){
     document.getElementById('favCount').textContent=items.length+'개 저장';
     const box=document.getElementById('favoriteCards');
     if(!items.length){box.innerHTML='<div class="panel favorite-empty"><b>저장한 자료가 없습니다.</b><p>마음에 드는 자료의 ☆를 눌러 내 자료에 저장해보세요.</p></div>';return}
-    box.innerHTML=items.map(m=>'<article class="card" style="cursor:pointer" onclick="openMaterialById(\''+E(m.id).replace(/'/g,"&#039;")+'\',\'',this)"><div class="card-top"><div class="tag">'+E(m.category||'기타')+'</div><button class="favorite-btn active" title="내 자료에서 제거" onclick="event.stopPropagation();toggleFavorite(\''+E(m.id).replace(/'/g,"&#039;")+'\',this).then(()=>myPage())">★</button></div><h3>'+E(m.title||'제목 없음')+'</h3><p>'+E(m.description||'')+'</p><div class="meta">'+E(m.author||'')+(m.year?' · '+E(m.year):'')+' · 조회 '+Number(m.views||0)+'</div></article>').join('');
+    box.innerHTML=items.map(m=>'<article class="card" style="cursor:pointer" onclick="openMaterialById(\''+E(m.id).replace(/'/g,"&#039;")+'\',\'\',this)"><div class="card-top"><div class="tag">'+E(m.category||'기타')+'</div><button class="favorite-btn active" title="내 자료에서 제거" onclick="event.stopPropagation();toggleFavorite(\''+E(m.id).replace(/'/g,"&#039;")+'\',this).then(()=>myPage())">★</button></div><h3>'+E(m.title||'제목 없음')+'</h3><p>'+E(m.description||'')+'</p><div class="meta">'+E(m.author||'')+(m.year?' · '+E(m.year):'')+' · 조회 '+Number(m.views||0)+'</div></article>').join('');
   }catch(e){document.getElementById('favoriteCards').innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
 }
 async function search(category=''){
