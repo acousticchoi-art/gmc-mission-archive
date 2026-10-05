@@ -88,10 +88,12 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
 @media(max-width:700px){.hero{padding:14px 14px 0}.hero h1{font-size:24px;margin-bottom:10px}.search{height:40px;margin-bottom:8px}.search button{min-height:40px;padding:0 16px}.container{padding:18px 14px 48px}.cards{grid-template-columns:1fr;gap:12px}.card{padding:17px}}
 @media(max-width:700px){.hero{padding:15px 14px 0}.hero h1{font-size:24px}.search{width:100%}.container{padding:21px 14px 42px}.title{padding-bottom:9px}.title h2{font-size:19px}.card{padding:15px 4px}.card h3{font-size:16px}.card p{font-size:12.5px}}
 .logo{display:flex;align-items:baseline;gap:8px}.logo strong{display:block;font-family:Georgia,"Times New Roman",serif;font-size:22px;line-height:1;color:#17344f;font-weight:700;letter-spacing:.035em}.logo span{display:block;font-family:Arial,Helvetica,sans-serif;font-size:10px;line-height:1;color:#607181;font-weight:700;letter-spacing:.035em;text-transform:uppercase}.logo:after{content:"";display:block;width:18px;height:1px;background:#b18a55;margin-left:1px;margin-bottom:2px}@media(max-width:700px){.logo{justify-content:center;gap:7px}.logo strong{font-size:20px}.logo span{font-size:9px;letter-spacing:.03em}.logo:after{width:14px}}
+
+.card-top{display:flex;align-items:center;justify-content:space-between;gap:12px}.favorite-btn{border:0;background:transparent;color:#9aa6af;font-size:21px;line-height:1;padding:0 3px;cursor:pointer;transition:transform .12s,color .12s}.favorite-btn:hover{transform:scale(1.08);color:#b18a55}.favorite-btn.active{color:#b18a55}.favorite-empty{max-width:720px;margin:18px 0;background:#f7f9fb;border-color:#e3e8ed}.favorite-empty p{margin:7px 0 0;color:#74818d;font-size:13px}@media(max-width:700px){nav button{padding:8px 7px}.favorite-btn{font-size:20px}}
 </style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
-let T=localStorage.getItem('gmc_token')||'',ME=null,CATS=[];
+let T=localStorage.getItem('gmc_token')||'',ME=null,CATS=[],FAVS=new Set();
 
 async function A(action,args=[],timeoutMs=45000){
   const ctl=new AbortController();
@@ -113,6 +115,7 @@ function nav(){
   const x=document.getElementById('nav');
   if(!ME){x.innerHTML='';return}
   x.innerHTML='<button class="primary" onclick="home()">자료실</button>'+
+    '<button onclick="myPage()">내 자료</button>'+
     (ME.role==='관리자'?'<button onclick="admin()">관리자</button>':'')+
     '<button onclick="pw()">비밀번호</button><button onclick="logout()">로그아웃</button>';
 }
@@ -157,6 +160,7 @@ async function home(){
     <div class="title"><h2>검색 결과</h2></div>
     <div class="cards" id="cards"><div class="notice">자료를 불러오는 중...</div></div>
   </div>`;
+  await loadFavorites();
   await Promise.all([loadCats(),search()]);
 }
 
@@ -297,6 +301,17 @@ function openMaterialById(id,url='',cardEl=null){
 }
 
 
+async function loadFavorites(){
+  try{const d=await A('listFavorites',[T]);FAVS=new Set((d.ids||[]).map(String))}catch(e){FAVS=new Set()}
+}
+async function toggleFavorite(id,btn){
+  if(!ME)return alert('로그인이 필요합니다.');
+  try{if(FAVS.has(String(id))){await A('removeFavorite',[T,id]);FAVS.delete(String(id))}else{await A('addFavorite',[T,id]);FAVS.add(String(id))}const active=FAVS.has(String(id));if(btn){btn.textContent=active?'★':'☆';btn.classList.toggle('active',active);btn.title=active?'내 자료에서 제거':'내 자료에 저장'}}catch(e){alert(e.message||'저장 처리 중 오류가 발생했습니다.')}
+}
+async function myPage(){
+  nav();document.getElementById('app').innerHTML='<div class="container"><div class="title"><h2>내 자료</h2><span class="meta" id="favCount"></span></div><div class="cards" id="favoriteCards"><div class="notice">불러오는 중...</div></div></div>';
+  try{const d=await A('listFavorites',[T]),items=d.materials||[];FAVS=new Set((d.ids||[]).map(String));document.getElementById('favCount').textContent=items.length+'개 저장';const box=document.getElementById('favoriteCards');if(!items.length){box.innerHTML='<div class="panel favorite-empty"><b>저장한 자료가 없습니다.</b><p>마음에 드는 자료의 ☆를 눌러 내 자료에 저장해보세요.</p></div>';return}box.innerHTML=items.map(m=>'<article class="card" style="cursor:pointer" onclick="openMaterialById(\''+E(m.id).replace(/\'/g,"&#039;")+'\',\'\',this)"><div class="card-top"><div class="tag">'+E(m.category||'기타')+'</div><button class="favorite-btn active" title="내 자료에서 제거" onclick="event.stopPropagation();toggleFavorite(\''+E(m.id).replace(/\'/g,"&#039;")+'\',this).then(()=>myPage())">★</button></div><h3>'+E(m.title||'제목 없음')+'</h3><p>'+E(m.description||'')+'</p><div class="meta">'+E(m.author||'')+(m.year?' · '+E(m.year):'')+' · 조회 '+Number(m.views||0)+'</div></article>').join('')}catch(e){document.getElementById('favoriteCards').innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
+}
 async function search(category=''){
   const q=document.getElementById('q')?.value.trim()||'';
   const cards=document.getElementById('cards'), count=document.getElementById('heroResultCount');
@@ -316,7 +331,7 @@ async function search(category=''){
     if(!Array.isArray(items)||!items.length){cards.innerHTML='<div class="notice">검색 결과가 없습니다.</div>';return}
     cards.innerHTML=items.map(m=>`
       <article class="card" style="cursor:pointer" onclick="openMaterialById('${E(m.id||m.materialId||m.ID||'').replace(/'/g,"&#039;")}','${E(m.url||m.viewUrl||m.driveUrl||m.webViewLink||'').replace(/'/g,"&#039;")}',this)">
-        <div class="tag">${E(m.category||'기타')}</div>
+        <div class="card-top"><div class="tag">${E(m.category||'기타')}</div><button class="favorite-btn ${FAVS.has(String(m.id||m.materialId||m.ID||''))?'active':''}" title="${FAVS.has(String(m.id||m.materialId||m.ID||''))?'내 자료에서 제거':'내 자료에 저장'}" onclick="event.stopPropagation();toggleFavorite('${E(m.id||m.materialId||m.ID||'').replace(/'/g,"&#039;')}',this)">${FAVS.has(String(m.id||m.materialId||m.ID||''))?'★':'☆'}</button></div>
         <h3>${E(m.title||m.name||'제목 없음')}</h3>
         <p>${E(m.description||m.content||'')}</p>
         <div class="meta">${E(m.author||m.writer||'')} ${m.year?'· '+E(m.year):''} · 조회 ${Number(m.views||0)} · 댓글 ${Number(m.commentCount||0)}</div>
