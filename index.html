@@ -387,6 +387,7 @@ async function admin(){
     <div class="admin-grid">
       <button class="admin-card" onclick="userAdmin()"><span class="admin-icon">01</span><b>회원 관리</b><small>회원 등록 · 권한 · 상태 관리</small><span class="admin-arrow">→</span></button>
       <button class="admin-card" onclick="uploadView()"><span class="admin-icon">02</span><b>자료 관리</b><small>자료 등록 · 검색 · 수정 · 공개/비공개 · 삭제</small><span class="admin-arrow">→</span></button>
+      <button class="admin-card" onclick="loginHistory()"><span class="admin-icon">03</span><b>로그인 이력</b><small>누가 언제 로그인했는지 확인</small><span class="admin-arrow">→</span></button>
     </div>
   </div>`;
 }
@@ -466,6 +467,20 @@ async function loadUsers(){
         }).join('')}</table></div>`
       : '<div class="notice">등록된 회원이 없습니다.</div>';
   }catch(e){document.getElementById('users').innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
+}
+function loginHistory(){
+  document.getElementById('app').innerHTML=`<div class="container admin-page"><div class="title"><h2>로그인 이력</h2><button class="btn light" onclick="admin()">← 관리자</button></div>
+  <div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px"><h3 style="margin:0">최근 로그인 기록</h3><button class="btn light" onclick="loadLoginHistory()">새로고침</button></div><div id="loginHistory"><div class="notice">불러오는 중...</div></div></div></div>`;
+  loadLoginHistory();
+}
+async function loadLoginHistory(){
+  try{
+    const r=await A('loginHistory',[T]);
+    const rows=r.history||[];
+    document.getElementById('loginHistory').innerHTML=rows.length
+      ? `<div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><tr><th style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">로그인 시간</th><th style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">이름</th><th style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">아이디</th><th style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">권한</th><th style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">지부</th></tr>${rows.map(x=>`<tr><td style="padding:9px;border-bottom:1px solid var(--line);white-space:nowrap">${E(x.loginAt)}</td><td style="padding:9px;border-bottom:1px solid var(--line)">${E(x.name)}</td><td style="padding:9px;border-bottom:1px solid var(--line)">${E(x.username)}</td><td style="padding:9px;border-bottom:1px solid var(--line)">${E(x.role)}</td><td style="padding:9px;border-bottom:1px solid var(--line)">${E(x.branch)}</td></tr>`).join('')}</table></div>`
+      : '<div class="notice">로그인 이력이 없습니다.</div>';
+  }catch(e){document.getElementById('loginHistory').innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
 }
 async function createUser(){
   const data={name:document.getElementById('un').value,username:document.getElementById('uid').value,email:document.getElementById('ue').value,branch:document.getElementById('ub').value,role:document.getElementById('ur').value,initialPassword:document.getElementById('up').value};
