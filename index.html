@@ -530,8 +530,8 @@ function renderMaterialManager(){
       <input id="adminMaterialQ" placeholder="제목, 저자, 파일명 검색" oninput="filterAdminMaterials()">
       <select id="adminMaterialCategory" onchange="filterAdminMaterials()"><option value="">전체 분야</option>${(CATS||[]).map(c=>`<option value="${E(c)}">${E(c)}</option>`).join('')}</select>
       <select id="adminMaterialStatus" onchange="filterAdminMaterials()"><option value="">전체 상태</option><option value="공개">공개</option><option value="비공개">비공개</option></select>
-      <select id="adminMaterialSort" onchange="filterAdminMaterials()"><option value="date">최신 등록순</option><option value="title">제목순</option><option value="views">조회수순</option><option value="year">작성연도순</option></select>
     </div>
+    <div class="admin-material-result-head"><span id="adminMaterialCount">검색 결과</span><select id="adminMaterialSort" onchange="filterAdminMaterials()"><option value="date">최신 등록순</option><option value="title">제목순</option><option value="views">조회수순</option><option value="year">작성연도순</option></select></div>
     <div id="adminMaterials"><div class="notice">자료를 불러오는 중...</div></div>
   </div>`;
 }
