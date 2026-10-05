@@ -175,7 +175,7 @@ async function home(){
     <div class="heroResult" id="heroResultCount">전체 자료를 불러오는 중...</div>
   </div></section>
   <div class="container">
-    <div class="search-result-head"><div class="title"><h2>검색 결과</h2></div><select id="searchSort" onchange="search()"><option value="related">관련도순</option><option value="date">최신 등록순</option><option value="title">제목순</option><option value="year">작성연도순</option><option value="views">조회수순</option></select></div>
+    <div class="search-result-head"><div class="title"><h2>검색 결과</h2></div><select id="searchSort" onchange="search()"><option value="related">관련도순</option><option value="date">최신 등록순</option><option value="title">제목순</option><option value="year">작성연도순</option><option value="views">조회수순</option><option value="comments">댓글순</option></select></div>
     <div class="cards" id="cards"><div class="notice">자료를 불러오는 중...</div></div>
   </div>`;
   await loadFavorites();
@@ -361,6 +361,7 @@ async function search(category=''){
     items.sort((a,b)=>{
       if(sort==='title')return String(a.title||a.name||'').localeCompare(String(b.title||b.name||''),'ko');
       if(sort==='views')return Number(b.views||0)-Number(a.views||0);
+      if(sort==='comments')return Number(b.commentCount||0)-Number(a.commentCount||0);
       if(sort==='year')return Number(b.year||0)-Number(a.year||0);
       if(sort==='date')return String(b.date||b.createdAt||'').localeCompare(String(a.date||a.createdAt||''));
       return 0;
