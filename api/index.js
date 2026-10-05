@@ -1,11 +1,9 @@
 const WORKER_API = 'https://gmc-mission-archive.tyzm.workers.dev/api';
 
-module.exports.config = { api: { bodyParser: false } };
-
 function allowedGoogleUrl(value) {
   let url;
   try { url = new URL(value); } catch (_) { return null; }
-  const allowed = ['googleapis.com','google.com','googleusercontent.com'];
+  const allowed = ['googleapis.com','google.com','googleusercontent.com','drive.google.com','docs.google.com','drive.usercontent.google.com'];
   if (!allowed.some(host => url.hostname === host || url.hostname.endsWith('.' + host))) return null;
   return url;
 }
@@ -80,3 +78,6 @@ module.exports = async (req, res) => {
     return res.status(502).json({ ok: false, message: 'Vercel API proxy error: ' + (e?.message || 'unknown error') });
   }
 };
+
+
+module.exports.config = { api: { bodyParser: false } };
