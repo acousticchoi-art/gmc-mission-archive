@@ -291,7 +291,6 @@ async function directDriveUpload(file,uploadUrl,msg){
     const r=await fetch(uploadUrl,{
       method:'PUT',
       headers:{
-        'Content-Length':String(end-start),
         'Content-Range':`bytes ${start}-${end-1}/${file.size}`
       },
       body:chunk
