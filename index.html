@@ -178,8 +178,9 @@ async function home(){
     <div class="search-result-head"><div class="title"><h2>검색 결과</h2></div><select id="searchSort" onchange="search()"><option value="related">관련도순</option><option value="date">최신 등록순</option><option value="title">제목순</option><option value="year">작성연도순</option><option value="views">조회수순</option><option value="comments">댓글순</option></select></div>
     <div class="cards" id="cards"><div class="notice">자료를 불러오는 중...</div></div>
   </div>`;
-  await loadFavorites();
-  await Promise.all([loadCats(),search()]);
+  loadFavorites().catch(()=>{});
+  loadCats();
+  search();
 }
 
 async function loadCats(){
