@@ -8,12 +8,12 @@ header{min-height:72px;background:#fff;border-bottom:1px solid var(--line);displ
 .logo{font-weight:800;letter-spacing:.09em;font-size:15px;color:var(--n);white-space:nowrap}.logo span{font-weight:400;color:#77828d}
 nav{display:flex;align-items:center;gap:4px;flex-wrap:wrap;justify-content:flex-end}
 nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border-radius:8px}.primary{color:var(--n);font-weight:700}
-.hero{background:linear-gradient(135deg,#17344f 0%,#244761 100%);color:#fff;padding:34px 20px 24px}
-.hero-inner,.container{width:min(1120px,100%);margin:auto}.eyebrow{font-size:11px;letter-spacing:.2em;opacity:.7}
-.hero h1{font-size:clamp(36px,5vw,48px);line-height:1.08;margin:13px 0 10px;letter-spacing:-.025em}.hero p{max-width:650px;opacity:.82;margin:0;line-height:1.7}
-.search{display:flex;width:100%;max-width:850px;background:#fff;border-radius:14px;overflow:hidden;margin-top:20px;box-shadow:0 10px 24px rgba(0,0,0,.14)}
-.search input{flex:1;min-width:0;border:0;padding:17px 19px;outline:0;color:#1d2a35;font-size:15px}.search button{border:0;background:var(--a);color:#fff;padding:0 27px;font-weight:bold;min-height:52px;transition:filter .15s}.search button:hover{filter:brightness(.96)}
-.container{padding:38px 20px 56px}.title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:15px}.title h2{margin:0;font-size:clamp(20px,3vw,25px);letter-spacing:-.02em}
+.hero{background:#fff;color:#1d2a35;padding:20px 20px 0;border-bottom:1px solid var(--line)}
+.hero-inner,.container{width:min(1120px,100%);margin:auto}.eyebrow{font-size:11px;letter-spacing:.16em;color:#7a858f;font-weight:700}
+.hero h1{font-size:clamp(25px,4vw,34px);line-height:1.15;margin:5px 0 14px;letter-spacing:-.03em}.hero p{display:none}
+.search{display:flex;width:min(620px,100%);height:42px;background:#fff;border:1px solid #bfc9d2;border-radius:999px;overflow:hidden;margin:0 auto 14px;box-shadow:0 2px 8px rgba(23,52,79,.06)}
+.search input{flex:1;min-width:0;border:0;padding:9px 15px;outline:0;color:#1d2a35;font-size:14px;background:#fff}.search button{border:0;background:var(--n);color:#fff;padding:0 18px;font-weight:bold;font-size:13px;min-height:42px}
+.container{padding:24px 20px 56px}.title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:15px}.title h2{margin:0;font-size:clamp(20px,3vw,25px);letter-spacing:-.02em}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}.cat,.card,.panel{background:#fff;border:1px solid var(--line);border-radius:15px;box-shadow:var(--shadow)}
 .cat{padding:20px;text-align:left;min-height:92px}.cat b{display:block;margin-bottom:7px}.cat small,.meta{color:var(--muted);font-size:12px}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px}.category-bar-wrap{margin-top:9px;border-top:0!important;padding-top:0!important}.hero-categories{max-width:850px}
@@ -74,6 +74,17 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
 #materialViewer .comment-form button{align-self:flex-end;border:0;border-radius:8px;background:#17344f;color:#fff;padding:10px 14px;font-weight:700}
 @media(max-width:700px){#materialViewer .comments{padding:15px 12px}#materialViewer .comment-form{display:block}#materialViewer .comment-form textarea{display:block;width:100%;min-height:130px;box-sizing:border-box}#materialViewer .comment-form button{display:block;width:100%;margin-top:7px;box-sizing:border-box}}
 
+
+.category-toggle{width:100%;max-width:620px;margin:0 auto;border:0;border-top:1px solid #eef1f4;background:#fff;padding:12px 2px;display:flex;justify-content:space-between;align-items:center;color:#253442;font-weight:700;font-size:14px}
+.category-toggle .arrow{font-size:18px;color:#7b8791;transition:transform .2s}
+.category-toggle.open .arrow{transform:rotate(180deg)}
+.category-panel{max-width:620px;margin:0 auto 14px;background:#f7f9fb;border:1px solid #e4e9ee;border-radius:12px;padding:10px;display:none}
+.category-panel.open{display:flex}
+.category-panel .category-bar{margin:0;gap:7px}
+.category-panel .category-bar button{border:1px solid #dce3e9;background:#fff;color:#596671;padding:8px 12px}
+.category-panel .category-bar button.active{background:var(--n);border-color:var(--n);color:#fff}
+.heroResult{max-width:620px;margin:0 auto;padding:0 2px 12px;color:#7a858f;font-size:12px}
+@media(max-width:700px){.hero{padding:14px 14px 0}.hero h1{font-size:24px;margin-bottom:10px}.search{height:40px;margin-bottom:8px}.search button{min-height:40px;padding:0 16px}.container{padding:18px 14px 48px}.cards{grid-template-columns:1fr;gap:12px}.card{padding:17px}}
 </style></head><body><header><div class="logo">GMC <span>MISSION ARCHIVE</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
@@ -135,17 +146,16 @@ async function home(){
   nav();
   document.getElementById('app').innerHTML=`
   <section class="hero"><div class="hero-inner">
-    <div class="eyebrow">GMC · MYANMAR MISSION</div><h1>Mission Archive</h1>
-    <p>미얀마 선교의 기록과 지식을 함께 보존하고 나누는 자료 아카이브입니다.</p>
+    <div class="eyebrow">GMC · MYANMAR MISSION</div>
+    <h1>Mission Archive</h1>
     <div class="search"><input id="q" placeholder="자료 제목, 내용, 작성자 검색" onkeydown="if(event.key==='Enter')search()"><button onclick="search()">검색</button></div>
-    <div class="category-bar-wrap hero-categories"><div class="category-label">자료 분야</div><div class="category-bar" id="cats"></div></div>
-    <div id="heroResultCount" style="margin-top:14px;font-size:14px;font-weight:700;color:#fff;opacity:.95;letter-spacing:.01em">전체 자료를 불러오는 중...</div>
+    <button class="category-toggle" id="categoryToggle" onclick="toggleCategories()"><span>카테고리</span><span class="arrow">⌄</span></button>
+    <div class="category-panel" id="categoryPanel"><div class="category-bar" id="cats"></div></div>
+    <div class="heroResult" id="heroResultCount">전체 자료를 불러오는 중...</div>
   </div></section>
   <div class="container">
-    
     <div class="title"><h2>검색 결과</h2></div>
     <div class="cards" id="cards"><div class="notice">자료를 불러오는 중...</div></div>
-    
   </div>`;
   await Promise.all([loadCats(),search()]);
 }
@@ -165,9 +175,18 @@ async function loadCats(){
 
 function categoryLabel(name){if(name==='교육')return '유아교육'; return name;}
 
+function toggleCategories(){
+  const panel=document.getElementById('categoryPanel'),btn=document.getElementById('categoryToggle');
+  if(!panel||!btn)return;
+  const open=panel.classList.toggle('open');
+  btn.classList.toggle('open',open);
+}
 function selectCategory(btn,category=''){
   document.querySelectorAll('#cats button').forEach(x=>x.classList.remove('active'));
   btn.classList.add('active');
+  const panel=document.getElementById('categoryPanel'),toggle=document.getElementById('categoryToggle');
+  if(panel)panel.classList.remove('open');
+  if(toggle)toggle.classList.remove('open');
   search(category);
 }
 
