@@ -396,7 +396,7 @@ async function api(action,args){
       const rows=await commentsRows();let row=0,owner='';
       for(let i=1;i<rows.length;i++)if(String(rows[i][0]||'')===id){row=i+1;owner=String(rows[i][2]||'');break;}
       if(!row)throw new Error('댓글을 찾을 수 없습니다.');
-      if(owner!==s.uid)throw new Error('본인이 작성한 댓글만 삭제할 수 있습니다.');
+      if(owner!==s.uid && s.role!=='관리자')throw new Error('본인이 작성한 댓글이거나 관리자여야 삭제할 수 있습니다.');
       await sheetUpdate('댓글!A'+row+':G'+row,[['','','','','','', '']]);
       return {ok:true};
     }
