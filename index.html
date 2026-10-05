@@ -58,6 +58,21 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
 #materialViewer .viewer-info-item span{display:block;color:#7a858f;font-size:12px;margin-bottom:4px}
 #materialViewer .viewer-info-item b{font-size:14px;word-break:break-word}
 @media(max-width:700px){#materialViewer .viewer-body{padding:16px}#materialViewer .viewer-info{grid-template-columns:1fr!important;border-right:1px solid #e5e9ed}#materialViewer .viewer-info-item{border-right:0!important}}
+#materialViewer .comments{margin-top:22px;border-top:1px solid #e5e9ed;padding-top:18px}
+#materialViewer .comments h3{margin:0 0 12px;font-size:16px}
+#materialViewer .comment-list{display:flex;flex-direction:column;gap:10px}
+#materialViewer .comment-item{border:1px solid #e5e9ed;border-radius:10px;padding:12px 14px;background:#fff}
+#materialViewer .comment-top{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:5px}
+#materialViewer .comment-author{font-weight:700;font-size:13px}
+#materialViewer .comment-date{font-size:11px;color:#89939c}
+#materialViewer .comment-text{font-size:14px;white-space:pre-wrap;word-break:break-word}
+#materialViewer .comment-actions{margin-top:7px;text-align:right}
+#materialViewer .comment-actions button{border:0;background:transparent;color:#66717c;font-size:12px;padding:2px 5px}
+#materialViewer .comment-form{display:flex;gap:8px;margin-top:12px}
+#materialViewer .comment-form textarea{flex:1;min-height:62px;resize:vertical;border:1px solid #ccd5dc;border-radius:9px;padding:10px;outline:0}
+#materialViewer .comment-form button{align-self:flex-end;border:0;border-radius:8px;background:#17344f;color:#fff;padding:10px 14px;font-weight:700}
+@media(max-width:700px){#materialViewer .comment-form{display:block}#materialViewer .comment-form button{width:100%;margin-top:7px}}
+
 </style></head><body><header><div class="logo">GMC <span>MISSION ARCHIVE</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
@@ -171,7 +186,35 @@ function closeMaterialViewer(){
   if(el)el.remove();
   document.body.style.overflow='';
 }
-function showMaterialViewer(m,link){
+function renderComments(comments,materialId){
+  const box=document.getElementById('commentList'); if(!box)return;
+  const list=Array.isArray(comments)?comments:[];
+  box.innerHTML=list.length?list.map(c=>{
+    const mine=ME&&String(c.userId)===String(ME.id);
+    return '<div class="comment-item"><div class="comment-top"><span class="comment-author">'+E(c.author||'회원')+'</span><span class="comment-date">'+E(c.updatedAt?c.updatedAt+' (수정됨)':c.createdAt||'')+'</span></div><div class="comment-text">'+E(c.text)+'</div>'+
+      (mine?'<div class="comment-actions"><button onclick="editComment(\''+E(c.id).replace(/'/g,"&#039;")+'\',\''+E(c.text).replace(/'/g,"&#039;")+'\',\''+E(materialId).replace(/'/g,"&#039;")+'\')">수정</button></div>':'')+
+      '</div>';
+  }).join(''):'<div class="meta">아직 댓글이 없습니다.</div>';
+}
+async function loadComments(materialId){
+  const box=document.getElementById('commentList'); if(!box||!materialId)return;
+  try{const d=await A('listComments',[T,materialId]);renderComments(d.comments||[],materialId)}
+  catch(e){box.innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
+}
+async function addComment(materialId){
+  const input=document.getElementById('commentInput'); if(!input)return;
+  const text=input.value.trim(); if(!text)return alert('댓글 내용을 입력하세요.');
+  try{await A('addComment',[T,materialId,text]);input.value='';await loadComments(materialId)}
+  catch(e){alert(e.message)}
+}
+async function editComment(id,currentText,materialId){
+  const next=prompt('댓글을 수정하세요.',currentText);
+  if(next===null)return;
+  const text=next.trim(); if(!text)return alert('댓글 내용을 입력하세요.');
+  try{await A('updateComment',[T,id,text]);await loadComments(materialId)}
+  catch(e){alert(e.message)}
+}
+function showMaterialViewer(m,link,materialId=''){
   const title=E(m.title||m.name||'자료');
   const desc=E(m.description||m.content||'');
   const fields=[
@@ -195,6 +238,9 @@ function showMaterialViewer(m,link){
     '<div class="viewer-body">'+
     '<div class="viewer-desc">'+desc+'</div>'+
     '<div class="viewer-info">'+meta+'</div>'+
+    '<div class="comments"><h3>댓글</h3><div class="comment-list" id="commentList"><div class="meta">댓글을 불러오는 중...</div></div>'+
+    (ME?'<div class="comment-form"><textarea id="commentInput" maxlength="2000" placeholder="이 자료에 대한 의견을 남겨주세요."></textarea><button onclick="addComment(\''+E(materialId).replace(/'/g,"&#039;")+'\')">댓글 등록</button></div>':'')+
+    '</div>'+
     '</div>'+
     '<div class="viewer-actions">'+
     (link?'<a class="btn primary" href="'+E(link)+'" target="_blank" rel="noopener">원본 열기 / 다운로드</a>':'')+
@@ -202,6 +248,7 @@ function showMaterialViewer(m,link){
     '</section>';
   document.body.appendChild(wrap);
   document.body.style.overflow='hidden';
+  if(materialId)loadComments(materialId);
 }
 function openMaterialById(id,url='',cardEl=null){
   if(!id && !url)return;
@@ -210,7 +257,7 @@ function openMaterialById(id,url='',cardEl=null){
   const desc=card?.querySelector?.('p')?.textContent||'';
   const link=url||'';
   if(link){
-    showMaterialViewer({title,description:desc},link);
+    showMaterialViewer({title,description:desc},link,id);
     if(id) A('getMaterial',[T,id]).catch(()=>{});
     return;
   }
@@ -218,7 +265,7 @@ function openMaterialById(id,url='',cardEl=null){
     A('getMaterial',[T,id]).then(d=>{
       const m=d.material||d.item||d.data||d;
       const resolved=m.url||m.viewUrl||m.driveUrl||m.webViewLink||m.downloadUrl||'';
-      if(resolved)showMaterialViewer(m,resolved);
+      if(resolved)showMaterialViewer(m,resolved,id);
       else alert('이 자료의 열기 링크를 찾을 수 없습니다.');
     }).catch(e=>alert(e.message||'자료를 열 수 없습니다.'));
   }
