@@ -169,8 +169,10 @@ function showMaterialViewer(m,link){
   const pdf=isPdfUrl(link,m)&&id;
   const title=E(m.title||m.name||'자료');
   const desc=E(m.description||m.content||'');
+  const directPdfUrl='https://drive.google.com/uc?export=download&id='+encodeURIComponent(id);
+  const proxyPdfUrl='/api?url='+encodeURIComponent(directPdfUrl);
   const content=pdf
-    ? '<iframe src="https://drive.google.com/uc?export=view&id='+encodeURIComponent(id)+'" title="'+title+' PDF 미리보기" allow="fullscreen"></iframe>'
+    ? '<iframe src="'+proxyPdfUrl+'" title="'+title+' PDF 미리보기" allow="fullscreen"></iframe>'
     : '<div class="viewer-empty"><strong>이 자료 형식은 아직 내부 미리보기를 지원하지 않습니다.</strong><p>아래 버튼으로 원본 자료를 열어주세요.</p></div>';
   const old=document.getElementById('materialViewer'); if(old)old.remove();
   const wrap=document.createElement('div');
