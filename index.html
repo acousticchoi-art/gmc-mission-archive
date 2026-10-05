@@ -85,6 +85,10 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
 .category-panel .category-bar button:hover{border-color:#b18a55;background:#fff8ed;color:#8b682f}
 .category-panel .category-bar button.active{background:#17344f;border-color:#17344f;color:#fff;box-shadow:0 3px 8px rgba(23,52,79,.15)}
 .heroResult{max-width:620px;margin:0 auto;padding:0 2px 12px;color:#587189;font-size:12px;font-weight:600}
+.search-result-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:4px}
+.search-result-head .title{flex:1;margin-bottom:0}
+.search-result-head select{border:1px solid #d5dde4;background:#fff;border-radius:7px;padding:8px 10px;font-size:12px;color:#465563;margin-bottom:11px}
+@media(max-width:700px){.search-result-head select{font-size:12px;padding:7px 9px;margin-bottom:9px}}
 @media(max-width:700px){.hero{padding:14px 14px 0}.hero h1{font-size:24px;margin-bottom:10px}.search{height:40px;margin-bottom:8px}.search button{min-height:40px;padding:0 16px}.container{padding:18px 14px 48px}.cards{grid-template-columns:1fr;gap:12px}.card{padding:17px}}
 @media(max-width:700px){.hero{padding:15px 14px 0}.hero h1{font-size:24px}.search{width:100%}.container{padding:21px 14px 42px}.title{padding-bottom:9px}.title h2{font-size:19px}.card{padding:15px 4px}.card h3{font-size:16px}.card p{font-size:12.5px}}
 .logo{display:flex;align-items:baseline;gap:8px}.logo strong{display:block;font-family:Georgia,"Times New Roman",serif;font-size:22px;line-height:1;color:#17344f;font-weight:700;letter-spacing:.035em}.logo span{display:block;font-family:Arial,Helvetica,sans-serif;font-size:10px;line-height:1;color:#607181;font-weight:700;letter-spacing:.035em;text-transform:uppercase}.logo:after{content:"";display:block;width:18px;height:1px;background:#b18a55;margin-left:1px;margin-bottom:2px}@media(max-width:700px){.logo{justify-content:center;gap:7px}.logo strong{font-size:20px}.logo span{font-size:9px;letter-spacing:.03em}.logo:after{width:14px}}
@@ -171,7 +175,7 @@ async function home(){
     <div class="heroResult" id="heroResultCount">전체 자료를 불러오는 중...</div>
   </div></section>
   <div class="container">
-    <div class="title"><h2>검색 결과</h2></div>
+    <div class="search-result-head"><div class="title"><h2>검색 결과</h2></div><select id="searchSort" onchange="search()"><option value="related">관련도순</option><option value="date">최신 등록순</option><option value="title">제목순</option><option value="year">작성연도순</option><option value="views">조회수순</option></select></div>
     <div class="cards" id="cards"><div class="notice">자료를 불러오는 중...</div></div>
   </div>`;
   await loadFavorites();
@@ -344,13 +348,23 @@ async function search(category=''){
     // Keep compatibility with the current Worker API.
     try{d=await A('listMaterials',[T,{q,category}])}
     catch(e){d=await A('listMaterials',[T,{q,category}])}
-    const items=d.materials||d.items||d.data||[];
+    let items=d.materials||d.items||d.data||[];
     if(count){
       count.textContent = q
         ? `'${q}' 검색 결과 ${Array.isArray(items)?items.length:0}건`
         : (category ? `${category} 자료 ${Array.isArray(items)?items.length:0}건` : `전체 자료 ${Array.isArray(items)?items.length:0}건`);
     }
     if(!Array.isArray(items)||!items.length){cards.innerHTML='<div class="notice">검색 결과가 없습니다.</div>';return}
+    const sort=document.getElementById('searchSort')?.value||(q?'related':'date');
+    const sortSelect=document.getElementById('searchSort'); if(sortSelect)sortSelect.value=sort;
+    items=[...items];
+    items.sort((a,b)=>{
+      if(sort==='title')return String(a.title||a.name||'').localeCompare(String(b.title||b.name||''),'ko');
+      if(sort==='views')return Number(b.views||0)-Number(a.views||0);
+      if(sort==='year')return Number(b.year||0)-Number(a.year||0);
+      if(sort==='date')return String(b.date||b.createdAt||'').localeCompare(String(a.date||a.createdAt||''));
+      return 0;
+    });
     cards.innerHTML=items.map(m=>`
       <article class="card" style="cursor:pointer" onclick="openMaterialById('${E(m.id||m.materialId||m.ID||'').replace(/'/g,"&#039;")}','${E(m.url||m.viewUrl||m.driveUrl||m.webViewLink||'').replace(/'/g,"&#039;")}',this)">
         <div class="card-top"><div class="tag">${E(m.category||'기타')}</div><button class="favorite-btn ${FAVS.has(String(m.id||m.materialId||m.ID||''))?'active':''}" title="${FAVS.has(String(m.id||m.materialId||m.ID||''))?'내 자료에서 제거':'내 자료에 저장'}" onclick="event.stopPropagation();toggleFavorite('${E(m.id||m.materialId||m.ID||'').replace(/'/g,"&#039;")}',this)">${FAVS.has(String(m.id||m.materialId||m.ID||''))?'★':'☆'}</button></div>
