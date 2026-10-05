@@ -104,7 +104,7 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
 .admin-material-actions{justify-content:flex-end!important;flex-wrap:wrap!important}
 .admin-material-actions .btn{height:38px!important;min-height:38px!important;padding:0 15px!important}
 }
-</style><style id="my-material-nav-style">.my-material-nav{color:#17344f!important;font-weight:700!important;background:#f2f6f9!important;border:1px solid #dce5ec!important}.my-material-nav:hover{background:#e8f0f5!important}</style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><script>
+</style><style id="my-material-nav-style">.my-material-nav{color:#17344f!important;font-weight:700!important;background:#f2f6f9!important;border:1px solid #dce5ec!important}.my-material-nav:hover{background:#e8f0f5!important}</style><style id="admin-material-sort-layout">.admin-material-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.admin-material-result-head{display:flex;align-items:center;justify-content:space-between;margin:14px 0 8px;padding-top:12px;border-top:1px solid #e5e9ed}.admin-material-result-head span{font-size:13px;font-weight:700;color:#56616b}.admin-material-result-head select{border:1px solid #d5dde4;background:#fff;border-radius:7px;padding:7px 10px;font-size:12px;color:#465563}@media(max-width:700px){.admin-material-result-head{margin-top:10px}.admin-material-result-head select{font-size:12px}}</style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
 let T=localStorage.getItem('gmc_token')||'',ME=null,CATS=[],FAVS=new Set();
@@ -377,7 +377,7 @@ async function admin(){
 }
 function materialAdmin(){
   document.getElementById('app').innerHTML=`<div class="container admin-page"><div class="title"><h2>자료 관리</h2><button class="btn light" onclick="admin()">← 관리자</button></div>
-  <div class="panel"><div class="admin-material-tools"><input id="adminMaterialQ" placeholder="제목, 저자, 파일명 검색" oninput="filterAdminMaterials()"><select id="adminMaterialStatus" onchange="filterAdminMaterials()"><option value="">전체 상태</option><option value="공개">공개</option><option value="비공개">비공개</option></select></div><div id="adminMaterials"><div class="notice">자료를 불러오는 중...</div></div></div></div>`;
+  <div class="panel"><div class="admin-material-tools"><input id="adminMaterialQ" placeholder="제목, 저자, 파일명 검색" oninput="filterAdminMaterials()"><select id="adminMaterialCategory" onchange="filterAdminMaterials()"><option value="">전체 분야</option>${(CATS||[]).map(c=>`<option value="${E(c)}">${E(c)}</option>`).join('')}</select><select id="adminMaterialStatus" onchange="filterAdminMaterials()"><option value="">전체 상태</option><option value="공개">공개</option><option value="비공개">비공개</option></select></div><div class="admin-material-result-head"><span id="adminMaterialCount">검색 결과</span><select id="adminMaterialSort" onchange="filterAdminMaterials()"><option value="date">최신 등록순</option><option value="title">제목순</option><option value="views">조회수순</option><option value="year">작성연도순</option></select></div><div id="adminMaterials"><div class="notice">자료를 불러오는 중...</div></div></div></div>`;
   loadAdminMaterials();
 }
 let ADMIN_MATERIALS=[];
@@ -400,6 +400,7 @@ function filterAdminMaterials(){
 }
 function renderAdminMaterials(list){
   const box=document.getElementById('adminMaterials');if(!box)return;
+  const count=document.getElementById('adminMaterialCount');if(count)count.textContent='검색 결과 '+list.length+'건';
   if(!list.length){box.innerHTML='<div class="notice">조건에 맞는 자료가 없습니다.</div>';return;}
   box.innerHTML=list.map(m=>`<div class="admin-material-row">
     <div class="admin-material-main"><div class="tag">${E(m.category||'기타')}</div><h3>${E(m.title||'제목 없음')}</h3><p>${E(m.author||'저자 미상')} · ${E(m.year||'연도 미상')} · 조회 ${Number(m.views||0)}</p><small>${E(m.fileName||'')}</small></div>
