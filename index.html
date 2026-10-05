@@ -223,7 +223,7 @@ async function search(category=''){
         <h3>${E(m.title||m.name||'제목 없음')}</h3>
         <p>${E(m.description||m.content||'')}</p>
         <div class="meta">${E(m.author||m.writer||'')} ${m.year?'· '+E(m.year):''} · 조회 ${Number(m.views||0)}</div>
-        ${m.url||m.viewUrl||m.driveUrl?`<a class="btn light" style="margin-top:12px" href="${E(m.url||m.viewUrl||m.driveUrl)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">자료 열기</a>`:''}
+        ${m.url||m.viewUrl||m.driveUrl?`<button class="btn light" style="margin-top:12px;width:100%" onclick="event.stopPropagation();this.closest('.card').click()">자료 보기</button>`:''}
       </article>`).join('');
   }catch(e){if(count)count.textContent='';cards.innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
 }
