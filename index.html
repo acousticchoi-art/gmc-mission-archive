@@ -153,8 +153,11 @@ function driveFileId(url){
   const m=s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)||s.match(/[?&]id=([a-zA-Z0-9_-]+)/);
   return m?m[1]:'';
 }
-function isPdfUrl(url){
-  return /\.pdf(?:[?#]|$)/i.test(String(url||'')) || /\/file\/d\//i.test(String(url||''));
+function isPdfUrl(url,m){
+  const type=String(m?.fileType||m?.mimeType||'').toLowerCase();
+  const name=String(m?.fileName||'').toLowerCase();
+  const u=String(url||'').toLowerCase();
+  return type==='pdf'||type.includes('pdf')||name.endsWith('.pdf')||/\.pdf(?:[?#]|$)/i.test(u);
 }
 function closeMaterialViewer(){
   const el=document.getElementById('materialViewer');
@@ -163,7 +166,7 @@ function closeMaterialViewer(){
 }
 function showMaterialViewer(m,link){
   const id=driveFileId(link);
-  const pdf=isPdfUrl(link)&&id;
+  const pdf=isPdfUrl(link,m)&&id;
   const title=E(m.title||m.name||'자료');
   const desc=E(m.description||m.content||'');
   const content=pdf
