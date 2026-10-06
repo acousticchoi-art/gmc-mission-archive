@@ -124,6 +124,8 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
   .member-mobile-actions{display:flex;gap:7px;margin-top:10px}
   .member-mobile-actions .btn{flex:1;min-height:39px;font-size:12px}
 }
+/* v29 material edit */
+.material-edit-card{max-width:860px;margin:0 auto;background:#fff;border:1px solid #dfe6ec;border-radius:14px;box-shadow:0 8px 28px rgba(23,52,79,.06);overflow:hidden}.material-edit-top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:24px 26px 20px;border-bottom:1px solid #e5e9ed}.material-edit-kicker{font-size:10px;letter-spacing:.16em;color:#8a98a5;font-weight:800;margin-bottom:6px}.material-edit-top h3{margin:0;color:#17344f;font-size:22px;letter-spacing:-.04em}.material-edit-top p{margin:6px 0 0;color:#7b8791;font-size:12px}.material-edit-body{padding:24px 26px 26px}.material-section{padding:0 0 22px;margin-bottom:22px;border-bottom:1px solid #edf0f2}.material-section:last-of-type{border-bottom:0;margin-bottom:0;padding-bottom:4px}.material-section-title{display:flex;align-items:center;gap:8px;margin-bottom:15px;color:#263b4d;font-size:14px;font-weight:800}.material-section-title:before{content:"";width:3px;height:15px;background:#b18a55;border-radius:2px}.material-edit-form label{display:block;margin:0 0 6px;color:#5e6d79;font-size:12px;font-weight:700}.material-edit-form input,.material-edit-form select,.material-edit-form textarea{width:100%;box-sizing:border-box;border:1px solid #d5dde4;border-radius:8px;background:#fbfcfd;color:#1d2a35;outline:0}.material-edit-form input,.material-edit-form select{height:44px;padding:0 12px}.material-edit-form textarea{min-height:105px;padding:11px 12px;resize:vertical;line-height:1.55}.material-edit-form input:focus,.material-edit-form select:focus,.material-edit-form textarea:focus{border-color:#7890a5;box-shadow:0 0 0 3px rgba(23,52,79,.06);background:#fff}.material-field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}.material-field-full{grid-column:1/-1}.material-field-grid.three{grid-template-columns:1.5fr 1fr 1fr}.material-edit-status{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border-radius:7px;background:#f1f6f3;color:#346747;font-size:12px;font-weight:800}.material-edit-status:before{content:"";width:6px;height:6px;border-radius:50%;background:#4c8a62}.material-edit-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:6px}.material-edit-actions .btn{min-height:44px;padding:10px 18px}@media(max-width:700px){.material-edit-card{border-radius:12px}.material-edit-top{padding:19px 17px 17px;align-items:flex-start}.material-edit-top h3{font-size:20px}.material-edit-top p{font-size:11px}.material-edit-top .btn{min-height:40px;padding:8px 12px;white-space:nowrap}.material-edit-body{padding:20px 17px 21px}.material-field-grid,.material-field-grid.three{grid-template-columns:1fr;gap:13px}.material-field-full{grid-column:auto}.material-edit-actions{flex-direction:column;align-items:stretch}.material-edit-actions .btn{width:100%;box-sizing:border-box}}
 </style><style id="internal-material-viewer">
 #materialViewer{position:fixed;inset:0;z-index:9999}
 #materialViewer .viewer-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.68)}
@@ -577,12 +579,34 @@ function renderAdminMaterials(list){
 function editMaterialAdmin(id){
   const m=ADMIN_MATERIALS.find(x=>String(x.id)===String(id));if(!m)return;
   const box=document.getElementById('adminMaterials');
-  box.innerHTML=`<div class="admin-edit"><div class="admin-edit-head"><div><div class="admin-kicker">MATERIAL EDIT</div><h3>자료 정보 수정</h3></div><button class="btn light" onclick="renderAdminMaterials(ADMIN_MATERIALS)">← 목록</button></div>
-    <div class="row"><div><label>제목</label><input id="ame_title" value="${E(m.title||'')}"></div><div><label>저자</label><input id="ame_author" value="${E(m.author||'')}"></div></div>
-    <label>설명</label><textarea id="ame_desc">${E(m.description||'')}</textarea>
-    <div class="row"><div><label>카테고리</label><select id="ame_cat">${(CATS||[]).map(c=>`<option ${c===m.category?'selected':''}>${E(c)}</option>`).join('')}</select></div><div><label>언어</label><input id="ame_lang" value="${E(m.language||'')}"></div><div><label>작성연도</label><input id="ame_year" value="${E(m.year||'')}"></div></div>
-    <div class="row"><div><label>파일 형식</label><input id="ame_type" value="${E(m.fileType||'')}"></div><div><label>공개 상태</label><select id="ame_status"><option ${m.status==='공개'?'selected':''}>공개</option><option ${m.status==='비공개'?'selected':''}>비공개</option><option ${m.status==='삭제'?'selected':''}>삭제</option></select></div></div>
-    <div style="margin-top:18px"><button class="btn" onclick="saveMaterialAdmin('${E(String(m.id||'')).replace(/'/g,"&#039;")}')">변경사항 저장</button></div><div id="ame_msg"></div></div>`;
+  const q=v=>E(v==null?'':v);
+  box.innerHTML=`<div class="material-edit-card">
+    <div class="material-edit-top"><div><div class="material-edit-kicker">MATERIAL EDIT</div><h3>자료 정보 수정</h3><p>등록된 자료의 정보를 확인하고 수정합니다.</p></div><button class="btn light" onclick="renderAdminMaterials(ADMIN_MATERIALS)">← 목록</button></div>
+    <div class="material-edit-body material-edit-form">
+      <div class="material-section"><div class="material-section-title">기본 정보</div>
+        <div class="material-field-grid">
+          <div class="material-field material-field-full"><label>제목</label><input id="ame_title" value="${q(m.title||'')}"></div>
+          <div class="material-field material-field-full"><label>설명</label><textarea id="ame_desc">${q(m.description||'')}</textarea></div>
+        </div>
+      </div>
+      <div class="material-section"><div class="material-section-title">분류 정보</div>
+        <div class="material-field-grid three">
+          <div class="material-field"><label>카테고리</label><select id="ame_cat">${(CATS||[]).map(c=>{const raw=typeof c==='string'?c:(c.name||c.category||'');return `<option ${raw===m.category?'selected':''}>${q(categoryLabel(raw))}</option>}).join('')}</select></div>
+          <div class="material-field"><label>언어</label><input id="ame_lang" value="${q(m.language||'')}"></div>
+          <div class="material-field"><label>작성연도</label><input id="ame_year" value="${q(m.year||'')}"></div>
+        </div>
+      </div>
+      <div class="material-section"><div class="material-section-title">저자 및 파일</div>
+        <div class="material-field-grid three">
+          <div class="material-field"><label>저자</label><input id="ame_author" value="${q(m.author||'')}"></div>
+          <div class="material-field"><label>파일 형식</label><input id="ame_type" value="${q(m.fileType||'')}" readonly></div>
+          <div class="material-field"><label>공개 상태</label><select id="ame_status"><option ${m.status==='공개'?'selected':''}>공개</option><option ${m.status==='비공개'?'selected':''}>비공개</option><option ${m.status==='삭제'?'selected':''}>삭제</option></select></div>
+        </div>
+      </div>
+      <div class="material-edit-actions"><span class="material-edit-status">현재 상태: ${q(m.status||'-')}</span><button class="btn" onclick="saveMaterialAdmin('${q(String(m.id||'')).replace(/'/g,"&#039;")}')">변경사항 저장</button></div>
+      <div id="ame_msg"></div>
+    </div>
+  </div>`;
 }
 async function saveMaterialAdmin(id){
   const data={title:document.getElementById('ame_title').value,description:document.getElementById('ame_desc').value,category:document.getElementById('ame_cat').value,language:document.getElementById('ame_lang').value,author:document.getElementById('ame_author').value,year:document.getElementById('ame_year').value,fileType:document.getElementById('ame_type').value,status:document.getElementById('ame_status').value};
