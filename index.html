@@ -182,6 +182,7 @@ function loginPage(message=''){
         <label>비밀번호</label><input id="password" type="password" autocomplete="current-password" required>
         <button class="btn" style="width:100%;margin-top:18px" id="loginBtn">로그인</button>
       </form>
+      <a href="/user-manual.html" target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:18px;color:#17344f;font-size:12px;font-weight:700;text-decoration:none">사용자 매뉴얼 보기</a>
     </div></div>`;
   setTimeout(()=>document.getElementById('username')?.focus(),50);
 }
@@ -485,6 +486,7 @@ async function admin(){
       <button class="admin-card" onclick="userAdmin()"><span class="admin-icon">01</span><b>회원 관리</b><small>회원 등록 · 권한 · 상태 관리</small><span class="admin-arrow">→</span></button>
       <button class="admin-card" onclick="uploadView()"><span class="admin-icon">02</span><b>자료 관리</b><small>자료 등록 · 검색 · 수정 · 공개/비공개 · 삭제</small><span class="admin-arrow">→</span></button>
       <button class="admin-card" onclick="loginHistory()"><span class="admin-icon">03</span><b>로그인 이력</b><small>누가 언제 로그인했는지 확인</small><span class="admin-arrow">→</span></button>
+      <button class="admin-card" onclick="window.open('/admin-manual.html','_blank','noopener')"><span class="admin-icon">04</span><b>관리자 매뉴얼</b><small>회원 · 자료 · 로그인 이력 관리 안내</small><span class="admin-arrow">→</span></button>
     </div>
   </div>`;
 }
