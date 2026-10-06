@@ -37,6 +37,39 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
 /* v26: remove the old secondary category line */
 .category-bar small:empty{display:none!important}
 .category-bar .category-sub,.category-bar .category-more,.category-bar .category-note{display:none!important}
+
+/* v27: member management list redesign */
+.member-list-wrap{margin-top:6px}
+.member-list-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 11px;border-bottom:1px solid #dfe6ec;color:#6f7d89;font-size:12px;font-weight:700}
+.member-list-count{color:#17344f;font-size:13px}
+.member-row{display:grid;grid-template-columns:minmax(130px,1.15fr) minmax(170px,1.45fr) 90px 90px 76px auto;align-items:center;gap:12px;padding:15px 2px;border-bottom:1px solid #e7ebef}
+.member-row:last-child{border-bottom:0}
+.member-cell{min-width:0}
+.member-name{font-weight:800;color:#1c3042;font-size:14px;line-height:1.35}
+.member-id{margin-top:3px;color:#7b8791;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.member-email{color:#536575;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.member-role,.member-branch{font-size:12px;color:#536575}
+.member-status{display:inline-flex;align-items:center;justify-content:center;min-width:46px;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:800;background:#f0f3f5;color:#687680}
+.member-status.active{background:#edf7f0;color:#2e6b45}
+.member-status.inactive{background:#f5f0f0;color:#8b5a5a}
+.member-actions{display:flex;justify-content:flex-end;gap:6px;white-space:nowrap}
+.member-actions .btn{min-height:36px;padding:7px 10px;font-size:11px;border-radius:7px}
+.member-actions .btn.light{background:#f1f4f6;color:#334755;border:1px solid #e0e6ea}
+.member-actions .btn.light:hover{background:#e8edf1}
+@media(max-width:700px){
+  .member-list-head{padding:0 0 9px}
+  .member-row{display:block;padding:15px 0;border-bottom:1px solid #e3e8ec}
+  .member-main{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+  .member-name{font-size:15px}
+  .member-id{font-size:11px}
+  .member-status{flex:0 0 auto}
+  .member-details{display:grid;grid-template-columns:1fr 1fr;gap:7px 12px;margin-top:12px;padding:10px 11px;background:#f7f9fb;border-radius:9px}
+  .member-detail{min-width:0}
+  .member-detail-label{display:block;margin-bottom:2px;color:#98a3ac;font-size:10px;font-weight:700}
+  .member-detail-value{display:block;color:#536575;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .member-actions{justify-content:stretch;margin-top:10px}
+  .member-actions .btn{flex:1;min-height:40px;font-size:12px}
+}
 </style><style id="internal-material-viewer">
 #materialViewer{position:fixed;inset:0;z-index:9999}
 #materialViewer .viewer-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.68)}
@@ -523,14 +556,48 @@ async function loadUsers(){
   try{
     const r=await A('listUsers',[T]);
     const users=r.users||r.items||r.data||[];
-    document.getElementById('users').innerHTML=Array.isArray(users)&&users.length
-      ? `<div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><tr><th style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">이름</th><th style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">아이디</th><th style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">권한</th><th style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">지부</th><th style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">상태</th><th style="padding:9px;border-bottom:1px solid var(--line)">작업</th></tr>${users.map(u=>{
+    const el=document.getElementById('users');
+    if(!Array.isArray(users)||!users.length){
+      el.innerHTML='<div class="notice">등록된 회원이 없습니다.</div>';
+      return;
+    }
+    el.innerHTML=`
+      <div class="member-list-wrap">
+        <div class="member-list-head">
+          <span>회원 목록</span>
+          <span class="member-list-count">${users.length}명</span>
+        </div>
+        ${users.map(u=>{
           const id=E(u.id||'').replace(/'/g,"&#039;");
           const active=u.status==='활성';
-          return `<tr><td style="padding:9px;border-bottom:1px solid var(--line)">${E(u.name)}</td><td style="padding:9px;border-bottom:1px solid var(--line)">${E(u.username)}</td><td style="padding:9px;border-bottom:1px solid var(--line)">${E(u.role)}</td><td style="padding:9px;border-bottom:1px solid var(--line)">${E(u.branch)}</td><td style="padding:9px;border-bottom:1px solid var(--line)">${E(u.status)}</td><td style="padding:9px;border-bottom:1px solid var(--line);white-space:nowrap"><button class="btn light" onclick="editUser('${id}')">수정</button> <button class="btn light" onclick="toggleUser('${id}','${active?'비활성':'활성'}')">${active?'비활성화':'활성화'}</button></td></tr>`;
-        }).join('')}</table></div>`
-      : '<div class="notice">등록된 회원이 없습니다.</div>';
-  }catch(e){document.getElementById('users').innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
+          return `
+            <div class="member-row">
+              <div class="member-main member-cell">
+                <div>
+                  <div class="member-name">${E(u.name||'-')}</div>
+                  <div class="member-id">${E(u.username||'-')}</div>
+                </div>
+                <span class="member-status ${active?'active':'inactive'}">${E(u.status||'-')}</span>
+              </div>
+              <div class="member-cell member-email" title="${E(u.email||'')}">${E(u.email||'-')}</div>
+              <div class="member-cell member-role">${E(u.role||'-')}</div>
+              <div class="member-cell member-branch">${E(u.branch||'-')}</div>
+              <div class="member-cell" style="display:none"></div>
+              <div class="member-actions">
+                <button class="btn light" onclick="editUser('${id}')">수정</button>
+                <button class="btn light" onclick="toggleUser('${id}','${active?'비활성':'활성'}')">${active?'비활성화':'활성화'}</button>
+              </div>
+              <div class="member-details">
+                <div class="member-detail"><span class="member-detail-label">이메일</span><span class="member-detail-value">${E(u.email||'-')}</span></div>
+                <div class="member-detail"><span class="member-detail-label">권한</span><span class="member-detail-value">${E(u.role||'-')}</span></div>
+                <div class="member-detail"><span class="member-detail-label">소속 지부</span><span class="member-detail-value">${E(u.branch||'-')}</span></div>
+              </div>
+            </div>`;
+        }).join('')}
+      </div>`;
+  }catch(e){
+    document.getElementById('users').innerHTML='<div class="notice error">'+E(e.message)+'</div>'
+  }
 }
 function loginHistory(){
   document.getElementById('app').innerHTML=`<div class="container admin-page"><div class="title"><h2>로그인 이력</h2><button class="btn light" onclick="admin()">← 관리자</button></div>
