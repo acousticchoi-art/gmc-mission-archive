@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GMC Mission Archive 관리자 매뉴얼</title>
+<style>
+:root{--n:#17344f;--a:#b18a55;--bg:#f5f7f9;--line:#dce4ea;--muted:#6c7b88;--danger:#a33d3d}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#263544;font-family:Arial,"Noto Sans KR",sans-serif;line-height:1.7}
+header{background:#fff;border-bottom:1px solid var(--line);padding:20px 18px;display:flex;justify-content:space-between;align-items:center;gap:14px;position:sticky;top:0;z-index:5}
+.logo{font-family:Georgia,serif;font-size:22px;font-weight:700;color:var(--n)}.badge{font-size:11px;font-weight:800;color:#8b682f;background:#f8f1e6;border-radius:999px;padding:5px 10px}
+main{width:min(900px,calc(100% - 28px));margin:28px auto 60px}.hero,.section{background:#fff;border:1px solid var(--line);border-radius:16px;padding:28px;margin-bottom:18px;box-shadow:0 6px 22px rgba(23,52,79,.05)}
+.hero h1{margin:0;color:var(--n);font-size:29px}.hero p{margin:6px 0 0;color:var(--muted)}
+h2{margin:0 0 13px;color:var(--n);font-size:23px}h3{margin:20px 0 7px;color:var(--n);font-size:17px}
+.step{padding:13px 15px;margin:8px 0;background:#f4f7f9;border-left:4px solid var(--a);border-radius:7px}
+.warning{background:#fff3f3;border:1px solid #efd1d1;color:#813b3b;border-radius:9px;padding:13px 15px;margin-top:12px}
+.note{background:#f8f3ea;border:1px solid #eadcc6;border-radius:9px;padding:13px 15px;margin-top:12px}
+table{width:100%;border-collapse:collapse;margin:12px 0}th,td{text-align:left;padding:11px;border-bottom:1px solid #e8edf0;font-size:14px}th{background:#f4f7f9;color:var(--n)}
+a{color:var(--n);font-weight:700;text-decoration:none}.back{display:inline-block;margin-bottom:14px}
+.code{font-family:ui-monospace,monospace;background:#f2f4f6;border-radius:6px;padding:2px 5px;font-size:13px}
+footer{text-align:center;color:#8a959e;font-size:12px;padding:10px 20px 35px}
+@media(max-width:600px){main{width:calc(100% - 20px);margin-top:18px}.hero,.section{padding:21px 18px}.hero h1{font-size:25px}h2{font-size:21px}th,td{font-size:13px;padding:9px}}
+</style></head><body>
+<header><div class="logo">GMC MISSION ARCHIVE</div><span class="badge">관리자 전용</span></header>
+<main>
+<a class="back" href="/">← 사이트로 돌아가기</a>
+<section class="hero"><h1>관리자 매뉴얼</h1><p>회원 관리 · 자료 등록 · 자료 관리 · 로그인 이력</p></section>
+<section class="section"><h2>1. 관리자 화면</h2>
+<p>관리자 계정으로 로그인하면 상단 메뉴에 <b>관리자</b> 메뉴가 표시됩니다. 관리자 화면에서는 회원과 자료를 관리할 수 있습니다.</p>
+<div class="step"><b>회원 관리</b> — 회원 등록, 회원 정보 수정, 권한 및 상태 관리</div>
+<div class="step"><b>자료 관리</b> — 자료 등록, 검색, 수정, 공개/비공개, 원본 확인, 삭제</div>
+<div class="step"><b>로그인 이력</b> — 누가 언제 로그인했는지 확인</div>
+</section>
+<section class="section"><h2>2. 회원 관리</h2>
+<h3>회원 등록</h3>
+<p>관리자 → 회원 관리에서 새 회원을 등록합니다.</p>
+<table><tr><th>항목</th><th>입력 내용</th></tr>
+<tr><td>이름</td><td>회원의 이름</td></tr><tr><td>아이디</td><td>로그인에 사용할 아이디</td></tr><tr><td>이메일</td><td>회원 이메일</td></tr><tr><td>소속 지부</td><td>회원이 소속된 지부</td></tr><tr><td>권한</td><td>일반회원 또는 관리자</td></tr><tr><td>초기 비밀번호</td><td>회원에게 전달할 최초 비밀번호</td></tr></table>
+<div class="note">첫 로그인 후 회원이 자신의 비밀번호를 변경할 수 있도록 안내합니다.</div>
+<h3>회원 목록</h3>
+<p>회원 목록에서 이름·아이디·이메일을 검색하고 상태, 권한, 지부별로 필터링할 수 있습니다.</p>
+<div class="step"><b>회원 정보 수정</b> — 이름, 아이디, 이메일, 지부, 권한, 상태를 수정합니다.</div>
+<div class="step"><b>비활성화</b> — 해당 계정의 로그인을 제한할 때 사용합니다.</div>
+<div class="step"><b>활성화</b> — 비활성 계정을 다시 사용할 수 있도록 합니다.</div>
+<div class="warning">관리자 권한은 꼭 필요한 사람에게만 부여합니다.</div>
+</section>
+<section class="section"><h2>3. 자료 등록</h2>
+<p>관리자 → 자료 관리 → <b>자료 등록</b>에서 진행합니다.</p>
+<div class="step">① 제목을 입력합니다.</div><div class="step">② 자료에 대한 간단한 설명을 입력합니다.</div>
+<div class="step">③ 카테고리를 선택합니다.</div><div class="step">④ 언어, 저자, 작성연도를 입력합니다.</div>
+<div class="step">⑤ 파일을 선택합니다.</div><div class="step">⑥ <b>Drive에 저장하고 등록</b>을 선택합니다.</div>
+<p>파일은 Google Drive에 원본으로 저장되고, 자료 정보는 아카이브에 등록됩니다.</p>
+<div class="note">파일 형식은 선택한 파일에서 자동으로 인식됩니다. 업로드 중에는 페이지를 닫거나 새로고침하지 않는 것이 좋습니다.</div>
+</section>
+<section class="section"><h2>4. 자료 관리</h2>
+<p>등록 자료 관리에서는 제목·저자·파일명 검색, 분야 및 공개 상태 필터, 정렬 기능을 사용할 수 있습니다.</p>
+<div class="step"><b>수정</b> — 제목, 설명, 카테고리, 언어, 저자, 작성연도, 파일 형식, 공개 상태를 수정합니다.</div>
+<div class="step"><b>원본</b> — Google Drive에 저장된 원본 파일을 확인합니다.</div>
+<div class="step"><b>삭제</b> — 자료를 삭제합니다. 현재 시스템에서는 삭제 시 Google Drive 원본도 휴지통으로 이동합니다.</div>
+<div class="warning">삭제는 실제 원본 파일에도 영향을 주므로 삭제 전 제목과 파일을 반드시 확인합니다.</div>
+</section>
+<section class="section"><h2>5. 공개 / 비공개 관리</h2>
+<p>자료를 내부적으로만 보관해야 하는 경우 자료 수정 화면에서 공개 상태를 <b>비공개</b>로 변경합니다.</p>
+<div class="step"><b>공개</b> — 일반 회원이 자료실에서 검색하고 열람할 수 있습니다.</div>
+<div class="step"><b>비공개</b> — 일반 자료실에서 공개되지 않도록 관리합니다.</div>
+</section>
+<section class="section"><h2>6. 로그인 이력</h2>
+<p>관리자 → 로그인 이력에서 최근 로그인 기록을 확인할 수 있습니다.</p>
+<p>기록에는 로그인 시간, 이름, 아이디, 권한, 소속 지부가 표시됩니다.</p>
+<div class="step">정기적으로 확인하여 계정 사용 현황과 이상 로그인 여부를 점검합니다.</div>
+</section>
+<section class="section"><h2>7. 관리자 계정 보안</h2>
+<div class="step">관리자 아이디와 비밀번호를 여러 사람과 공유하지 않습니다.</div>
+<div class="step">관리자 권한이 필요하지 않은 계정에는 관리자 권한을 부여하지 않습니다.</div>
+<div class="step">사용하지 않는 계정은 비활성화합니다.</div>
+<div class="step">자료 삭제 전 Google Drive 원본을 반드시 확인합니다.</div>
+</section>
+<section class="section"><h2>8. 개발자용 부록</h2>
+<p>개발자가 시스템을 유지·보수할 때 확인해야 할 구조입니다.</p>
+<h3>주요 구성</h3>
+<table><tr><th>구성</th><th>역할</th></tr>
+<tr><td><span class="code">index.html</span></td><td>로그인, 회원 화면, 자료실, 관리자 화면의 프론트엔드</td></tr>
+<tr><td><span class="code">worker.js</span></td><td>인증, Google Sheets/Drive 연동, 자료·회원 API</td></tr>
+<tr><td><span class="code">api/</span></td><td>Vercel API 라우팅 관련 구성</td></tr>
+<tr><td><span class="code">_redirects</span></td><td>라우팅 보조 설정</td></tr>
+</table>
+<h3>Google Sheets / Drive</h3>
+<p>회원·자료·댓글·로그인 이력 등의 데이터는 Google Sheets를 기반으로 관리하며, 원본 파일은 Google Drive에 저장합니다. Worker는 서비스 계정 인증을 통해 Sheets와 Drive API를 사용합니다.</p>
+<p>주요 환경 변수는 <span class="code">GMC_SHEET_ID</span>, <span class="code">GMC_ROOT_FOLDER_ID</span>, <span class="code">GMC_SA_EMAIL</span>, <span class="code">GMC_SA_PRIVATE_KEY</span>, <span class="code">GMC_SESSION_SECRET</span> 등입니다.</p>
+<h3>배포</h3>
+<p>사이트는 Vercel 배포를 기준으로 운영합니다. 개발 중에는 불필요한 Production Deploy를 반복하지 않고 변경사항을 충분히 확인한 뒤 배포합니다.</p>
+<div class="note">개발자 매뉴얼의 상세 내용은 시스템 변경 시 실제 코드와 환경변수 구성을 기준으로 갱신합니다.</div>
+</section>
+</main><footer>GMC Mission Archive · 관리자 매뉴얼</footer></body></html>
