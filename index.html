@@ -70,63 +70,7 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
   .member-actions{justify-content:stretch;margin-top:10px}
   .member-actions .btn{flex:1;min-height:40px;font-size:12px}
 }
-
-/* v28: scalable member management */
-.member-manager{margin-top:4px}
-.member-toolbar{display:grid;grid-template-columns:minmax(220px,1.7fr) repeat(3,minmax(120px,.75fr));gap:8px;margin-bottom:12px}
-.member-toolbar input,.member-toolbar select{height:42px;border:1px solid #d4dde4;border-radius:8px;background:#fff;padding:0 12px;color:#263744;outline:0}
-.member-toolbar input:focus,.member-toolbar select:focus{border-color:#7890a5;box-shadow:0 0 0 3px rgba(23,52,79,.06)}
-.member-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 2px 10px;color:#778590;font-size:12px}
-.member-summary strong{color:#17344f}
-.member-table-wrap{border:1px solid #dfe6ec;border-radius:10px;background:#fff;overflow:hidden}
-.member-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:13px}
-.member-table th{height:42px;background:#f6f8fa;color:#687782;font-size:11px;font-weight:800;text-align:left;padding:0 12px;border-bottom:1px solid #dfe6ec;white-space:nowrap}
-.member-table td{height:58px;padding:8px 12px;border-bottom:1px solid #edf0f2;color:#3e505e;vertical-align:middle}
-.member-table tr:last-child td{border-bottom:0}
-.member-table tr:hover td{background:#fafcfd}
-.member-table th:nth-child(1),.member-table td:nth-child(1){width:17%}
-.member-table th:nth-child(2),.member-table td:nth-child(2){width:23%}
-.member-table th:nth-child(3),.member-table td:nth-child(3){width:13%}
-.member-table th:nth-child(4),.member-table td:nth-child(4){width:13%}
-.member-table th:nth-child(5),.member-table td:nth-child(5){width:10%}
-.member-table th:nth-child(6),.member-table td:nth-child(6){width:24%}
-.member-primary{font-weight:800;color:#1c3042;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.member-secondary{font-size:11px;color:#8a969f;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.member-email{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#536575}
-.member-status{display:inline-flex;align-items:center;justify-content:center;min-width:48px;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:800}
-.member-status.active{background:#edf7f0;color:#2e6b45}
-.member-status.inactive{background:#f4f0f0;color:#8a5c5c}
-.member-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;white-space:nowrap}
-.member-actions .btn{min-height:34px;padding:6px 10px;font-size:11px;border-radius:7px}
-.member-actions .btn.light{background:#f3f5f7;color:#344957;border:1px solid #e0e5e9}
-.member-pagination{display:flex;align-items:center;justify-content:center;gap:5px;padding:14px 0 2px}
-.member-page-btn{min-width:34px;height:34px;border:1px solid #d7dfe5;background:#fff;color:#596b78;border-radius:7px;font-size:12px}
-.member-page-btn.active{background:#17344f;color:#fff;border-color:#17344f;font-weight:800}
-.member-page-btn:disabled{opacity:.4;cursor:default}
-.member-empty{padding:32px 18px;text-align:center;color:#84909a;font-size:13px}
-.member-mobile-list{display:none}
-@media(max-width:820px){
-  .member-toolbar{grid-template-columns:1fr 1fr}
-  .member-toolbar input{grid-column:1/-1}
-}
-@media(max-width:700px){
-  .member-toolbar{grid-template-columns:1fr 1fr}
-  .member-toolbar input{grid-column:1/-1}
-  .member-table-wrap{display:none}
-  .member-mobile-list{display:block}
-  .member-mobile-card{background:#fff;border:1px solid #dfe6ec;border-radius:10px;padding:14px;margin-bottom:8px}
-  .member-mobile-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
-  .member-mobile-name{font-weight:800;color:#1c3042;font-size:15px}
-  .member-mobile-id{font-size:11px;color:#8a969f;margin-top:3px}
-  .member-mobile-info{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;padding:10px;background:#f7f9fb;border-radius:8px}
-  .member-mobile-info span{display:block;font-size:10px;color:#99a4ad;font-weight:700;margin-bottom:2px}
-  .member-mobile-info b{display:block;font-size:12px;color:#536575;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
-  .member-mobile-actions{display:flex;gap:7px;margin-top:10px}
-  .member-mobile-actions .btn{flex:1;min-height:39px;font-size:12px}
-}
-/* v29 material edit */
-.material-edit-card{max-width:860px;margin:0 auto;background:#fff;border:1px solid #dfe6ec;border-radius:14px;box-shadow:0 8px 28px rgba(23,52,79,.06);overflow:hidden}.material-edit-top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:24px 26px 20px;border-bottom:1px solid #e5e9ed}.material-edit-kicker{font-size:10px;letter-spacing:.16em;color:#8a98a5;font-weight:800;margin-bottom:6px}.material-edit-top h3{margin:0;color:#17344f;font-size:22px;letter-spacing:-.04em}.material-edit-top p{margin:6px 0 0;color:#7b8791;font-size:12px}.material-edit-body{padding:24px 26px 26px}.material-section{padding:0 0 22px;margin-bottom:22px;border-bottom:1px solid #edf0f2}.material-section:last-of-type{border-bottom:0;margin-bottom:0;padding-bottom:4px}.material-section-title{display:flex;align-items:center;gap:8px;margin-bottom:15px;color:#263b4d;font-size:14px;font-weight:800}.material-section-title:before{content:"";width:3px;height:15px;background:#b18a55;border-radius:2px}.material-edit-form label{display:block;margin:0 0 6px;color:#5e6d79;font-size:12px;font-weight:700}.material-edit-form input,.material-edit-form select,.material-edit-form textarea{width:100%;box-sizing:border-box;border:1px solid #d5dde4;border-radius:8px;background:#fbfcfd;color:#1d2a35;outline:0}.material-edit-form input,.material-edit-form select{height:44px;padding:0 12px}.material-edit-form textarea{min-height:105px;padding:11px 12px;resize:vertical;line-height:1.55}.material-edit-form input:focus,.material-edit-form select:focus,.material-edit-form textarea:focus{border-color:#7890a5;box-shadow:0 0 0 3px rgba(23,52,79,.06);background:#fff}.material-field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}.material-field-full{grid-column:1/-1}.material-field-grid.three{grid-template-columns:1.5fr 1fr 1fr}.material-edit-status{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border-radius:7px;background:#f1f6f3;color:#346747;font-size:12px;font-weight:800}.material-edit-status:before{content:"";width:6px;height:6px;border-radius:50%;background:#4c8a62}.material-edit-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:6px}.material-edit-actions .btn{min-height:44px;padding:10px 18px}@media(max-width:700px){.material-edit-card{border-radius:12px}.material-edit-top{padding:19px 17px 17px;align-items:flex-start}.material-edit-top h3{font-size:20px}.material-edit-top p{font-size:11px}.material-edit-top .btn{min-height:40px;padding:8px 12px;white-space:nowrap}.material-edit-body{padding:20px 17px 21px}.material-field-grid,.material-field-grid.three{grid-template-columns:1fr;gap:13px}.material-field-full{grid-column:auto}.material-edit-actions{flex-direction:column;align-items:stretch}.material-edit-actions .btn{width:100%;box-sizing:border-box}}
-</style><style id="internal-material-viewer">
+/* v29-safe material edit */.admin-edit{max-width:860px!important;margin:0 auto;background:#fff;border:1px solid #dfe6ec;border-radius:14px;padding:0!important;box-shadow:0 8px 28px rgba(23,52,79,.06);overflow:hidden}.admin-edit-head{display:flex;justify-content:space-between;align-items:center;gap:14px;border-bottom:1px solid #e5e9ed!important;padding:22px 25px 19px!important;margin:0!important}.admin-edit-head .admin-kicker{font-size:10px;letter-spacing:.16em;color:#8a98a5;font-weight:800;margin-bottom:5px}.admin-edit-head h3{margin:0!important;color:#17344f;font-size:21px}.admin-edit-head .btn{min-height:40px;padding:8px 13px;white-space:nowrap}.admin-edit .admin-edit-body{padding:24px 25px 26px}.admin-edit .admin-section{padding:0 0 22px;margin-bottom:22px;border-bottom:1px solid #edf0f2}.admin-edit .admin-section:last-child{border-bottom:0;margin-bottom:0;padding-bottom:0}.admin-edit .admin-section-title{display:flex;align-items:center;gap:8px;margin-bottom:14px;color:#263b4d;font-size:14px;font-weight:800}.admin-edit .admin-section-title:before{content:"";width:3px;height:15px;background:#b18a55;border-radius:2px}.admin-edit .admin-field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}.admin-edit .admin-field-grid.three{grid-template-columns:1.5fr 1fr 1fr}.admin-edit .admin-field-full{grid-column:1/-1}.admin-edit .admin-field label{display:block!important;margin:0 0 6px!important;color:#5e6d79;font-size:12px;font-weight:700}.admin-edit .admin-field input,.admin-edit .admin-field select,.admin-edit .admin-field textarea{width:100%;box-sizing:border-box;border:1px solid #d5dde4;border-radius:8px;background:#fbfcfd;color:#1d2a35;outline:0}.admin-edit .admin-field input,.admin-edit .admin-field select{height:44px;padding:0 12px}.admin-edit .admin-field textarea{min-height:105px;padding:11px 12px;resize:vertical;line-height:1.55}.admin-edit .admin-field input:focus,.admin-edit .admin-field select:focus,.admin-edit .admin-field textarea:focus{border-color:#7890a5;box-shadow:0 0 0 3px rgba(23,52,79,.06);background:#fff}.admin-edit .admin-edit-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:4px}.admin-edit .admin-current-status{font-size:12px;color:#346747;background:#f1f6f3;border-radius:7px;padding:7px 10px;font-weight:800}.admin-edit .admin-edit-footer .btn{min-height:44px;padding:10px 18px}@media(max-width:700px){.admin-edit-head{padding:19px 17px 17px!important;align-items:flex-start}.admin-edit-head h3{font-size:20px}.admin-edit .admin-edit-body{padding:20px 17px 21px}.admin-edit .admin-field-grid,.admin-edit .admin-field-grid.three{grid-template-columns:1fr}.admin-edit .admin-field-full{grid-column:auto}.admin-edit .admin-edit-footer{flex-direction:column;align-items:stretch}.admin-edit .admin-edit-footer .btn{width:100%;box-sizing:border-box}.admin-edit .admin-current-status{text-align:center}}</style><style id="internal-material-viewer">
 #materialViewer{position:fixed;inset:0;z-index:9999}
 #materialViewer .viewer-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.68)}
 #materialViewer .viewer-panel{position:absolute;inset:4vh 4vw;background:#fff;border-radius:18px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.35)}
@@ -579,31 +523,24 @@ function renderAdminMaterials(list){
 function editMaterialAdmin(id){
   const m=ADMIN_MATERIALS.find(x=>String(x.id)===String(id));if(!m)return;
   const box=document.getElementById('adminMaterials');
-  const q=v=>E(v==null?'':v);
-  box.innerHTML=`<div class="material-edit-card">
-    <div class="material-edit-top"><div><div class="material-edit-kicker">MATERIAL EDIT</div><h3>자료 정보 수정</h3><p>등록된 자료의 정보를 확인하고 수정합니다.</p></div><button class="btn light" onclick="renderAdminMaterials(ADMIN_MATERIALS)">← 목록</button></div>
-    <div class="material-edit-body material-edit-form">
-      <div class="material-section"><div class="material-section-title">기본 정보</div>
-        <div class="material-field-grid">
-          <div class="material-field material-field-full"><label>제목</label><input id="ame_title" value="${q(m.title||'')}"></div>
-          <div class="material-field material-field-full"><label>설명</label><textarea id="ame_desc">${q(m.description||'')}</textarea></div>
-        </div>
-      </div>
-      <div class="material-section"><div class="material-section-title">분류 정보</div>
-        <div class="material-field-grid three">
-          <div class="material-field"><label>카테고리</label><select id="ame_cat">${(CATS||[]).map(c=>{const raw=typeof c==='string'?c:(c.name||c.category||'');return `<option ${raw===m.category?'selected':''}>${q(categoryLabel(raw))}</option>}).join('')}</select></div>
-          <div class="material-field"><label>언어</label><input id="ame_lang" value="${q(m.language||'')}"></div>
-          <div class="material-field"><label>작성연도</label><input id="ame_year" value="${q(m.year||'')}"></div>
-        </div>
-      </div>
-      <div class="material-section"><div class="material-section-title">저자 및 파일</div>
-        <div class="material-field-grid three">
-          <div class="material-field"><label>저자</label><input id="ame_author" value="${q(m.author||'')}"></div>
-          <div class="material-field"><label>파일 형식</label><input id="ame_type" value="${q(m.fileType||'')}" readonly></div>
-          <div class="material-field"><label>공개 상태</label><select id="ame_status"><option ${m.status==='공개'?'selected':''}>공개</option><option ${m.status==='비공개'?'selected':''}>비공개</option><option ${m.status==='삭제'?'selected':''}>삭제</option></select></div>
-        </div>
-      </div>
-      <div class="material-edit-actions"><span class="material-edit-status">현재 상태: ${q(m.status||'-')}</span><button class="btn" onclick="saveMaterialAdmin('${q(String(m.id||'')).replace(/'/g,"&#039;")}')">변경사항 저장</button></div>
+  box.innerHTML=`<div class="admin-edit">
+    <div class="admin-edit-head"><div><div class="admin-kicker">MATERIAL EDIT</div><h3>자료 정보 수정</h3></div><button class="btn light" onclick="renderAdminMaterials(ADMIN_MATERIALS)">← 목록</button></div>
+    <div class="admin-edit-body">
+      <div class="admin-section"><div class="admin-section-title">기본 정보</div><div class="admin-field-grid">
+        <div class="admin-field admin-field-full"><label>제목</label><input id="ame_title" value="${E(m.title||'')}"></div>
+        <div class="admin-field admin-field-full"><label>설명</label><textarea id="ame_desc">${E(m.description||'')}</textarea></div>
+      </div></div>
+      <div class="admin-section"><div class="admin-section-title">분류 정보</div><div class="admin-field-grid three">
+        <div class="admin-field"><label>카테고리</label><select id="ame_cat">${(CATS||[]).map(c=>{const raw=typeof c==='string'?c:(c.name||c.category||'');return '<option '+(raw===m.category?'selected':'')+'>'+E(categoryLabel(raw))+'</option>'}).join('')}</select></div>
+        <div class="admin-field"><label>언어</label><input id="ame_lang" value="${E(m.language||'')}"></div>
+        <div class="admin-field"><label>작성연도</label><input id="ame_year" value="${E(m.year||'')}"></div>
+      </div></div>
+      <div class="admin-section"><div class="admin-section-title">저자 및 파일</div><div class="admin-field-grid three">
+        <div class="admin-field"><label>저자</label><input id="ame_author" value="${E(m.author||'')}"></div>
+        <div class="admin-field"><label>파일 형식</label><input id="ame_type" value="${E(m.fileType||'')}" readonly></div>
+        <div class="admin-field"><label>공개 상태</label><select id="ame_status"><option ${m.status==='공개'?'selected':''}>공개</option><option ${m.status==='비공개'?'selected':''}>비공개</option><option ${m.status==='삭제'?'selected':''}>삭제</option></select></div>
+      </div></div>
+      <div class="admin-edit-footer"><span class="admin-current-status">현재 상태: ${E(m.status||'-')}</span><button class="btn" onclick="saveMaterialAdmin('${E(String(m.id||'')).replace(/'/g,"&#039;")}')">변경사항 저장</button></div>
       <div id="ame_msg"></div>
     </div>
   </div>`;
@@ -627,118 +564,54 @@ function userAdmin(){
   <label>권한</label><select id="ur"><option>일반회원</option></select>
   <label>초기 비밀번호</label><input id="up" type="password" minlength="6" value="gmcgmc">
   <button class="btn" style="margin-top:16px" onclick="createUser()">회원 등록</button><div id="umsg"></div></div>
-  <div class="panel"><h3>회원 목록</h3>
-    <div id="users"><div class="notice">불러오는 중...</div></div>
-  </div></div>`;
+  <div class="panel"><h3>회원 목록</h3><div id="users"><div class="notice">불러오는 중...</div></div></div></div>`;
   loadUsers();
 }
-
-let MEMBER_USERS=[];
-let MEMBER_PAGE=1;
-const MEMBER_PAGE_SIZE=15;
-
-function memberEsc(v){return E(v==null?'':v)}
-function memberFiltered(){
-  const q=(document.getElementById('memberSearch')?.value||'').trim().toLowerCase();
-  const status=document.getElementById('memberStatus')?.value||'';
-  const role=document.getElementById('memberRole')?.value||'';
-  const branch=document.getElementById('memberBranch')?.value||'';
-  return MEMBER_USERS.filter(u=>{
-    const text=[u.name,u.username,u.email,u.branch,u.role].join(' ').toLowerCase();
-    return (!q||text.includes(q))&&(!status||u.status===status)&&(!role||u.role===role)&&(!branch||u.branch===branch);
-  });
-}
-
-function renderUsers(){
-  const el=document.getElementById('users');
-  if(!el)return;
-  const rows=memberFiltered();
-  const totalPages=Math.max(1,Math.ceil(rows.length/MEMBER_PAGE_SIZE));
-  if(MEMBER_PAGE>totalPages)MEMBER_PAGE=totalPages;
-  const from=(MEMBER_PAGE-1)*MEMBER_PAGE_SIZE;
-  const pageRows=rows.slice(from,from+MEMBER_PAGE_SIZE);
-
-  const roles=[...new Set(MEMBER_USERS.map(u=>u.role).filter(Boolean))];
-  const branches=[...new Set(MEMBER_USERS.map(u=>u.branch).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'ko'));
-  const q=memberEsc(document.getElementById('memberSearch')?.value||'');
-  const status=memberEsc(document.getElementById('memberStatus')?.value||'');
-  const role=memberEsc(document.getElementById('memberRole')?.value||'');
-  const branch=memberEsc(document.getElementById('memberBranch')?.value||'');
-
-  const option=(value,label,selected)=>'<option value="'+memberEsc(value)+'" '+(selected?'selected':'')+'>'+memberEsc(label)+'</option>';
-  const toolbar=`
-    <div class="member-manager">
-      <div class="member-toolbar">
-        <input id="memberSearch" value="${q}" placeholder="이름, 아이디, 이메일 검색" oninput="memberSearchChanged()">
-        <select id="memberStatus" onchange="memberFilterChanged()">${option('','상태: 전체',!status)}${option('활성','활성',status==='활성')}${option('비활성','비활성',status==='비활성')}</select>
-        <select id="memberRole" onchange="memberFilterChanged()">${option('','권한: 전체',!role)}${roles.map(x=>option(x,x,role===x)).join('')}</select>
-        <select id="memberBranch" onchange="memberFilterChanged()">${option('','지부: 전체',!branch)}${branches.map(x=>option(x,x,branch===x)).join('')}</select>
-      </div>
-      <div class="member-summary"><span>전체 <strong>${MEMBER_USERS.length}</strong>명 · 검색 결과 <strong>${rows.length}</strong>명</span><span>${rows.length?from+1+'–'+Math.min(from+MEMBER_PAGE_SIZE,rows.length):'0'} / ${rows.length}</span></div>`;
-
-  if(!pageRows.length){
-    el.innerHTML=toolbar+'<div class="member-table-wrap"><div class="member-empty">조건에 맞는 회원이 없습니다.</div></div><div class="member-mobile-list"><div class="member-empty">조건에 맞는 회원이 없습니다.</div></div>';
-    return;
-  }
-
-  const desktop=`
-    <div class="member-table-wrap">
-      <table class="member-table">
-        <thead><tr><th>회원</th><th>이메일</th><th>권한</th><th>소속 지부</th><th>상태</th><th>관리</th></tr></thead>
-        <tbody>${pageRows.map(u=>{
-          const id=memberEsc(u.id||'').replace(/'/g,"&#039;");
-          const active=u.status==='활성';
-          return `<tr>
-            <td><div class="member-primary">${memberEsc(u.name||'-')}</div><div class="member-secondary">${memberEsc(u.username||'-')}</div></td>
-            <td><div class="member-email" title="${memberEsc(u.email||'')}">${memberEsc(u.email||'-')}</div></td>
-            <td>${memberEsc(u.role||'-')}</td>
-            <td>${memberEsc(u.branch||'-')}</td>
-            <td><span class="member-status ${active?'active':'inactive'}">${memberEsc(u.status||'-')}</span></td>
-            <td><div class="member-actions"><button class="btn light" onclick="editUser('${id}')">수정</button><button class="btn light" onclick="toggleUser('${id}','${active?'비활성':'활성'}')">${active?'비활성화':'활성화'}</button></div></td>
-          </tr>`;
-        }).join('')}</tbody>
-      </table>
-    </div>`;
-
-  const mobile=`
-    <div class="member-mobile-list">${pageRows.map(u=>{
-      const id=memberEsc(u.id||'').replace(/'/g,"&#039;");
-      const active=u.status==='활성';
-      return `<div class="member-mobile-card">
-        <div class="member-mobile-top"><div><div class="member-mobile-name">${memberEsc(u.name||'-')}</div><div class="member-mobile-id">${memberEsc(u.username||'-')}</div></div><span class="member-status ${active?'active':'inactive'}">${memberEsc(u.status||'-')}</span></div>
-        <div class="member-mobile-info">
-          <div><span>이메일</span><b>${memberEsc(u.email||'-')}</b></div>
-          <div><span>권한</span><b>${memberEsc(u.role||'-')}</b></div>
-          <div><span>소속 지부</span><b>${memberEsc(u.branch||'-')}</b></div>
-        </div>
-        <div class="member-mobile-actions"><button class="btn light" onclick="editUser('${id}')">회원 정보 수정</button><button class="btn light" onclick="toggleUser('${id}','${active?'비활성':'활성'}')">${active?'비활성화':'활성화'}</button></div>
-      </div>`;
-    }).join('')}</div>`;
-
-  let pagination='';
-  if(totalPages>1){
-    const pages=[];
-    const startPage=Math.max(1,Math.min(MEMBER_PAGE-2,totalPages-4));
-    const endPage=Math.min(totalPages,startPage+4);
-    for(let i=startPage;i<=endPage;i++)pages.push('<button class="member-page-btn '+(i===MEMBER_PAGE?'active':'')+'" onclick="memberGoPage('+i+')">'+i+'</button>');
-    pagination='<div class="member-pagination"><button class="member-page-btn" '+(MEMBER_PAGE===1?'disabled':'')+' onclick="memberGoPage('+(MEMBER_PAGE-1)+')">‹</button>'+pages.join('')+'<button class="member-page-btn" '+(MEMBER_PAGE===totalPages?'disabled':'')+' onclick="memberGoPage('+(MEMBER_PAGE+1)+')">›</button></div>';
-  }
-  el.innerHTML=toolbar+desktop+mobile+pagination;
-}
-
-function memberSearchChanged(){MEMBER_PAGE=1;renderUsers()}
-function memberFilterChanged(){MEMBER_PAGE=1;renderUsers()}
-function memberGoPage(page){MEMBER_PAGE=page;renderUsers()}
-
 async function loadUsers(){
   try{
     const r=await A('listUsers',[T]);
-    MEMBER_USERS=r.users||r.items||r.data||[];
-    if(!Array.isArray(MEMBER_USERS))MEMBER_USERS=[];
-    MEMBER_PAGE=1;
-    renderUsers();
+    const users=r.users||r.items||r.data||[];
+    const el=document.getElementById('users');
+    if(!Array.isArray(users)||!users.length){
+      el.innerHTML='<div class="notice">등록된 회원이 없습니다.</div>';
+      return;
+    }
+    el.innerHTML=`
+      <div class="member-list-wrap">
+        <div class="member-list-head">
+          <span>회원 목록</span>
+          <span class="member-list-count">${users.length}명</span>
+        </div>
+        ${users.map(u=>{
+          const id=E(u.id||'').replace(/'/g,"&#039;");
+          const active=u.status==='활성';
+          return `
+            <div class="member-row">
+              <div class="member-main member-cell">
+                <div>
+                  <div class="member-name">${E(u.name||'-')}</div>
+                  <div class="member-id">${E(u.username||'-')}</div>
+                </div>
+                <span class="member-status ${active?'active':'inactive'}">${E(u.status||'-')}</span>
+              </div>
+              <div class="member-cell member-email" title="${E(u.email||'')}">${E(u.email||'-')}</div>
+              <div class="member-cell member-role">${E(u.role||'-')}</div>
+              <div class="member-cell member-branch">${E(u.branch||'-')}</div>
+              <div class="member-cell" style="display:none"></div>
+              <div class="member-actions">
+                <button class="btn light" onclick="editUser('${id}')">수정</button>
+                <button class="btn light" onclick="toggleUser('${id}','${active?'비활성':'활성'}')">${active?'비활성화':'활성화'}</button>
+              </div>
+              <div class="member-details">
+                <div class="member-detail"><span class="member-detail-label">이메일</span><span class="member-detail-value">${E(u.email||'-')}</span></div>
+                <div class="member-detail"><span class="member-detail-label">권한</span><span class="member-detail-value">${E(u.role||'-')}</span></div>
+                <div class="member-detail"><span class="member-detail-label">소속 지부</span><span class="member-detail-value">${E(u.branch||'-')}</span></div>
+              </div>
+            </div>`;
+        }).join('')}
+      </div>`;
   }catch(e){
-    document.getElementById('users').innerHTML='<div class="notice error">'+E(e.message)+'</div>';
+    document.getElementById('users').innerHTML='<div class="notice error">'+E(e.message)+'</div>'
   }
 }
 function loginHistory(){
