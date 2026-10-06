@@ -551,7 +551,7 @@ async function saveMaterialAdmin(id){
   catch(e){document.getElementById('ame_msg').innerHTML='<div class="notice error">'+E(e.message)+'</div>';}
 }
 async function deleteMaterialAdmin(id,title){
-  if(!confirm('자료를 삭제하시겠습니까?\\n\\n'+title+'\\n\\n삭제하면 Google Drive 원본도 휴지통으로 이동합니다.'))return;
+  if(!confirm('자료를 삭제하시겠습니까?\n\n'+title+'\n\n삭제하면 Google Drive 원본도 휴지통으로 이동합니다.'))return;
   try{await A('deleteMaterial',[T,id]);alert('자료가 삭제되었습니다.');await loadAdminMaterials();}
   catch(e){alert(e.message);}
 }
