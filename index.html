@@ -818,9 +818,10 @@ async function pw(force=false){
   nav();
   document.getElementById('app').innerHTML=`<div class="container"><div class="panel"><div class="form">
   <h2>비밀번호 변경</h2>${force?'<div class="notice">첫 로그인입니다. 새 비밀번호를 설정해 주세요.</div>':''}
+  <div class="notice" style="line-height:1.7;margin:12px 0 18px"><strong>비밀번호 입력 안내</strong><br>새 비밀번호를 첫 번째 칸에 입력한 다음, 아래 확인 칸에 <strong>똑같은 비밀번호를 한 번 더 입력</strong>해 주세요. 두 칸의 비밀번호가 서로 같아야 변경됩니다. 비밀번호는 6자 이상이어야 합니다.</div>
   <label>현재 비밀번호</label><input id="oldpw" type="password">
-  <label>새 비밀번호</label><input id="newpw" type="password" minlength="6">
-  <label>새 비밀번호 확인</label><input id="newpw2" type="password" minlength="6">
+  <label>새 비밀번호</label><input id="newpw" type="password" minlength="6" autocomplete="new-password">
+  <label>새 비밀번호 확인 (위와 똑같이 입력)</label><input id="newpw2" type="password" minlength="6" autocomplete="new-password">
   <button class="btn" style="margin-top:16px" onclick="changePw()">변경하기</button>
   </div></div></div>`;
 }
