@@ -302,7 +302,7 @@ async function api(action,args,ctx=null){
         const hay=fields.join(' ');
         const hayCompact=fields.map(compact).join('');
         if(q && !(terms.every(t=>hay.includes(t)) || (qCompact && hayCompact.includes(qCompact)))) continue;
-        if(cat && norm(r[3])!==cat) continue;
+        if(cat && compact(r[3])!==compact(cat)) continue;
         if(lang && norm(r[4])!==lang) continue;
         const id=String(r[0]);
         out.push({id,title:String(r[1]||''),description:String(r[2]||''),category:String(r[3]||''),language:String(r[4]||''),author:String(r[5]||''),year:String(r[6]||''),fileName:String(r[8]||''),fileType:String(r[9]||''),date:String(r[10]||''),views:Number(r[14]||0),commentCount:counts[id]||0,viewUrl:'https://drive.google.com/file/d/'+encodeURIComponent(String(r[7]||''))+'/view',downloadUrl:'https://drive.google.com/uc?export=download&id='+encodeURIComponent(String(r[7]||''))});
