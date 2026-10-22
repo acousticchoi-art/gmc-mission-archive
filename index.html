@@ -18,7 +18,7 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
 .cat{padding:20px;text-align:left;min-height:92px}.cat b{display:block;margin-bottom:7px}.cat small,.meta{color:var(--muted);font-size:12px}
 .cards{display:grid;grid-template-columns:1fr;gap:0}.category-bar-wrap{margin-top:9px;border-top:0!important;padding-top:0!important}.hero-categories{max-width:850px}
 
-.category-bar{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-top:10px}
+.category-bar{display:block;margin-top:10px}.category-group{margin:12px 0 16px}.category-group-title{font-size:12px;font-weight:800;color:#b18a55;margin:0 0 7px}.category-group-items{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
 .category-bar button{flex:0 0 auto;border:1px solid rgba(255,255,255,.24);background:rgba(255,255,255,.07);color:rgba(255,255,255,.82);border-radius:999px;padding:7px 12px;font-size:12px;line-height:1.2;transition:all .15s}
 .category-bar button:hover{border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.13);color:#fff}
 .category-bar button.active{background:var(--a);border-color:var(--a);color:#fff;font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,.12)}
@@ -221,11 +221,17 @@ async function loadCats(){
   try{
     const d=await A('categories',[T]); CATS=d.categories||d.items||d.data||[];
     if(!Array.isArray(CATS))CATS=[];
-    const names=CATS.map(c=>typeof c==='string'?c:(c.name||c.category||'')).filter(Boolean); if(!names.includes('BAM')) names.push('BAM');
+    const names=CATS.map(c=>typeof c==='string'?c:(c.name||c.category||'')).filter(Boolean);
     const cats=document.getElementById('cats'); if(!cats)return;
-    cats.innerHTML='<button class="active" onclick="selectCategory(this,\'\')">전체</button>'+names.map(name=>
-      `<button onclick="selectCategory(this,'${E(name).replace(/'/g,"&#039;")}')">${E(categoryLabel(name))}</button>`
-    ).join('');
+    const groups=[
+      {title:'교육 사역',items:['신학교·지도자','교육','어린이·청소년']},
+      {title:'교회 사역',items:['교회개척','주일학교','제자훈련','전도','사역자훈련','교단협력']},
+      {title:'공동체 사역',items:['기숙사','학사','고아원']},
+      {title:'비즈니스 사역',items:['BAM','어학원','NGO 개발','문화사역']},
+      {title:'공통자료',items:['GMC 자료','사진·영상','서적','미얀마 이해']}
+    ];
+    cats.innerHTML='<button class="active" onclick="selectCategory(this,\'\')">전체 자료</button>'+
+      groups.map(g=>'<div class="category-group"><div class="category-group-title">'+E(g.title)+'</div><div class="category-group-items">'+g.items.map(name=>names.includes(name)?`<button onclick="selectCategory(this,'${E(name).replace(/'/g,"&#039;")}')">${E(categoryLabel(name))}</button>`:'').join('')+'</div></div>').join('');
   }catch(e){
     const cats=document.getElementById('cats'); if(cats)cats.innerHTML='<div class="notice error">'+E(e.message)+'</div>';
   }
