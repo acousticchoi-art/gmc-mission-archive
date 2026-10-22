@@ -608,6 +608,7 @@ async function loadUsers(){
               <div class="member-cell" style="display:none"></div>
               <div class="member-actions">
                 <button class="btn light" onclick="editUser('${id}')">수정</button>
+                <button class="btn light" onclick="resetMemberPassword('${id}','${E(u.name||u.username||'회원').replace(/'/g,"&#039;")}')">비밀번호 초기화</button>
                 <button class="btn light" onclick="toggleUser('${id}','${active?'비활성':'활성'}')">${active?'비활성화':'활성화'}</button>
               </div>
               <div class="member-details">
@@ -647,6 +648,16 @@ async function toggleUser(id,status){
     await A('updateUser',[T,{id,status}]);
     await loadUsers();
   }catch(e){alert(e.message)}
+}
+async function resetMemberPassword(id,name){
+  if(!confirm(name+' 회원의 비밀번호를 초기화할까요? 초기화 후 해당 회원은 임시 비밀번호로 로그인해야 합니다.'))return;
+  const password=prompt('임시 비밀번호를 입력하세요. 6자 이상으로 설정하세요.');
+  if(password===null)return;
+  if(password.length<6){alert('비밀번호는 6자 이상이어야 합니다.');return;}
+  try{
+    await A('resetUserPassword',[T,id,password]);
+    alert('비밀번호가 초기화되었습니다.\n\n회원에게 임시 비밀번호를 안전하게 전달해 주세요. 회원은 로그인 후 새 비밀번호를 설정해야 합니다.');
+  }catch(e){alert('비밀번호 초기화 실패: '+e.message)}
 }
 async function editUser(id){
   try{
