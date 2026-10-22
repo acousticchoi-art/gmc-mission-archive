@@ -278,7 +278,7 @@ async function api(action,args,ctx=null){
     case 'logout':return {ok:true};
     case 'me':{const s=await session(args[0]),u=await findUserById(s.uid);if(!u)throw new Error('회원 정보를 찾을 수 없습니다.');return {ok:true,user:publicUser(u)};}
     case 'changePassword':{const s=await session(args[0]);const u=await findUserById(s.uid);if(!u)throw new Error('회원 정보를 찾을 수 없습니다.');validatePassword(args[1]);validatePassword(args[2]);const oldHash=await hashPassword(args[1],u.salt);if(!constEq(oldHash,u.hash))throw new Error('현재 비밀번호가 올바르지 않습니다.');const salt=randomHex(16),hash=await hashPassword(args[2],salt);await sheetUpdate('회원!H'+u.row+':J'+u.row,[[hash,salt,false]]);return {ok:true};}
-    case 'categories':{await session(args[0]);const rows=await sheetGet('카테고리!A:D');return {ok:true,categories:rows.slice(1).filter(r=>r[0]&&String(r[3]).toLowerCase()==='true').map(r=>String(r[1]))};}
+    case 'categories':{await session(args[0]);return {ok:true,categories:['신학교·지도자','교육','어린이·청소년','교회개척','주일학교','제자훈련','전도','사역자훈련','교단협력','기숙사','학사','고아원','BAM','어학원','NGO 개발','문화사역','GMC 자료','사진·영상','서적','미얀마 이해']};}
     case 'listMaterials':{
       await session(args[0]);
       const f=args[1]||{};
