@@ -126,17 +126,17 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
  .category-toggle,.category-panel,.heroResult{max-width:none;width:100%}
 }
 </style><style id="mobile-viewer-actions-refresh">
-#materialViewer .viewer-actions{align-items:stretch}
-#materialViewer .viewer-actions .btn{display:flex;align-items:center;justify-content:center;text-align:center;min-width:0;min-height:48px;white-space:normal;line-height:1.25;text-decoration:none}
+#materialViewer .viewer-actions{display:flex;align-items:stretch;gap:10px}
+#materialViewer .viewer-actions .btn{display:flex;align-items:center;justify-content:center;text-align:center;min-width:0;min-height:46px;padding:10px 16px;white-space:normal;line-height:1.25;text-decoration:none;border-radius:10px}
 @media(max-width:700px){
  #materialViewer .viewer-panel{inset:2vh 2vw;border-radius:16px}
- #materialViewer .viewer-actions{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) minmax(76px,.72fr);gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
- #materialViewer .viewer-actions .btn{height:54px;min-height:54px;padding:7px 5px;font-size:14px;border-radius:10px;overflow-wrap:anywhere}
- #materialViewer .viewer-actions .btn.primary{font-size:13px}
+ #materialViewer .viewer-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;padding:12px 14px calc(12px + env(safe-area-inset-bottom));background:#fff}
+ #materialViewer .viewer-actions .btn{height:48px;min-height:48px;padding:8px 10px;font-size:14px;border-radius:10px;white-space:nowrap}
+ #materialViewer .viewer-actions .btn.primary{grid-column:1 / -1;height:50px;font-size:15px}
 }
 @media(max-width:380px){
- #materialViewer .viewer-actions{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 72px;gap:6px;padding-left:8px;padding-right:8px}
- #materialViewer .viewer-actions .btn{font-size:12px}
+ #materialViewer .viewer-actions{gap:7px;padding-left:10px;padding-right:10px}
+ #materialViewer .viewer-actions .btn{font-size:13px}
 }
 </style><style id="internal-material-viewer">
 #materialViewer{position:fixed;inset:0;z-index:9999}
@@ -780,9 +780,9 @@ function showMaterialViewer(m,link,materialId=''){
     '</div>'+
     '</div>'+
     '<div class="viewer-actions">'+
-    (link?'<a class="btn primary" href="'+E(link)+'" target="_blank" rel="noopener">원본 열기 / 다운로드</a>':'')+
-    (materialId?'<button class="btn light" onclick="shareMaterial(\''+E(materialId).replace(/'/g,"&#039;")+'\')">자료 링크 공유</button>':'')+
-    '<button class="btn light" onclick="closeMaterialViewer()">뒤로가기</button></div>'+
+    (link?'<a class="btn primary" href="'+E(link)+'" target="_blank" rel="noopener">원본 열기</a>':'')+
+    (materialId?'<button class="btn light" onclick="shareMaterial(\''+E(materialId).replace(/'/g,"&#039;")+'\')">링크 공유</button>':'')+
+    '<button class="btn light" onclick="closeMaterialViewer()">닫기</button></div>'+
     '</section>';
   document.body.appendChild(wrap);
   document.body.style.overflow='hidden';
