@@ -890,7 +890,7 @@ async function toggleFavorite(id,btn){
 }
 async function myPage(){
   nav();
-  document.getElementById('app').innerHTML='<div class="container"><div class="title"><h2>내 보관함</h2><span class="meta" id="myMaterialCount"></span></div><div class="material-tabs"><button id="favTab" class="active" onclick="switchMyMaterialTab(\'favorite\')">저장한 자료</button><button id="recentTab" onclick="switchMyMaterialTab(\'recent\')">최근 본 자료</button></div><div class="cards" id="myMaterialCards"><div class="notice">불러오는 중...</div></div></div>';
+  document.getElementById('app').innerHTML='<div class="container"><div class="title"><h2>내 보관함</h2><span class="meta" id="myMaterialCount"></span></div><div class="material-tabs"><button id="favTab" class="active" onclick="switchMyMaterialTab(\'favorite\')">보관한 자료</button><button id="recentTab" onclick="switchMyMaterialTab(\'recent\')">최근 본 자료</button></div><div class="cards" id="myMaterialCards"><div class="notice">불러오는 중...</div></div></div>';
   await loadFavorites();
   switchMyMaterialTab('favorite');
 }
@@ -905,7 +905,7 @@ async function switchMyMaterialTab(tab){
     document.getElementById('myMaterialCount').textContent=items.length+'개';
     if(tab==='favorite'){
       FAVS=new Set((d.ids||[]).map(String));
-      if(!items.length){box.innerHTML='<div class="panel favorite-empty"><b>저장한 자료가 없습니다.</b><p>마음에 드는 자료의 ☆를 눌러 내 자료에 저장해보세요.</p></div>';return}
+      if(!items.length){box.innerHTML='<div class="panel favorite-empty"><b>보관한 자료가 없습니다.</b><p>마음에 드는 자료의 ☆를 눌러 내 보관함에 저장해보세요.</p></div>';return}
       box.innerHTML=items.map(m=>'<article class="card" style="cursor:pointer" onclick="openMaterialById(\''+E(m.id).replace(/'/g,"&#039;")+'\',\'\',this)"><div class="card-top"><div class="tag">'+E(m.category||'기타')+'</div><button class="favorite-btn active" title="내 보관함에서 제거" onclick="event.stopPropagation();toggleFavorite(\''+E(m.id).replace(/'/g,"&#039;")+'\',this).then(()=>switchMyMaterialTab(\'favorite\'))">★</button></div><h3>'+E(m.title||'제목 없음')+'</h3><p>'+E(m.description||'')+'</p><div class="meta">'+E(m.author||'')+(m.year?' · '+E(m.year):'')+' · 조회 '+Number(m.views||0)+'</div></article>').join('');
     }else{
       if(!items.length){box.innerHTML='<div class="panel favorite-empty"><b>최근 본 자료가 없습니다.</b><p>자료를 열어보면 여기에 최근 본 순서대로 표시됩니다.</p></div>';return}
@@ -943,7 +943,7 @@ async function search(category=''){
     });
     cards.innerHTML=items.map(m=>`
       <article class="card" style="cursor:pointer" onclick="openMaterialById('${E(m.id||m.materialId||m.ID||'').replace(/'/g,"&#039;")}','${E(m.url||m.viewUrl||m.driveUrl||m.webViewLink||'').replace(/'/g,"&#039;")}',this)">
-        <div class="card-top"><div class="tag">${E(m.category||'기타')}</div><button class="favorite-btn ${FAVS.has(String(m.id||m.materialId||m.ID||''))?'active':''}" title="${FAVS.has(String(m.id||m.materialId||m.ID||''))?'내 보관함에서 제거':'내 자료에 저장'}" onclick="event.stopPropagation();toggleFavorite('${E(m.id||m.materialId||m.ID||'').replace(/'/g,"&#039;")}',this)">${FAVS.has(String(m.id||m.materialId||m.ID||''))?'★':'☆'}</button></div>
+        <div class="card-top"><div class="tag">${E(m.category||'기타')}</div><button class="favorite-btn ${FAVS.has(String(m.id||m.materialId||m.ID||''))?'active':''}" title="${FAVS.has(String(m.id||m.materialId||m.ID||''))?'내 보관함에서 제거':'내 보관함에 저장'}" onclick="event.stopPropagation();toggleFavorite('${E(m.id||m.materialId||m.ID||'').replace(/'/g,"&#039;")}',this)">${FAVS.has(String(m.id||m.materialId||m.ID||''))?'★':'☆'}</button></div>
         <h3>${E(m.title||m.name||'제목 없음')}</h3>
         <p>${E(m.description||m.content||'')}</p>
         <div class="meta">${E(m.author||m.writer||'')} ${m.year?'· '+E(m.year):''} · 조회 ${Number(m.views||0)} · 댓글 ${Number(m.commentCount||0)}</div>
