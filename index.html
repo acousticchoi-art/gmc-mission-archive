@@ -952,13 +952,13 @@ async function search(category, restoring=false){
   try{
     let d;
     // Keep compatibility with the current Worker API.
-    try{d=await A('listMaterials',[T,{q,category}])}
-    catch(e){d=await A('listMaterials',[T,{q,category}])}
+    try{d=await A('listMaterials',[T,{q,category:state.category}])}
+    catch(e){d=await A('listMaterials',[T,{q,category:state.category}])}
     let items=d.materials||d.items||d.data||[];
     if(count){
       count.textContent = q
         ? `'${q}' 검색 결과 ${Array.isArray(items)?items.length:0}건`
-        : (category ? `${category} 자료 ${Array.isArray(items)?items.length:0}건` : `전체 자료 ${Array.isArray(items)?items.length:0}건`);
+        : (state.category ? `${state.category} 자료 ${Array.isArray(items)?items.length:0}건` : `전체 자료 ${Array.isArray(items)?items.length:0}건`);
     }
     if(!Array.isArray(items)||!items.length){cards.innerHTML='<div class="notice">검색 결과가 없습니다.</div>';return}
     const sort=document.getElementById('searchSort')?.value||state.sort||(q?'related':'date');
