@@ -312,12 +312,18 @@ async function api(action,args,ctx=null){
     }
     case 'getMaterial':{const s=await session(args[0]),m=await findMaterial(args[1]);if(!m||m.status!=='공개')throw new Error('자료를 찾을 수 없습니다.');const material={...m,date:m.date,viewUrl:'https://drive.google.com/file/d/'+encodeURIComponent(m.driveId)+'/view',downloadUrl:'https://drive.google.com/uc?export=download&id='+encodeURIComponent(m.driveId)};const log=async()=>{try{await sheetUpdate('자료!O'+m.row+':O'+m.row,[[m.views+1]]);const rv=await recentViewsRows(),rid=maxNextId(rv,'R');await sheetAppend('최근본자료',[rid,s.uid,m.id,nowText()]);}catch(e){}};if(ctx?.waitUntil)ctx.waitUntil(log());else await log();return {ok:true,material};}
     case 'listRecentViews':{
-      const s=await session(args[0]),rows=await recentViewsRows(),materials=await materialsRows(),latest=new Map();
-      for(let i=1;i<rows.length;i++){const r=rows[i],materialId=String(r[2]||''),viewedAt=String(r[3]||'');if(!materialId||!viewedAt)continue;latest.set(materialId,{viewedAt,row:i});}
+      const s=await session(args[0]),rows=await recentViewsRows(),latest=new Map();
+      const timeValue=value=>{const raw=String(value||'').trim();if(!raw)return 0;const normalized=raw.replace(/^(\\d{4})-(\\d{2})-(\\d{2}) (\\d{2}:\\d{2}:\\d{2})$/,'$1-$2-$3T$4+06:30');const parsed=Date.parse(normalized);return Number.isFinite(parsed)?parsed:0;};
+      for(let i=1;i<rows.length;i++){
+        const r=rows[i],userId=String(r[1]||''),materialId=String(r[2]||''),viewedAt=String(r[3]||'');
+        if(userId!==String(s.uid)||!materialId||!viewedAt)continue;
+        const timestamp=timeValue(viewedAt),previous=latest.get(materialId);
+        if(!previous||timestamp>=previous.timestamp)latest.set(materialId,{viewedAt,timestamp,row:i});
+      }
       const out=[];
-      for(const [materialId,v] of latest){const m=await findMaterial(materialId);if(!m||m.status!=='공개')continue;out.push({id:m.id,title:m.title,description:m.description,category:m.category,language:m.language,author:m.author,year:m.year,fileName:m.fileName,fileType:m.fileType,date:m.date,views:m.views,viewedAt:v.viewedAt});}
-      out.sort((a,b)=>String(b.viewedAt).localeCompare(String(a.viewedAt)));
-      return {ok:true,materials:out.slice(0,30)};
+      for(const [materialId,v] of latest){const m=await findMaterial(materialId);if(!m||m.status!=='공개')continue;out.push({id:m.id,title:m.title,description:m.description,category:m.category,language:m.language,author:m.author,year:m.year,fileName:m.fileName,fileType:m.fileType,date:m.date,views:m.views,viewedAt:v.viewedAt,_viewTimestamp:v.timestamp});}
+      out.sort((a,b)=>b._viewTimestamp-a._viewTimestamp);
+      return {ok:true,materials:out.slice(0,30).map(({_viewTimestamp,...m})=>m)};
     }
     case 'listFavorites':{
       const s=await session(args[0]),rows=await favoritesRows(),materials=await materialsRows(),ids=new Set();
