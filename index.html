@@ -96,6 +96,35 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
   .hero { padding-left: 24px; padding-right: 24px; }
   .container { padding-left: 24px; padding-right: 24px; }
 }
+</style><style id="search-layout-refresh">
+/* Search controls: clearer alignment and more balanced button proportions */
+.hero{padding-top:24px}
+.hero-inner{max-width:1060px}
+.hero h1{margin-bottom:16px}
+.search{width:min(820px,100%);height:54px;margin:0 0 14px;border:1px solid #c5d0da;border-radius:10px;box-shadow:0 3px 12px rgba(23,52,79,.06);gap:0}
+.search:focus-within{border-color:#17344f;box-shadow:0 0 0 3px rgba(23,52,79,.09)}
+.search input{height:52px;line-height:52px;padding:0 18px;font-size:15px}
+.search button{height:52px;min-height:52px;line-height:1;border:0;border-left:1px solid rgba(255,255,255,.16);border-radius:0 9px 9px 0;padding:0 26px;min-width:104px;background:#17344f;color:#fff;font-size:14px;font-weight:700;transition:background .15s ease}
+.search button:hover{background:#244b6b}
+.category-toggle,.category-panel,.heroResult{max-width:820px;margin-left:0;margin-right:0}
+.heroResult{margin-top:10px;margin-bottom:14px}
+@media(min-width:701px){
+ .hero{padding:28px 32px 0}
+ .hero-inner{width:min(1180px,100%)}
+ .hero h1{font-size:32px;margin:0 0 17px}
+ .search{width:min(820px,100%);height:54px;margin:0 0 14px}
+ .search input{height:52px;line-height:52px}
+ .search button{height:52px;min-height:52px;padding:0 28px}
+ .category-toggle,.category-panel,.heroResult{max-width:820px;margin-left:0;margin-right:0}
+}
+@media(max-width:700px){
+ .hero{padding:20px 16px 0}
+ .hero h1{font-size:27px;margin-bottom:15px}
+ .search{width:100%;height:48px;margin-bottom:12px}
+ .search input{height:46px;line-height:46px;padding:0 12px;font-size:14px}
+ .search button{height:46px;min-height:46px;min-width:76px;padding:0 17px;font-size:13px}
+ .category-toggle,.category-panel,.heroResult{max-width:none;width:100%}
+}
 </style><style id="internal-material-viewer">
 #materialViewer{position:fixed;inset:0;z-index:9999}
 #materialViewer .viewer-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.68)}
