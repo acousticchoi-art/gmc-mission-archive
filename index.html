@@ -197,6 +197,28 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
     text-align: left;
   }
 }
+
+/* Correct desktop archive grid: align category controls with the search field. */
+@media (min-width: 900px) {
+  .hero { padding-left: 32px !important; padding-right: 32px !important; }
+  .hero-inner { width: min(1500px, 100%) !important; max-width: none !important; margin: 0 auto !important; }
+  .hero h1 { margin-left: 0 !important; }
+  .search { width: min(950px, 100%) !important; margin: 0 0 14px !important; }
+  .hero-categories,
+  .category-bar-wrap,
+  .category-bar,
+  .category-summary,
+  .category-controls {
+    width: min(950px, 100%) !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: auto !important;
+  }
+  .hero-categories { display: block !important; }
+  .category-bar-wrap { text-align: left !important; }
+  .category-bar { justify-content: flex-start !important; }
+  .container { width: min(1500px, 100%) !important; max-width: none !important; padding-left: 32px !important; padding-right: 32px !important; }
+}
 </style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
