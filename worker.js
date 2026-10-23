@@ -180,11 +180,28 @@ async function googleJson(url,opts={}){
   return d;
 }
 function sheetUrl(range){return 'https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.SHEET_ID)+'/values/'+encodeURIComponent(range);}
-async function sheetGet(range){return (await googleJson(sheetUrl(range)+'?valueRenderOption=FORMATTED_VALUE')).values||[];}
-async function sheetAppend(sheet,values){
-  return googleJson(sheetUrl(sheet+'!A:Z')+':append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({values:[values]})});
+// Short-lived per-isolate cache reduces repeated Google Sheets reads during page navigation/search.
+const SHEET_READ_CACHE=new Map();
+const SHEET_READ_TTL_MS=15000;
+function invalidateSheetReadCache(){SHEET_READ_CACHE.clear();}
+async function sheetGet(range){
+  const now=Date.now(),cached=SHEET_READ_CACHE.get(range);
+  if(cached&&cached.expiresAt>now)return cached.values.map(row=>row.slice());
+  try{
+    const values=(await googleJson(sheetUrl(range)+'?valueRenderOption=FORMATTED_VALUE')).values||[];
+    SHEET_READ_CACHE.set(range,{values,expiresAt:Date.now()+SHEET_READ_TTL_MS});
+    return values.map(row=>row.slice());
+  }catch(e){
+    // If Google temporarily rate-limits reads, use a recent successful result if available.
+    if(cached&&Date.now()-cached.expiresAt<=60000)return cached.values.map(row=>row.slice());
+    throw e;
+  }
 }
-async function sheetUpdate(range,values){return googleJson(sheetUrl(range)+'?valueInputOption=USER_ENTERED',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({range,majorDimension:'ROWS',values})});}
+async function sheetAppend(sheet,values){
+  const result=await googleJson(sheetUrl(sheet+'!A:Z')+':append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({values:[values]})});
+  invalidateSheetReadCache();return result;
+}
+async function sheetUpdate(range,values){const result=await googleJson(sheetUrl(range)+'?valueInputOption=USER_ENTERED',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({range,majorDimension:'ROWS',values})});invalidateSheetReadCache();return result;}
 function normalizeRole(v){return String(v||'')==='관리자'?'관리자':'일반회원';}
 function rowObj(r,row){return {id:String(r[0]||''),name:String(r[1]||''),username:String(r[2]||''),email:String(r[3]||''),phone:String(r[4]||''),branch:String(r[5]||''),role:normalizeRole(r[6]),hash:String(r[7]||''),salt:String(r[8]||''),firstLogin:String(r[9]).toLowerCase()==='true',status:String(r[10]||''),created:String(r[11]||''),lastLogin:String(r[12]||''),row};}
 async function ensureFavoritesSheet(){
