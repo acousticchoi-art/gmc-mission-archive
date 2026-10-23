@@ -386,6 +386,40 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
   .hero .search input { height: 72px !important; min-height: 72px !important; padding: 0 24px !important; }
   .hero .search button { height: 72px !important; min-height: 72px !important; }
 }
+
+/* Refined compact hero: preserve the navy/gold style without overwhelming the page. */
+.hero {
+  padding: 34px 24px 28px !important;
+  background: radial-gradient(ellipse at 88% 10%, #244b68 0%, transparent 46%), linear-gradient(135deg, #142f48 0%, #1b3d57 58%, #18364e 100%) !important;
+}
+.hero .hero-inner { width: min(1080px, 100%) !important; max-width: 1080px !important; }
+.hero .eyebrow { font-size: 12px !important; letter-spacing: .2em !important; margin-bottom: 12px !important; }
+.hero h1 { font-size: clamp(36px, 4.5vw, 54px) !important; line-height: 1.08 !important; margin: 0 0 12px !important; }
+.hero p.hero-description { font-size: clamp(15px, 1.8vw, 19px) !important; line-height: 1.6 !important; margin: 0 0 24px !important; max-width: 800px !important; }
+.hero .search {
+  width: min(760px, 100%) !important;
+  flex-direction: row !important;
+  height: 58px !important;
+  min-height: 58px !important;
+  margin: 0 auto 14px !important;
+  border-radius: 14px !important;
+}
+.hero .search input { flex: 1 1 auto !important; width: auto !important; height: 58px !important; min-height: 58px !important; padding: 0 22px !important; font-size: 17px !important; }
+.hero .search button { flex: 0 0 116px !important; width: 116px !important; height: 58px !important; min-height: 58px !important; font-size: 17px !important; }
+.hero .category-toggle,
+.hero .category-panel,
+.hero .heroResult { width: min(760px, 100%) !important; }
+.hero .category-toggle { padding: 12px 16px !important; font-size: 14px !important; }
+.hero .heroResult { font-size: 12px !important; margin-top: 10px !important; }
+@media (max-width: 700px) {
+  .hero { padding: 28px 18px 24px !important; }
+  .hero .eyebrow { font-size: 11px !important; margin-bottom: 10px !important; }
+  .hero h1 { font-size: clamp(34px, 9vw, 44px) !important; margin-bottom: 12px !important; }
+  .hero p.hero-description { font-size: 15px !important; line-height: 1.65 !important; margin-bottom: 22px !important; }
+  .hero .search { flex-direction: row !important; height: 54px !important; min-height: 54px !important; border-radius: 12px !important; }
+  .hero .search input { height: 54px !important; min-height: 54px !important; padding: 0 14px !important; font-size: 15px !important; }
+  .hero .search button { flex: 0 0 82px !important; width: 82px !important; height: 54px !important; min-height: 54px !important; font-size: 15px !important; }
+}
 </style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
