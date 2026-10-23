@@ -125,6 +125,19 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
  .search button{height:46px;min-height:46px;min-width:76px;padding:0 17px;font-size:13px}
  .category-toggle,.category-panel,.heroResult{max-width:none;width:100%}
 }
+</style><style id="mobile-viewer-actions-refresh">
+#materialViewer .viewer-actions{align-items:stretch}
+#materialViewer .viewer-actions .btn{display:flex;align-items:center;justify-content:center;text-align:center;min-width:0;min-height:48px;white-space:normal;line-height:1.25;text-decoration:none}
+@media(max-width:700px){
+ #materialViewer .viewer-panel{inset:2vh 2vw;border-radius:16px}
+ #materialViewer .viewer-actions{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) minmax(76px,.72fr);gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
+ #materialViewer .viewer-actions .btn{height:54px;min-height:54px;padding:7px 5px;font-size:14px;border-radius:10px;overflow-wrap:anywhere}
+ #materialViewer .viewer-actions .btn.primary{font-size:13px}
+}
+@media(max-width:380px){
+ #materialViewer .viewer-actions{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 72px;gap:6px;padding-left:8px;padding-right:8px}
+ #materialViewer .viewer-actions .btn{font-size:12px}
+}
 </style><style id="internal-material-viewer">
 #materialViewer{position:fixed;inset:0;z-index:9999}
 #materialViewer .viewer-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.68)}
