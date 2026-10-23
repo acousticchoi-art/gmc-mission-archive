@@ -280,6 +280,112 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
     line-height: 1.85;
   }
 }
+
+/* Mission Archive visual refresh inspired by the navy-and-gold reference. */
+.hero {
+  background: radial-gradient(ellipse at 88% 10%, #244b68 0%, transparent 46%), linear-gradient(135deg, #142f48 0%, #1b3d57 58%, #18364e 100%) !important;
+  color: #fff !important;
+  padding: clamp(34px, 5vw, 68px) 24px 34px !important;
+  border-bottom: 0 !important;
+}
+.hero-inner {
+  width: min(1120px, 100%) !important;
+  max-width: 1120px !important;
+  margin: 0 auto !important;
+}
+.hero .eyebrow {
+  font-size: clamp(12px, 1.7vw, 17px) !important;
+  letter-spacing: .24em !important;
+  color: #bdcbd5 !important;
+  font-weight: 500 !important;
+  margin: 0 0 20px !important;
+}
+.hero h1 {
+  color: #fff !important;
+  font-size: clamp(46px, 8vw, 92px) !important;
+  font-weight: 800 !important;
+  letter-spacing: -.045em !important;
+  line-height: 1.04 !important;
+  margin: 0 0 24px !important;
+}
+.hero p.hero-description {
+  display: block !important;
+  color: #d0dbe3 !important;
+  font-size: clamp(17px, 2.8vw, 30px) !important;
+  line-height: 1.65 !important;
+  letter-spacing: -.025em !important;
+  margin: 0 0 38px !important;
+  max-width: 1050px !important;
+}
+.hero .search {
+  width: min(990px, 100%) !important;
+  height: auto !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  margin: 0 auto 20px !important;
+  border: 0 !important;
+  border-radius: 28px !important;
+  overflow: hidden !important;
+  background: #fff !important;
+  box-shadow: 0 12px 34px rgba(0,0,0,.12) !important;
+}
+.hero .search input {
+  width: 100% !important;
+  height: 82px !important;
+  min-height: 82px !important;
+  padding: 0 40px !important;
+  font-size: clamp(18px, 2.7vw, 30px) !important;
+  line-height: normal !important;
+  border: 0 !important;
+}
+.hero .search button {
+  width: 100% !important;
+  height: 82px !important;
+  min-height: 82px !important;
+  background: #b18a55 !important;
+  color: #fff !important;
+  font-size: clamp(20px, 2.8vw, 30px) !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  padding: 0 24px !important;
+}
+.hero .category-toggle {
+  width: min(990px, 100%) !important;
+  margin: 0 auto !important;
+  color: #e6edf2 !important;
+  border-color: rgba(255,255,255,.2) !important;
+  background: rgba(255,255,255,.06) !important;
+}
+.hero .category-panel,
+.hero .heroResult {
+  width: min(990px, 100%) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  color: #d0dbe3 !important;
+}
+.hero .category-bar button {
+  background: rgba(255,255,255,.09) !important;
+  border-color: rgba(255,255,255,.18) !important;
+  color: #eef3f6 !important;
+}
+.hero .category-bar button.active {
+  background: #b18a55 !important;
+  border-color: #b18a55 !important;
+  color: #fff !important;
+}
+@media (min-width: 900px) {
+  .hero { padding-left: 32px !important; padding-right: 32px !important; }
+}
+@media (max-width: 700px) {
+  .hero { padding: 32px 18px 28px !important; }
+  .hero .eyebrow { margin-bottom: 16px !important; }
+  .hero h1 { margin-bottom: 18px !important; }
+  .hero p.hero-description { margin-bottom: 28px !important; }
+  .hero .search { border-radius: 22px !important; }
+  .hero .search input { height: 72px !important; min-height: 72px !important; padding: 0 24px !important; }
+  .hero .search button { height: 72px !important; min-height: 72px !important; }
+}
 </style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
@@ -341,7 +447,9 @@ async function home(){
   nav();
   document.getElementById('app').innerHTML=`
   <section class="hero"><div class="hero-inner">
-    <h1>선교 자료를 찾아보세요</h1>
+    <div class="eyebrow">GMC · MYANMAR MISSION</div>
+    <h1>Mission Archive</h1>
+    <p class="hero-description">미얀마 선교의 기록과 지식을 함께 보존하고 나누는 자료 아카이브입니다.</p>
     <div class="search"><input id="q" placeholder="자료 제목, 내용, 작성자 검색" onkeydown="if(event.key==='Enter')search()"><button onclick="search()">검색</button></div>
     <button class="category-toggle" id="categoryToggle" onclick="toggleCategories()"><span>카테고리</span><span class="arrow">⌄</span></button>
     <div class="category-panel" id="categoryPanel"><div class="category-bar" id="cats"></div></div>
