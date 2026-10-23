@@ -1140,17 +1140,20 @@ async function loadUsers(){
 }
 function loginHistory(){
   document.getElementById('app').innerHTML=`<div class="container admin-page"><div class="title"><h2>로그인 이력</h2><button class="btn light" onclick="admin()">← 관리자</button></div>
-  <div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px"><h3 style="margin:0">최근 로그인 기록</h3><button class="btn light" onclick="loadLoginHistory()">새로고침</button></div><div id="loginHistory"><div class="notice">불러오는 중...</div></div></div></div>`;
+  <div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px"><h3 style="margin:0">최근 로그인 기록</h3><button class="btn light" onclick="loadLoginHistory()">새로고침</button></div><div id="loginHistory"><div class="notice">불러오는 중...</div></div></div></div>`;
   loadLoginHistory();
 }
 async function loadLoginHistory(){
+  const target=document.getElementById('loginHistory');
+  if(!target)return;
+  target.innerHTML='<div class="notice">불러오는 중...</div>';
   try{
     const r=await A('loginHistory',[T]);
     const rows=r.history||[];
-    document.getElementById('loginHistory').innerHTML=rows.length
-      ? `<div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><tr><th style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">로그인 시간</th><th style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">이름</th><th style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">아이디</th><th style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">권한</th><th style="text-align:left;padding:9px;border-bottom:1px solid var(--line)">지부</th></tr>${rows.map(x=>`<tr><td style="padding:9px;border-bottom:1px solid var(--line);white-space:nowrap">${E(x.loginAt)}</td><td style="padding:9px;border-bottom:1px solid var(--line)">${E(x.name)}</td><td style="padding:9px;border-bottom:1px solid var(--line)">${E(x.username)}</td><td style="padding:9px;border-bottom:1px solid var(--line)">${E(x.role)}</td><td style="padding:9px;border-bottom:1px solid var(--line)">${E(x.branch)}</td></tr>`).join('')}</table></div>`
+    target.innerHTML=rows.length
+      ? `<div class="login-history-scroll" style="width:100%;max-width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:10px"><table style="width:100%;min-width:720px;table-layout:auto;border-collapse:collapse;font-size:14px"><thead><tr><th style="text-align:left;padding:12px;white-space:nowrap;background:#f7f9fa;border-bottom:1px solid var(--line)">로그인 시간</th><th style="text-align:left;padding:12px;white-space:nowrap;background:#f7f9fa;border-bottom:1px solid var(--line)">이름</th><th style="text-align:left;padding:12px;white-space:nowrap;background:#f7f9fa;border-bottom:1px solid var(--line)">아이디</th><th style="text-align:left;padding:12px;white-space:nowrap;background:#f7f9fa;border-bottom:1px solid var(--line)">권한</th><th style="text-align:left;padding:12px;white-space:nowrap;background:#f7f9fa;border-bottom:1px solid var(--line)">지부</th></tr></thead><tbody>${rows.map(x=>`<tr><td style="padding:12px;white-space:nowrap;font-variant-numeric:tabular-nums;border-bottom:1px solid var(--line)">${E(x.loginAt||'-')}</td><td style="padding:12px;white-space:nowrap;border-bottom:1px solid var(--line)">${E(x.name||'-')}</td><td style="padding:12px;white-space:nowrap;border-bottom:1px solid var(--line)">${E(x.username||'-')}</td><td style="padding:12px;white-space:nowrap;border-bottom:1px solid var(--line)">${E(x.role||'-')}</td><td style="padding:12px;white-space:nowrap;border-bottom:1px solid var(--line)">${E(x.branch||'-')}</td></tr>`).join('')}</tbody></table></div><div class="meta" style="margin-top:8px">모바일에서는 표를 좌우로 밀어 전체 항목을 확인할 수 있습니다.</div>`
       : '<div class="notice">로그인 이력이 없습니다.</div>';
-  }catch(e){document.getElementById('loginHistory').innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
+  }catch(e){target.innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
 }
 async function createUser(){
   const data={name:document.getElementById('un').value,username:document.getElementById('uid').value,email:document.getElementById('ue').value,branch:document.getElementById('ub').value,role:document.getElementById('ur').value,initialPassword:document.getElementById('up').value};
