@@ -451,6 +451,55 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
     margin-right: 0 !important;
   }
 }
+
+/* Category panel contrast and alignment polish. */
+.hero .category-toggle {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  text-align: left !important;
+  background: rgba(255,255,255,.08) !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+  border-radius: 10px !important;
+  color: #fff !important;
+}
+.hero .category-toggle .arrow { color: #d8c19f !important; }
+.hero .category-panel {
+  background: #fff !important;
+  border: 1px solid #e1e7ec !important;
+  border-radius: 14px !important;
+  padding: 18px !important;
+  margin-top: 8px !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.08) !important;
+}
+.hero .category-bar { display: flex !important; flex-direction: column !important; align-items: stretch !important; gap: 18px !important; }
+.hero .category-bar > button,
+.hero .category-bar .category-group-items button {
+  color: #33485a !important;
+  background: #f4f7f9 !important;
+  border: 1px solid #e1e7ec !important;
+}
+.hero .category-bar > button.active,
+.hero .category-bar .category-group-items button.active {
+  color: #fff !important;
+  background: #b18a55 !important;
+  border-color: #b18a55 !important;
+}
+.hero .category-group-title { color: #9b7443 !important; font-weight: 700 !important; }
+.hero .category-bar .category-group-items { display: flex !important; flex-wrap: wrap !important; gap: 8px !important; }
+.hero .category-bar .category-group-items button { padding: 8px 12px !important; border-radius: 8px !important; }
+.hero .heroResult { color: #e2eaf0 !important; }
+@media (min-width: 701px) {
+  .hero .hero-inner { width: min(760px, calc(100% - 48px)) !important; max-width: 760px !important; }
+  .hero .search,
+  .hero .category-toggle,
+  .hero .category-panel,
+  .hero .heroResult { width: 100% !important; max-width: none !important; margin-left: 0 !important; margin-right: 0 !important; }
+}
+@media (max-width: 700px) {
+  .hero .category-panel { padding: 14px !important; }
+  .hero .category-bar { gap: 15px !important; }
+}
 </style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
