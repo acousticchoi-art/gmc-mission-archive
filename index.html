@@ -592,7 +592,7 @@ function nav(){
   const x=document.getElementById('nav');
   if(!ME){x.innerHTML='';return}
   x.innerHTML='<button class="primary" onclick="home()">자료실</button>'+
-    '<button class="my-material-nav" onclick="myPage()">내 자료</button>'+
+    '<button class="my-material-nav" onclick="myPage()">내 보관함</button>'+
     (ME.role==='관리자'?'<button onclick="admin()">관리자</button>':'')+
     '<button onclick="pw()">비밀번호</button><button onclick="logout()">로그아웃</button>';
 }
@@ -776,11 +776,11 @@ async function toggleMaterialFavorite(id){
     const active=FAVS.has(String(id));
     if(btn){
       btn.classList.toggle('saved',active);
-      btn.innerHTML=active?'✓ 내 자료에 저장됨':'☆ 내 자료로 저장';
+      btn.innerHTML=active?'✓ 내 보관함에 저장됨':'☆ 내 보관함에 저장';
       btn.setAttribute('aria-pressed',String(active));
     }
     const note=document.getElementById('viewerFavoriteNote');
-    if(note)note.textContent=active?'내 자료 메뉴에서 확인할 수 있습니다.':'저장하면 내 자료 메뉴에서 다시 볼 수 있습니다.';
+    if(note)note.textContent=active?'내 보관함에서 확인할 수 있습니다.':'저장하면 내 보관함 메뉴에서 다시 볼 수 있습니다.';
   }catch(e){alert(e.message||'저장 처리 중 오류가 발생했습니다.')}
 }
 function showMaterialViewer(m,link,materialId=''){
@@ -812,7 +812,7 @@ function showMaterialViewer(m,link,materialId=''){
     '</div>'+
     '</div>'+
     '<div class="viewer-save-row">'+
-    (materialId?'<button id="viewerFavoriteBtn" class="viewer-favorite '+(FAVS.has(String(materialId))?'saved':'')+'" aria-pressed="'+String(FAVS.has(String(materialId)))+'" onclick="toggleMaterialFavorite(\''+E(materialId).replace(/'/g,"&#039;")+'\')">'+(FAVS.has(String(materialId))?'✓ 내 자료에 저장됨':'☆ 내 자료로 저장')+'</button><div id="viewerFavoriteNote" class="viewer-favorite-note">'+(FAVS.has(String(materialId))?'내 자료 메뉴에서 확인할 수 있습니다.':'저장하면 내 자료 메뉴에서 다시 볼 수 있습니다.')+'</div>':'')+
+    (materialId?'<button id="viewerFavoriteBtn" class="viewer-favorite '+(FAVS.has(String(materialId))?'saved':'')+'" aria-pressed="'+String(FAVS.has(String(materialId)))+'" onclick="toggleMaterialFavorite(\''+E(materialId).replace(/'/g,"&#039;")+'\')">'+(FAVS.has(String(materialId))?'✓ 내 보관함에 저장됨':'☆ 내 보관함에 저장')+'</button><div id="viewerFavoriteNote" class="viewer-favorite-note">'+(FAVS.has(String(materialId))?'내 보관함에서 확인할 수 있습니다.':'저장하면 내 보관함 메뉴에서 다시 볼 수 있습니다.')+'</div>':'')+
     '</div>'+
     '<div class="viewer-actions">'+
     (link?'<a class="btn primary" href="'+E(link)+'" target="_blank" rel="noopener">원본 열기</a>':'')+
@@ -886,11 +886,11 @@ async function loadFavorites(){
 }
 async function toggleFavorite(id,btn){
   if(!ME)return alert('로그인이 필요합니다.');
-  try{if(FAVS.has(String(id))){await A('removeFavorite',[T,id]);FAVS.delete(String(id))}else{await A('addFavorite',[T,id]);FAVS.add(String(id))}const active=FAVS.has(String(id));if(btn){btn.textContent=active?'★':'☆';btn.classList.toggle('active',active);btn.title=active?'내 자료에서 제거':'내 자료에 저장'}}catch(e){alert(e.message||'저장 처리 중 오류가 발생했습니다.')}
+  try{if(FAVS.has(String(id))){await A('removeFavorite',[T,id]);FAVS.delete(String(id))}else{await A('addFavorite',[T,id]);FAVS.add(String(id))}const active=FAVS.has(String(id));if(btn){btn.textContent=active?'★':'☆';btn.classList.toggle('active',active);btn.title=active?'내 보관함에서 제거':'내 보관함에 저장'}}catch(e){alert(e.message||'저장 처리 중 오류가 발생했습니다.')}
 }
 async function myPage(){
   nav();
-  document.getElementById('app').innerHTML='<div class="container"><div class="title"><h2>내 자료</h2><span class="meta" id="myMaterialCount"></span></div><div class="material-tabs"><button id="favTab" class="active" onclick="switchMyMaterialTab(\'favorite\')">저장한 자료</button><button id="recentTab" onclick="switchMyMaterialTab(\'recent\')">최근 본 자료</button></div><div class="cards" id="myMaterialCards"><div class="notice">불러오는 중...</div></div></div>';
+  document.getElementById('app').innerHTML='<div class="container"><div class="title"><h2>내 보관함</h2><span class="meta" id="myMaterialCount"></span></div><div class="material-tabs"><button id="favTab" class="active" onclick="switchMyMaterialTab(\'favorite\')">저장한 자료</button><button id="recentTab" onclick="switchMyMaterialTab(\'recent\')">최근 본 자료</button></div><div class="cards" id="myMaterialCards"><div class="notice">불러오는 중...</div></div></div>';
   await loadFavorites();
   switchMyMaterialTab('favorite');
 }
@@ -906,7 +906,7 @@ async function switchMyMaterialTab(tab){
     if(tab==='favorite'){
       FAVS=new Set((d.ids||[]).map(String));
       if(!items.length){box.innerHTML='<div class="panel favorite-empty"><b>저장한 자료가 없습니다.</b><p>마음에 드는 자료의 ☆를 눌러 내 자료에 저장해보세요.</p></div>';return}
-      box.innerHTML=items.map(m=>'<article class="card" style="cursor:pointer" onclick="openMaterialById(\''+E(m.id).replace(/'/g,"&#039;")+'\',\'\',this)"><div class="card-top"><div class="tag">'+E(m.category||'기타')+'</div><button class="favorite-btn active" title="내 자료에서 제거" onclick="event.stopPropagation();toggleFavorite(\''+E(m.id).replace(/'/g,"&#039;")+'\',this).then(()=>switchMyMaterialTab(\'favorite\'))">★</button></div><h3>'+E(m.title||'제목 없음')+'</h3><p>'+E(m.description||'')+'</p><div class="meta">'+E(m.author||'')+(m.year?' · '+E(m.year):'')+' · 조회 '+Number(m.views||0)+'</div></article>').join('');
+      box.innerHTML=items.map(m=>'<article class="card" style="cursor:pointer" onclick="openMaterialById(\''+E(m.id).replace(/'/g,"&#039;")+'\',\'\',this)"><div class="card-top"><div class="tag">'+E(m.category||'기타')+'</div><button class="favorite-btn active" title="내 보관함에서 제거" onclick="event.stopPropagation();toggleFavorite(\''+E(m.id).replace(/'/g,"&#039;")+'\',this).then(()=>switchMyMaterialTab(\'favorite\'))">★</button></div><h3>'+E(m.title||'제목 없음')+'</h3><p>'+E(m.description||'')+'</p><div class="meta">'+E(m.author||'')+(m.year?' · '+E(m.year):'')+' · 조회 '+Number(m.views||0)+'</div></article>').join('');
     }else{
       if(!items.length){box.innerHTML='<div class="panel favorite-empty"><b>최근 본 자료가 없습니다.</b><p>자료를 열어보면 여기에 최근 본 순서대로 표시됩니다.</p></div>';return}
       box.innerHTML=items.map(m=>'<article class="card" style="cursor:pointer" onclick="openMaterialById(\''+E(m.id).replace(/'/g,"&#039;")+'\',\'\',this)"><div class="card-top"><div class="tag">'+E(m.category||'기타')+'</div><span class="meta">'+E(m.viewedAt||'')+'</span></div><h3>'+E(m.title||'제목 없음')+'</h3><p>'+E(m.description||'')+'</p><div class="meta">'+E(m.author||'')+(m.year?' · '+E(m.year):'')+' · 조회 '+Number(m.views||0)+'</div></article>').join('');
@@ -943,7 +943,7 @@ async function search(category=''){
     });
     cards.innerHTML=items.map(m=>`
       <article class="card" style="cursor:pointer" onclick="openMaterialById('${E(m.id||m.materialId||m.ID||'').replace(/'/g,"&#039;")}','${E(m.url||m.viewUrl||m.driveUrl||m.webViewLink||'').replace(/'/g,"&#039;")}',this)">
-        <div class="card-top"><div class="tag">${E(m.category||'기타')}</div><button class="favorite-btn ${FAVS.has(String(m.id||m.materialId||m.ID||''))?'active':''}" title="${FAVS.has(String(m.id||m.materialId||m.ID||''))?'내 자료에서 제거':'내 자료에 저장'}" onclick="event.stopPropagation();toggleFavorite('${E(m.id||m.materialId||m.ID||'').replace(/'/g,"&#039;")}',this)">${FAVS.has(String(m.id||m.materialId||m.ID||''))?'★':'☆'}</button></div>
+        <div class="card-top"><div class="tag">${E(m.category||'기타')}</div><button class="favorite-btn ${FAVS.has(String(m.id||m.materialId||m.ID||''))?'active':''}" title="${FAVS.has(String(m.id||m.materialId||m.ID||''))?'내 보관함에서 제거':'내 자료에 저장'}" onclick="event.stopPropagation();toggleFavorite('${E(m.id||m.materialId||m.ID||'').replace(/'/g,"&#039;")}',this)">${FAVS.has(String(m.id||m.materialId||m.ID||''))?'★':'☆'}</button></div>
         <h3>${E(m.title||m.name||'제목 없음')}</h3>
         <p>${E(m.description||m.content||'')}</p>
         <div class="meta">${E(m.author||m.writer||'')} ${m.year?'· '+E(m.year):''} · 조회 ${Number(m.views||0)} · 댓글 ${Number(m.commentCount||0)}</div>
