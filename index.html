@@ -641,8 +641,9 @@ async function home(){
     <div class="cards" id="cards"><div class="notice">자료를 불러오는 중...</div></div>
   </div>`;
   loadFavorites().catch(()=>{});
+  restoreSearchState();
   loadCats();
-  search();
+  search(undefined, true);
 }
 
 async function loadCats(){
@@ -660,6 +661,10 @@ async function loadCats(){
     ];
     cats.innerHTML='<button class="active" onclick="selectCategory(this,\'\')">전체 자료</button>'+
       groups.map(g=>'<div class="category-group"><div class="category-group-title">'+E(g.title)+'</div><div class="category-group-items">'+g.items.map(name=>names.includes(name)?`<button onclick="selectCategory(this,'${E(name).replace(/'/g,"&#039;")}')">${E(categoryLabel(name))}</button>`:'').join('')+'</div></div>').join('');
+    const selected=(window.__gmcSearchState||{}).category||'';
+    const active=[...cats.querySelectorAll('button')].find(b=>b.getAttribute('onclick')?.includes("'"+selected+"'"))||cats.querySelector('button');
+    if(active){cats.querySelectorAll('button').forEach(b=>b.classList.remove('active'));active.classList.add('active')}
+
   }catch(e){
     const cats=document.getElementById('cats'); if(cats)cats.innerHTML='<div class="notice error">'+E(e.message)+'</div>';
   }
@@ -679,6 +684,7 @@ function selectCategory(btn,category=''){
   const panel=document.getElementById('categoryPanel'),toggle=document.getElementById('categoryToggle');
   if(panel)panel.classList.remove('open');
   if(toggle)toggle.classList.remove('open');
+  window.__gmcSearchState={...(window.__gmcSearchState||{}),category:category||''};
   search(category);
 }
 
@@ -913,9 +919,34 @@ async function switchMyMaterialTab(tab){
     }
   }catch(e){box.innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
 }
-async function search(category=''){
-  const q=document.getElementById('q')?.value.trim()||'';
+function readSearchState(){
+  const state=window.__gmcSearchState||{};
+  return {q:document.getElementById('q')?.value??state.q??'',category:state.category||'',sort:document.getElementById('searchSort')?.value||state.sort||'date'};
+}
+function persistSearchState(){
+  const state=readSearchState();
+  window.__gmcSearchState=state;
+  try{sessionStorage.setItem('gmcArchiveSearchState',JSON.stringify(state))}catch(e){}
+}
+function restoreSearchState(){
+  let saved=window.__gmcSearchState||{};
+  try{saved={...saved,...JSON.parse(sessionStorage.getItem('gmcArchiveSearchState')||'{}')}}catch(e){}
+  window.__gmcSearchState={q:saved.q||'',category:saved.category||'',sort:saved.sort||'date'};
+  const input=document.getElementById('q'),sort=document.getElementById('searchSort');
+  if(input)input.value=window.__gmcSearchState.q;
+  if(sort)sort.value=window.__gmcSearchState.sort;
+}
+async function search(category, restoring=false){
+  const state=readSearchState();
+  if(category!==undefined){state.category=category||''}
+  else if(state.category===undefined){state.category=''}
+  const q=(document.getElementById('q')?.value||state.q||'').trim();
+  state.q=q;
   const cards=document.getElementById('cards'), count=document.getElementById('heroResultCount');
+  const sortSelect=document.getElementById('searchSort');
+  if(sortSelect&&state.sort)sortSelect.value=state.sort;
+  window.__gmcSearchState=state;
+  if(!restoring)persistSearchState();
   if(!cards)return;
   cards.innerHTML='<div class="notice">검색 중...</div>';
   try{
@@ -930,8 +961,10 @@ async function search(category=''){
         : (category ? `${category} 자료 ${Array.isArray(items)?items.length:0}건` : `전체 자료 ${Array.isArray(items)?items.length:0}건`);
     }
     if(!Array.isArray(items)||!items.length){cards.innerHTML='<div class="notice">검색 결과가 없습니다.</div>';return}
-    const sort=document.getElementById('searchSort')?.value||(q?'related':'date');
-    const sortSelect=document.getElementById('searchSort'); if(sortSelect)sortSelect.value=sort;
+    const sort=document.getElementById('searchSort')?.value||state.sort||(q?'related':'date');
+    if(sortSelect)sortSelect.value=sort;
+    state.q=q;state.sort=sort;window.__gmcSearchState=state;
+    try{sessionStorage.setItem('gmcArchiveSearchState',JSON.stringify(state))}catch(e){}
     items=[...items];
     items.sort((a,b)=>{
       if(sort==='title')return String(a.title||a.name||'').localeCompare(String(b.title||b.name||''),'ko');
