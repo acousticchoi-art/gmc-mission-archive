@@ -125,6 +125,18 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
  .search button{height:46px;min-height:46px;min-width:76px;padding:0 17px;font-size:13px}
  .category-toggle,.category-panel,.heroResult{max-width:none;width:100%}
 }
+</style><style id="viewer-save-and-share-style">
+#materialViewer .viewer-save-row{padding:16px 22px 4px}
+#materialViewer .viewer-favorite{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:48px;padding:12px 16px;border:1px solid #b8c9d6;border-radius:10px;background:#f7fafc;color:#17344f;font-size:15px;font-weight:700}
+#materialViewer .viewer-favorite.saved{border-color:#c4d9ca;background:#f1f8f3;color:#27633d}
+#materialViewer .viewer-favorite-note{margin-top:7px;color:#71808d;text-align:center;font-size:12px}
+#materialViewer .viewer-share svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#materialViewer .viewer-actions .viewer-share{gap:7px}
+@media(max-width:700px){
+ #materialViewer .viewer-save-row{padding:12px 14px 0}
+ #materialViewer .viewer-favorite{min-height:46px;font-size:14px}
+ #materialViewer .viewer-favorite-note{font-size:12px;margin-top:6px}
+}
 </style><style id="mobile-viewer-actions-refresh">
 #materialViewer .viewer-actions{display:flex;align-items:stretch;gap:10px}
 #materialViewer .viewer-actions .btn{display:flex;align-items:center;justify-content:center;text-align:center;min-width:0;min-height:46px;padding:10px 16px;white-space:normal;line-height:1.25;text-decoration:none;border-radius:10px}
@@ -732,12 +744,16 @@ async function deleteComment(id,materialId){
   try{await A('deleteComment',[T,id]);await loadComments(materialId)}
   catch(e){alert(e.message)}
 }
-function shareMaterial(id){
+async function shareMaterial(id){
   if(!id)return;
   const url=new URL(window.location.href);
   url.searchParams.set('material',String(id));
   url.hash='';
   const shareUrl=url.toString();
+  if(navigator.share){
+    try{await navigator.share({title:document.querySelector('#materialViewer h2')?.textContent||'GMC Mission Archive 자료',text:'GMC 선교 자료를 공유합니다.',url:shareUrl});return}
+    catch(e){if(e?.name==='AbortError')return}
+  }
   const fallback=()=>{
     const input=document.createElement('textarea');
     input.value=shareUrl;input.setAttribute('readonly','');
@@ -745,11 +761,27 @@ function shareMaterial(id){
     document.body.appendChild(input);input.select();
     let ok=false;try{ok=document.execCommand('copy')}catch(e){}
     input.remove();
-    alert(ok?'자료 링크를 복사했습니다. 카카오톡이나 단체 채팅방에 붙여넣으세요.':'링크를 복사하지 못했습니다. 주소를 직접 복사해 주세요.\n'+shareUrl);
+    alert(ok?'자료 링크를 복사했습니다. 공유할 곳에 붙여넣으세요.':'링크를 복사하지 못했습니다. 주소를 직접 복사해 주세요.\n'+shareUrl);
   };
   if(navigator.clipboard&&window.isSecureContext){
-    navigator.clipboard.writeText(shareUrl).then(()=>alert('자료 링크를 복사했습니다. 카카오톡이나 단체 채팅방에 붙여넣으세요.')).catch(fallback);
+    navigator.clipboard.writeText(shareUrl).then(()=>alert('자료 링크를 복사했습니다. 공유할 곳에 붙여넣으세요.')).catch(fallback);
   }else fallback();
+}
+async function toggleMaterialFavorite(id){
+  if(!id||!ME){alert('로그인이 필요합니다.');return}
+  const btn=document.getElementById('viewerFavoriteBtn');
+  try{
+    if(FAVS.has(String(id))){await A('removeFavorite',[T,id]);FAVS.delete(String(id))}
+    else{await A('addFavorite',[T,id]);FAVS.add(String(id))}
+    const active=FAVS.has(String(id));
+    if(btn){
+      btn.classList.toggle('saved',active);
+      btn.innerHTML=active?'✓ 내 자료에 저장됨':'☆ 내 자료로 저장';
+      btn.setAttribute('aria-pressed',String(active));
+    }
+    const note=document.getElementById('viewerFavoriteNote');
+    if(note)note.textContent=active?'내 자료 메뉴에서 확인할 수 있습니다.':'저장하면 내 자료 메뉴에서 다시 볼 수 있습니다.';
+  }catch(e){alert(e.message||'저장 처리 중 오류가 발생했습니다.')}
 }
 function showMaterialViewer(m,link,materialId=''){
   const title=E(m.title||m.name||'자료');
@@ -779,9 +811,12 @@ function showMaterialViewer(m,link,materialId=''){
     (ME?'<div class="comment-form"><textarea id="commentInput" maxlength="2000" placeholder="이 자료에 대한 의견을 남겨주세요."></textarea><button onclick="addComment(\''+E(materialId).replace(/'/g,"&#039;")+'\')">댓글 등록</button></div>':'')+
     '</div>'+
     '</div>'+
+    '<div class="viewer-save-row">'+
+    (materialId?'<button id="viewerFavoriteBtn" class="viewer-favorite '+(FAVS.has(String(materialId))?'saved':'')+'" aria-pressed="'+String(FAVS.has(String(materialId)))+'" onclick="toggleMaterialFavorite(\''+E(materialId).replace(/'/g,"&#039;")+'\')">'+(FAVS.has(String(materialId))?'✓ 내 자료에 저장됨':'☆ 내 자료로 저장')+'</button><div id="viewerFavoriteNote" class="viewer-favorite-note">'+(FAVS.has(String(materialId))?'내 자료 메뉴에서 확인할 수 있습니다.':'저장하면 내 자료 메뉴에서 다시 볼 수 있습니다.')+'</div>':'')+
+    '</div>'+
     '<div class="viewer-actions">'+
     (link?'<a class="btn primary" href="'+E(link)+'" target="_blank" rel="noopener">원본 열기</a>':'')+
-    (materialId?'<button class="btn light" onclick="shareMaterial(\''+E(materialId).replace(/'/g,"&#039;")+'\')">링크 공유</button>':'')+
+    (materialId?'<button class="btn light viewer-share" aria-label="공유" onclick="shareMaterial(\''+E(materialId).replace(/'/g,"&#039;")+'\')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V3m-5 5 5-5 5 5M5 13v7h14v-7"/></svg><span>공유</span></button>':'')+
     '<button class="btn light" onclick="closeMaterialViewer()">닫기</button></div>'+
     '</section>';
   document.body.appendChild(wrap);
