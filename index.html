@@ -420,6 +420,37 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
   .hero .search input { height: 54px !important; min-height: 54px !important; padding: 0 14px !important; font-size: 15px !important; }
   .hero .search button { flex: 0 0 82px !important; width: 82px !important; height: 54px !important; min-height: 54px !important; font-size: 15px !important; }
 }
+
+/* Align desktop hero content to the exact search-field width and center axis. */
+@media (min-width: 701px) {
+  .hero .hero-inner {
+    width: min(760px, calc(100% - 48px)) !important;
+    max-width: 760px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  .hero .eyebrow,
+  .hero h1,
+  .hero p.hero-description {
+    width: 100% !important;
+    max-width: none !important;
+    text-align: left !important;
+  }
+  .hero .search {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  .hero .category-toggle,
+  .hero .category-panel,
+  .hero .heroResult {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+}
 </style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
