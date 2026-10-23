@@ -804,7 +804,7 @@ function showMaterialViewer(m,link,materialId=''){
     ['등록일',m.date||''],
     ['조회수',m.views!=null?String(m.views):'']
   ].filter(x=>x[1]!==''&&x[1]!=null);
-  const meta=fields.map(x=>'<div class="viewer-info-item"><span>'+E(x[0])+'</span><b>'+E(x[1])+'</b></div>').join('');
+  const meta=fields.map(x=>'<div class="viewer-info-item"><span>'+E(x[0])+'</span><b>'+(x[0]==='카테고리'?categoryTagsHtml(x[1]):E(x[1]))+'</b></div>').join('');
   const old=document.getElementById('materialViewer'); if(old)old.remove();
   const wrap=document.createElement('div');
   wrap.id='materialViewer';
@@ -1024,7 +1024,7 @@ async function loadAdminMaterials(){
 function filterAdminMaterials(){
   const q=(document.getElementById('adminMaterialQ')?.value||'').trim().toLowerCase();
   const cat=document.getElementById('adminMaterialCategory')?.value||'',st=document.getElementById('adminMaterialStatus')?.value||'',sort=document.getElementById('adminMaterialSort')?.value||'date';
-  const list=ADMIN_MATERIALS.filter(m=>(!q||[m.title,m.author,m.fileName].join(' ').toLowerCase().includes(q))&&(!cat||m.category===cat)&&(!st||m.status===st));
+  const list=ADMIN_MATERIALS.filter(m=>(!q||[m.title,m.author,m.fileName].join(' ').toLowerCase().includes(q))&&(!cat||categoryList(m.category).includes(cat))&&(!st||m.status===st));
   list.sort((a,b)=>{
     if(sort==='title')return String(a.title||'').localeCompare(String(b.title||''),'ko');
     if(sort==='views')return Number(b.views||0)-Number(a.views||0);
