@@ -197,6 +197,11 @@ async function sheetGet(range){
     throw e;
   }
 }
+async function sheetGetFresh(range){
+  // Security-sensitive reads must not use stale cache or stale-on-error fallback.
+  const values=(await googleJson(sheetUrl(range)+'?valueRenderOption=FORMATTED_VALUE')).values||[];
+  return values.map(row=>row.slice());
+}
 async function sheetAppend(sheet,values){
   const result=await googleJson(sheetUrl(sheet+'!A:Z')+':append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({values:[values]})});
   invalidateSheetReadCache();return result;
@@ -250,6 +255,7 @@ async function usersRows(){return await sheetGet('회원!A:M');}
 async function materialsRows(){return await sheetGet('자료!A:O');}
 async function findUserByUsername(x){const rows=await usersRows(),q=String(x||'').trim().toLowerCase();for(let i=1;i<rows.length;i++)if(String(rows[i][2]||'').toLowerCase()===q)return rowObj(rows[i],i+1);return null;}
 async function findUserById(id){const rows=await usersRows();for(let i=1;i<rows.length;i++)if(String(rows[i][0]||'')===String(id))return rowObj(rows[i],i+1);return null;}
+async function findUserByIdFresh(id){const rows=await sheetGetFresh('회원!A:M');for(let i=1;i<rows.length;i++)if(String(rows[i][0]||'')===String(id))return rowObj(rows[i],i+1);return null;}
 function publicUser(u){return {id:u.id,name:u.name,username:u.username,email:u.email,branch:u.branch,role:u.role,firstLogin:u.firstLogin};}
 function maxNextId(rows,prefix){let n=0;for(let i=1;i<rows.length;i++){const m=String(rows[i][0]||'').match(new RegExp('^'+prefix+'(\\d+)$'));if(m)n=Math.max(n,Number(m[1]));}return prefix+String(n+1).padStart(4,'0');}
 async function hashPassword(p,salt){const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(String(salt)+String(p)));return Array.from(new Uint8Array(d)).map(b=>b.toString(16).padStart(2,'0')).join('');}
@@ -261,7 +267,7 @@ function randomBytes(n){const x=new Uint8Array(n);crypto.getRandomValues(x);retu
 function randomHex(n){return Array.from(randomBytes(n)).map(b=>b.toString(16).padStart(2,'0')).join('');}
 async function hmac(data){const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(CFG.SESSION_SECRET),{name:'HMAC',hash:'SHA-256'},false,['sign']);return new Uint8Array(await crypto.subtle.sign('HMAC',key,new TextEncoder().encode(data)));}
 async function makeSession(u){const payload={uid:u.id,role:u.role,username:u.username,authVersion:u.salt,exp:Math.floor(Date.now()/1000)+SESSION_TTL};const p=b64uText(JSON.stringify(payload));return p+'.'+b64u(await hmac(p));}
-async function session(token){if(!token)throw new Error('로그인이 필요합니다.');const parts=String(token).split('.');if(parts.length!==2)throw new Error('세션이 올바르지 않습니다.');const expected=b64u(await hmac(parts[0]));if(!constEq(expected,parts[1]))throw new Error('세션이 올바르지 않습니다.');let p;try{p=JSON.parse(new TextDecoder().decode(fromB64u(parts[0])))}catch(_){throw new Error('세션이 올바르지 않습니다.')}if(Number(p.exp)<Math.floor(Date.now()/1000))throw new Error('세션이 만료되었습니다. 다시 로그인해주세요.');const u=await findUserById(p.uid);if(!u||u.status!=='활성')throw new Error('회원 상태가 비활성화되었습니다. 다시 로그인할 수 없습니다.');if(u.role!==p.role)throw new Error('회원 권한이 변경되었습니다. 다시 로그인해주세요.');if(!p.authVersion||p.authVersion!==u.salt)throw new Error('비밀번호가 변경되었습니다. 다시 로그인해주세요.');return p;}
+async function session(token){if(!token)throw new Error('로그인이 필요합니다.');const parts=String(token).split('.');if(parts.length!==2)throw new Error('세션이 올바르지 않습니다.');const expected=b64u(await hmac(parts[0]));if(!constEq(expected,parts[1]))throw new Error('세션이 올바르지 않습니다.');let p;try{p=JSON.parse(new TextDecoder().decode(fromB64u(parts[0])))}catch(_){throw new Error('세션이 올바르지 않습니다.')}if(Number(p.exp)<Math.floor(Date.now()/1000))throw new Error('세션이 만료되었습니다. 다시 로그인해주세요.');const u=await findUserByIdFresh(p.uid);if(!u||u.status!=='활성')throw new Error('회원 상태가 비활성화되었습니다. 다시 로그인할 수 없습니다.');if(u.role!==p.role)throw new Error('회원 권한이 변경되었습니다. 다시 로그인해주세요.');if(!p.authVersion||p.authVersion!==u.salt)throw new Error('비밀번호가 변경되었습니다. 다시 로그인해주세요.');return p;}
 async function requireRole(token,roles){const s=await session(token);if(!roles.includes(s.role))throw new Error('권한이 없습니다.');return s;}
 async function ensurePublic(fileId){
   if(!fileId||!CFG.DRIVE_REFRESH_TOKEN)return;
