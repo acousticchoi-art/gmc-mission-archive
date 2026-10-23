@@ -219,6 +219,42 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
   .category-bar { justify-content: flex-start !important; }
   .container { width: min(1500px, 100%) !important; max-width: none !important; padding-left: 32px !important; padding-right: 32px !important; }
 }
+
+/* Desktop archive layout: center the heading, search, and category section together. */
+@media (min-width: 900px) {
+  .hero-inner {
+    width: min(1120px, 100%) !important;
+    max-width: 1120px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  .hero h1 { text-align: center !important; }
+  .search {
+    width: min(950px, 100%) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  .hero-categories,
+  .category-bar-wrap,
+  .category-bar,
+  .category-summary,
+  .category-controls {
+    width: min(950px, 100%) !important;
+    max-width: 950px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  .category-bar-wrap { text-align: center !important; }
+  .category-bar { justify-content: center !important; }
+  .container {
+    width: min(1500px, 100%) !important;
+    max-width: 1500px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: 32px !important;
+    padding-right: 32px !important;
+  }
+}
 </style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
