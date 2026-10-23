@@ -690,6 +690,25 @@ async function deleteComment(id,materialId){
   try{await A('deleteComment',[T,id]);await loadComments(materialId)}
   catch(e){alert(e.message)}
 }
+function shareMaterial(id){
+  if(!id)return;
+  const url=new URL(window.location.href);
+  url.searchParams.set('material',String(id));
+  url.hash='';
+  const shareUrl=url.toString();
+  const fallback=()=>{
+    const input=document.createElement('textarea');
+    input.value=shareUrl;input.setAttribute('readonly','');
+    input.style.position='fixed';input.style.opacity='0';
+    document.body.appendChild(input);input.select();
+    let ok=false;try{ok=document.execCommand('copy')}catch(e){}
+    input.remove();
+    alert(ok?'자료 링크를 복사했습니다. 카카오톡이나 단체 채팅방에 붙여넣으세요.':'링크를 복사하지 못했습니다. 주소를 직접 복사해 주세요.\n'+shareUrl);
+  };
+  if(navigator.clipboard&&window.isSecureContext){
+    navigator.clipboard.writeText(shareUrl).then(()=>alert('자료 링크를 복사했습니다. 카카오톡이나 단체 채팅방에 붙여넣으세요.')).catch(fallback);
+  }else fallback();
+}
 function showMaterialViewer(m,link,materialId=''){
   const title=E(m.title||m.name||'자료');
   const desc=E(m.description||m.content||'');
@@ -720,6 +739,7 @@ function showMaterialViewer(m,link,materialId=''){
     '</div>'+
     '<div class="viewer-actions">'+
     (link?'<a class="btn primary" href="'+E(link)+'" target="_blank" rel="noopener">원본 열기 / 다운로드</a>':'')+
+    (materialId?'<button class="btn light" onclick="shareMaterial(\''+E(materialId).replace(/'/g,"&#039;")+'\')">자료 링크 공유</button>':'')+
     '<button class="btn light" onclick="closeMaterialViewer()">뒤로가기</button></div>'+
     '</section>';
   document.body.appendChild(wrap);
@@ -852,6 +872,14 @@ async function search(category=''){
         <div class="meta">${E(m.author||m.writer||'')} ${m.year?'· '+E(m.year):''} · 조회 ${Number(m.views||0)} · 댓글 ${Number(m.commentCount||0)}</div>
 
       </article>`).join('');
+    const sharedId=new URLSearchParams(window.location.search).get('material');
+    if(sharedId && !window.__gmcSharedMaterialOpened){
+      const match=items.find(m=>String(m.id||m.materialId||m.ID||'')===String(sharedId));
+      if(match){
+        window.__gmcSharedMaterialOpened=true;
+        openMaterialById(String(sharedId),match.url||match.viewUrl||match.driveUrl||match.webViewLink||'',null);
+      }
+    }
   }catch(e){if(count)count.textContent='';cards.innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
 }
 
