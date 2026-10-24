@@ -1468,9 +1468,22 @@ async function admin(){
       <button class="admin-card" onclick="userAdmin()"><span class="admin-icon">01</span><b>회원 관리</b><small>회원 등록 · 권한 · 상태 관리</small><span class="admin-arrow">→</span></button>
       <button class="admin-card" onclick="uploadView()"><span class="admin-icon">02</span><b>자료 관리</b><small>자료 등록 · 검색 · 수정 · 공개/비공개 · 삭제</small><span class="admin-arrow">→</span></button>
       <button class="admin-card" onclick="loginHistory()"><span class="admin-icon">03</span><b>로그인 이력</b><small>누가 언제 로그인했는지 확인</small><span class="admin-arrow">→</span></button>
+      <button class="admin-card" onclick="downloadBackup()"><span class="admin-icon">04</span><b>데이터 백업</b><small>회원·자료·활동 데이터를 파일로 저장</small><span class="admin-arrow">→</span></button>
       <a href="https://drive.google.com/file/d/1sAbh-AUch4lROsWZfbUoVAQL1e1n8mdc/view?usp=drivesdk" target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:18px;color:#17344f;font-size:12px;font-weight:700;text-decoration:none">관리자 매뉴얼 보기</a>
     </div>
   </div>`;
+}
+async function downloadBackup(){
+  if(!ME || ME.role!=='관리자')return;
+  if(!confirm('회원 정보와 로그인 검증 정보가 포함된 백업 파일을 다운로드합니다. 파일을 안전하게 보관하세요. 계속할까요?'))return;
+  try{
+    const r=await A('exportBackup',[T]);
+    if(!r||!r.ok||!r.backup)throw new Error(r?.message||'백업을 만들지 못했습니다.');
+    const blob=new Blob([JSON.stringify(r.backup,null,2)],{type:'application/json;charset=utf-8'});
+    const url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download='GMC-Archive-Backup-'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }catch(e){alert('백업 실패: '+(e?.message||e));}
 }
 function materialAdmin(){
   document.getElementById('app').innerHTML=`<div class="container admin-page"><div class="title"><h2>자료 관리</h2><button class="btn light" onclick="admin()">← 관리자</button></div>
