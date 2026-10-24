@@ -480,6 +480,23 @@ async function api(action,args,ctx=null){
     case 'resetUserPassword':{const s=await requireRole(args[0],['관리자']);validatePassword(args[2]);const u=await findUserById(args[1]);if(!u)throw new Error('회원이 없습니다.');const salt=randomHex(16),hash=await hashPassword(args[2],salt);await sheetUpdate('회원!H'+u.row+':J'+u.row,[[hash,salt,true]]);return {ok:true};}
     case 'makeAllMaterialsPublic':{await requireRole(args[0],['관리자']);const rows=await materialsRows();let count=0,fail=0;for(let i=1;i<rows.length;i++){const driveId=String(rows[i][7]||'');if(!driveId||String(rows[i][12]||'')==='삭제')continue;try{await ensurePublic(driveId);count++;}catch(e){fail++;}}return {ok:true,count,fail};}
     case 'exportBackup':{await requireRole(args[0],['관리자']);const [users,materials,favorites,comments,recentViews,loginHistory]=await Promise.all([sheetGet('회원!A:M'),sheetGet('자료!A:O'),sheetGet('즐겨찾기!A:D'),sheetGet('댓글!A:G'),sheetGet('최근본자료!A:D'),loginHistoryRows()]);return {ok:true,backup:{format:'GMC-Mission-Archive-Backup',version:1,createdAt:nowText(),sheets:{회원:users,자료:materials,즐겨찾기:favorites,댓글:comments,최근본자료:recentViews,로그인이력:loginHistory}}};}
+    case 'restoreBackup':{
+      await requireRole(args[0],['관리자']);
+      const b=args[1];
+      const names={'회원':'A:M','자료':'A:O','즐겨찾기':'A:D','댓글':'A:G','최근본자료':'A:D','로그인이력':'A:G'};
+      if(!b||b.format!=='GMC-Mission-Archive-Backup'||b.version!==1||!b.sheets||typeof b.sheets!=='object')throw new Error('GMC 아카이브 백업 파일이 아니거나 버전이 맞지 않습니다.');
+      for(const name of Object.keys(names)){const rows=b.sheets[name];if(!Array.isArray(rows)||!rows.length||!Array.isArray(rows[0]))throw new Error('백업 파일에 필수 시트가 없거나 형식이 올바르지 않습니다: '+name);}
+      if(!b.sheets['회원'][0].some(v=>String(v)==='아이디')||!b.sheets['자료'][0].some(v=>String(v)==='자료ID'||String(v)==='ID'))throw new Error('회원 또는 자료 시트의 제목 행을 확인할 수 없습니다.');
+      // Restore only after a complete backup has been downloaded by the UI. No Drive files are deleted or replaced.
+      for(const [name,cols] of Object.entries(names)){
+        const range=name+'!'+cols;
+        await googleJson(sheetUrl(range)+':clear',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({})});
+        const rows=b.sheets[name];
+        if(rows.length)await googleJson(sheetUrl(name+'!A1')+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({range:name+'!A1',majorDimension:'ROWS',values:rows})});
+      }
+      invalidateSheetReadCache();
+      return {ok:true,message:'백업 데이터를 복원했습니다. Google Drive 파일 자체는 변경하지 않았습니다.',counts:Object.fromEntries(Object.entries(b.sheets).map(([k,v])=>[k,Math.max(0,v.length-1)]))};
+    }
     case 'dashboard':{await requireRole(args[0],['관리자']);const us=await usersRows(),ms=await materialsRows();return {ok:true,stats:{users:Math.max(0,us.length-1),activeUsers:us.slice(1).filter(r=>r[10]==='활성').length,materials:ms.slice(1).filter(r=>r[12]==='공개').length,views:ms.slice(1).reduce((a,r)=>a+Number(r[14]||0),0)}};}
     default:throw new Error('지원하지 않는 요청입니다.');
   }
