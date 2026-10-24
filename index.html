@@ -1541,6 +1541,7 @@ async function deleteMaterialAdmin(id,title){
 }
 
 function userAdmin(){
+  window.__memberAdminLoaded=false;
   document.getElementById('app').innerHTML=`<div class="container admin-page member-admin-page"><div class="title"><h2>회원 관리</h2><button class="btn light" onclick="admin()">← 관리자</button></div>
   <div class="member-admin-tabs" role="tablist" aria-label="회원 관리 메뉴">
     <button type="button" id="memberTabRegister" class="active" role="tab" aria-selected="true" onclick="showMemberAdminTab('register')">회원 등록</button>
