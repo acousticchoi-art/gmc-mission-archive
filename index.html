@@ -1327,8 +1327,10 @@ async function search(category, restoring=false){
     const d=await A('listMaterials',[T,{q,category:state.category}]);
     let items=d.materials||d.items||d.data||[];
     if(!Array.isArray(items))items=[];
-    const languages=[...new Set(items.map(m=>String(m.language||m.lang||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ko'));
-    const years=[...new Set(items.map(m=>String(m.year||'').trim()).filter(y=>/^\\d{4}$/.test(y)))].sort((a,b)=>Number(b)-Number(a));
+    const languageOf=m=>String(m.language||m.lang||m.langauge||m['언어']||'').trim();
+    const yearOf=m=>{const v=String(m.year||m['작성연도']||'').trim();const match=v.match(/(19|20)[0-9]{2}/);return match?match[0]:''};
+    const languages=[...new Set(items.map(languageOf).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ko'));
+    const years=[...new Set(items.map(yearOf).filter(Boolean))].sort((a,b)=>Number(b)-Number(a));
     if(languageSelect){
       const selected=state.language||languageSelect.value||'';
       languageSelect.innerHTML='<option value="">전체 언어</option>'+languages.map(v=>'<option value="'+E(v)+'">'+E(v)+'</option>').join('');
@@ -1341,8 +1343,8 @@ async function search(category, restoring=false){
       yearSelect.value=years.includes(selected)?selected:'';
       state.year=yearSelect.value;
     }
-    if(languageSelect?.value)items=items.filter(m=>String(m.language||m.lang||'').trim()===languageSelect.value);
-    if(yearSelect?.value)items=items.filter(m=>String(m.year||'').trim()===yearSelect.value);
+    if(languageSelect?.value)items=items.filter(m=>languageOf(m)===languageSelect.value);
+    if(yearSelect?.value)items=items.filter(m=>yearOf(m)===yearSelect.value);
     const sort=sortSelect?.value||state.sort||(q?'related':'date');
     if(sortSelect)sortSelect.value=sort;
     state.q=q;state.sort=sort;window.__gmcSearchState=state;
