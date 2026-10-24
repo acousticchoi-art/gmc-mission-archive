@@ -1285,7 +1285,13 @@ async function switchMyMaterialTab(tab){
 }
 function readSearchState(){
   const state=window.__gmcSearchState||{};
-  return {q:document.getElementById('q')?.value??state.q??'',category:state.category||'',sort:document.getElementById('searchSort')?.value||state.sort||'date'};
+  return {
+    q:document.getElementById('q')?.value??state.q??'',
+    category:state.category||'',
+    sort:document.getElementById('searchSort')?.value||state.sort||'date',
+    language:document.getElementById('filterLanguage')?.value??state.language??'',
+    year:document.getElementById('filterYear')?.value??state.year??''
+  };
 }
 function persistSearchState(){
   const state=readSearchState();
@@ -1295,7 +1301,7 @@ function persistSearchState(){
 function restoreSearchState(){
   let saved=window.__gmcSearchState||{};
   try{saved={...saved,...JSON.parse(sessionStorage.getItem('gmcArchiveSearchState')||'{}')}}catch(e){}
-  window.__gmcSearchState={q:saved.q||'',category:saved.category||'',sort:saved.sort||'date'};
+  window.__gmcSearchState={q:saved.q||'',category:saved.category||'',sort:saved.sort||'date',language:saved.language||'',year:saved.year||''};
   const input=document.getElementById('q'),sort=document.getElementById('searchSort');
   if(input)input.value=window.__gmcSearchState.q;
   if(sort)sort.value=window.__gmcSearchState.sort;
