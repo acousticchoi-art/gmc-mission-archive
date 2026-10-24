@@ -1540,7 +1540,7 @@ async function deleteMaterialAdmin(id,title){
   catch(e){alert(e.message);}
 }
 
-function userAdmin(){
+function userAdmin(initialTab='register'){
   window.__memberAdminLoaded=false;
   document.getElementById('app').innerHTML=`<div class="container admin-page member-admin-page"><div class="title"><h2>회원 관리</h2><button class="btn light" onclick="admin()">← 관리자</button></div>
   <div class="member-admin-tabs" role="tablist" aria-label="회원 관리 메뉴">
@@ -1553,7 +1553,7 @@ function userAdmin(){
       <div class="member-register-field"><label for="un">이름</label><input id="un" autocomplete="name" placeholder="이름 입력"></div>
       <div class="member-register-field"><label for="uid">아이디</label><input id="uid" autocomplete="username" placeholder="로그인 아이디 입력"></div>
       <div class="member-register-field"><label for="ue">이메일</label><input id="ue" type="email" autocomplete="email" placeholder="이메일 입력"></div>
-      <div class="member-register-field"><label for="ub">소속 지부</label><input id="ub" placeholder="소속 지부 입력"></div>
+      <div class="member-register-field"><label for="ub">소속 지부</label><select id="ub"><option value="">지부 선택</option><option>1지부</option><option>2지부</option><option>3지부</option><option>4지부</option><option>5지부</option><option>수습회원</option><option>기타회원</option></select></div>
       <div class="member-register-field"><label for="ur">권한</label><select id="ur"><option>일반회원</option></select></div>
       <div class="member-register-field"><label for="up">초기 비밀번호</label><input id="up" type="password" minlength="6" autocomplete="new-password" value="gmcgmc"></div>
     </div>
@@ -1569,7 +1569,7 @@ function userAdmin(){
     </div>
     <div id="users"><div class="notice">회원 목록을 불러오는 중...</div></div>
   </section></div>`;
-  showMemberAdminTab('register');
+  showMemberAdminTab(initialTab);
 }
 function showMemberAdminTab(tab){
   const register=tab==='register';
@@ -1662,7 +1662,7 @@ async function loadLoginHistory(){
 }
 async function createUser(){
   const data={name:document.getElementById('un').value,username:document.getElementById('uid').value,email:document.getElementById('ue').value,branch:document.getElementById('ub').value,role:document.getElementById('ur').value,initialPassword:document.getElementById('up').value};
-  try{await A('createUser',[T,data]);document.getElementById('umsg').innerHTML='<div class="notice ok">회원이 등록되었습니다.</div>';window.__memberAdminLoaded=false;ADMIN_USERS=[];if(document.getElementById('memberTabCount'))document.getElementById('memberTabCount').textContent='';}
+  try{await A('createUser',[T,data]);document.getElementById('umsg').innerHTML='<div class="notice ok">회원이 등록되었습니다.</div>';window.__memberAdminLoaded=false;ADMIN_USERS=[];if(document.getElementById('memberTabCount'))document.getElementById('memberTabCount').textContent='';userAdmin('manage');}
   catch(e){document.getElementById('umsg').innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
 }
 async function toggleUser(id,status){
@@ -1688,12 +1688,12 @@ async function editUser(id){
     const u=(r.users||[]).find(x=>String(x.id)===String(id));
     if(!u)throw new Error('회원을 찾을 수 없습니다.');
     const q=v=>E(v==null?'':v);
-    document.getElementById('app').innerHTML=`<div class="container"><div class="title"><h2>회원 정보 수정</h2><button class="btn light" onclick="userAdmin()">← 회원 목록</button></div>
+    document.getElementById('app').innerHTML=`<div class="container"><div class="title"><h2>회원 정보 수정</h2><button class="btn light" onclick="userAdmin('manage')">← 회원 목록</button></div>
       <div class="panel form">
         <label>이름</label><input id="eu_name" value="${q(u.name)}">
         <label>아이디</label><input id="eu_username" value="${q(u.username)}">
         <label>이메일</label><input id="eu_email" value="${q(u.email)}">
-        <label>소속 지부</label><input id="eu_branch" value="${q(u.branch)}">
+        <label>소속 지부</label><select id="eu_branch"><option value="">지부 선택</option><option ${u.branch==='1지부'?'selected':''}>1지부</option><option ${u.branch==='2지부'?'selected':''}>2지부</option><option ${u.branch==='3지부'?'selected':''}>3지부</option><option ${u.branch==='4지부'?'selected':''}>4지부</option><option ${u.branch==='5지부'?'selected':''}>5지부</option><option ${u.branch==='수습회원'?'selected':''}>수습회원</option><option ${u.branch==='기타회원'?'selected':''}>기타회원</option></select>
         <label>권한</label><select id="eu_role">${['관리자','일반회원'].map(x=>`<option ${x===u.role?'selected':''}>${x}</option>`).join('')}</select>
         <label>상태</label><select id="eu_status"><option ${u.status==='활성'?'selected':''}>활성</option><option ${u.status==='비활성'?'selected':''}>비활성</option></select>
         <button class="btn" style="margin-top:16px" onclick="saveUser('${E(id).replace(/'/g,"&#039;")}')">저장</button>
@@ -1714,7 +1714,7 @@ async function saveUser(id){
   try{
     await A('updateUser',[T,data]);
     alert('회원 정보가 수정되었습니다.');
-    userAdmin();
+    userAdmin('manage');
   }catch(e){document.getElementById('eumsg').innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
 }
 function uploadView(mode='register'){
