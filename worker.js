@@ -493,6 +493,7 @@ async function api(action,args,ctx=null){
     case 'updateUser':{const s=await requireRole(args[0],['관리자']),data=args[1]||{},u=await findUserById(data.id);if(!u)throw new Error('회원이 없습니다.');const nextName=data.name!==undefined?data.name:u.name,nextUsername=data.username!==undefined?data.username:u.username,nextEmail=data.email!==undefined?data.email:u.email,nextPhone=data.phone!==undefined?data.phone:u.phone,nextBranch=data.branch!==undefined?data.branch:u.branch,nextRole=data.role!==undefined?data.role:u.role,nextStatus=data.status!==undefined?data.status:u.status;if(!ROLES.includes(nextRole))throw new Error('권한은 관리자 또는 일반회원만 선택할 수 있습니다.');if(data.id===s.uid&&nextStatus==='비활성')throw new Error('현재 로그인한 관리자 계정은 비활성화할 수 없습니다.');await sheetUpdate('회원!B'+u.row+':G'+u.row,[[safe(nextName),safe(nextUsername),safe(nextEmail),safe(nextPhone),safe(nextBranch),nextRole]]);await sheetUpdate('회원!K'+u.row+':K'+u.row,[[nextStatus==='비활성'?'비활성':'활성']]);return {ok:true};}
     case 'resetUserPassword':{const s=await requireRole(args[0],['관리자']);validatePassword(args[2]);const u=await findUserById(args[1]);if(!u)throw new Error('회원이 없습니다.');const salt=randomHex(16),hash=await hashPassword(args[2],salt);await sheetUpdate('회원!H'+u.row+':J'+u.row,[[hash,salt,true]]);return {ok:true};}
     case 'makeAllMaterialsPublic':{await requireRole(args[0],['관리자']);const rows=await materialsRows();let count=0,fail=0;for(let i=1;i<rows.length;i++){const driveId=String(rows[i][7]||'');if(!driveId||String(rows[i][12]||'')==='삭제')continue;try{await ensurePublic(driveId);count++;}catch(e){fail++;}}return {ok:true,count,fail};}
+    case 'backupStatus':{await requireRole(args[0],['관리자']);const ranges={'회원':'회원!A:M','자료':'자료!A:O','즐겨찾기':'즐겨찾기!A:D','댓글':'댓글!A:G','최근본자료':'최근본자료!A:D','로그인이력':'로그인이력!A:G'};const counts={};for(const [k,v] of Object.entries(ranges)){const rows=k==='로그인이력'?await loginHistoryRows():await sheetGet(v);counts[k]=Math.max(0,rows.length-1);}return {ok:true,counts};}
     case 'exportBackup':{await requireRole(args[0],['관리자']);return {ok:true,backup:await collectBackupData()};}
     case 'restoreBackup':{
       await requireRole(args[0],['관리자']);
@@ -519,9 +520,9 @@ async function api(action,args,ctx=null){
       try{
         for(const [name,cols] of Object.entries(names)){
           const range=name+'!'+cols;
+          written.push(name);
           await googleJson(sheetUrl(range)+':clear',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({})});
           await googleJson(sheetUrl(name+'!A1')+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({range:name+'!A1',majorDimension:'ROWS',values:b.sheets[name]})});
-          written.push(name);
         }
       }catch(err){
         const rollbackErrors=[];
