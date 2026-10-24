@@ -570,6 +570,87 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
   .hero .category-bar .category-group-title { margin-bottom: 7px !important; }
   .hero .category-panel { padding: 13px !important; }
 }
+</style><style id="mobile-viewer-layout-polish">
+/* Keep the material detail dialog comfortable on phones and narrow browser windows. */
+@media (max-width: 900px) {
+  #materialViewer .viewer-panel {
+    inset: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
+    border-radius: 18px;
+  }
+  #materialViewer .viewer-head {
+    gap: 14px;
+    padding: 18px 18px 16px;
+  }
+  #materialViewer .viewer-head h2 {
+    font-size: clamp(20px, 4vw, 26px);
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+  #materialViewer .viewer-body {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  #materialViewer .viewer-desc {
+    padding: 18px 20px 22px;
+    overflow-wrap: anywhere;
+  }
+  #materialViewer .viewer-info {
+    margin: 0 14px;
+  }
+  #materialViewer .viewer-info-item {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  #materialViewer .viewer-save-row {
+    flex: 0 0 auto;
+    padding: 10px 14px 8px;
+    background: #fff;
+  }
+  #materialViewer .viewer-favorite {
+    min-height: 42px;
+    padding: 9px 12px;
+  }
+  #materialViewer .viewer-favorite-note {
+    margin-top: 4px;
+    font-size: 12px;
+  }
+  #materialViewer .viewer-actions {
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+    padding: 10px 14px calc(12px + env(safe-area-inset-bottom));
+    border-top: 1px solid #e4e9ee;
+    background: #fff;
+  }
+  #materialViewer .viewer-actions .btn {
+    width: 100%;
+    min-width: 0;
+    height: 46px;
+    min-height: 46px;
+    padding: 8px 6px;
+    font-size: 14px;
+    line-height: 1.2;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    gap: 5px;
+  }
+  #materialViewer .viewer-actions .material-original-link {
+    grid-column: 1 / -1;
+    height: 48px;
+    font-size: 15px;
+  }
+  #materialViewer .viewer-actions .material-open-arrow {
+    flex: 0 0 auto;
+  }
+}
+@media (max-width: 380px) {
+  #materialViewer .viewer-head { padding: 14px 14px 12px; }
+  #materialViewer .viewer-actions { gap: 6px; padding-left: 10px; padding-right: 10px; }
+  #materialViewer .viewer-actions .btn { font-size: 13px; }
+}
 </style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
