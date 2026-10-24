@@ -65,6 +65,7 @@ function config(env){
   return {
     SHEET_ID: env.GMC_SHEET_ID || '',
     ROOT_FOLDER_ID: env.GMC_ROOT_FOLDER_ID || '',
+    BACKUP_FOLDER_ID: env.GMC_BACKUP_FOLDER_ID || '',
     SA_EMAIL: env.GMC_SA_EMAIL || '',
     SA_PRIVATE_KEY: env.GMC_SA_PRIVATE_KEY || '',
     SESSION_SECRET: env.GMC_SESSION_SECRET || '',
@@ -301,10 +302,11 @@ async function collectBackupData(){
   return {format:'GMC-Mission-Archive-Backup',version:1,createdAt:nowText(),sheets:{회원:users,자료:materials,즐겨찾기:favorites,댓글:comments,최근본자료:recentViews,로그인이력:loginHistory}};
 }
 async function saveScheduledBackup(){
+  if(!CFG.BACKUP_FOLDER_ID)throw new Error('GMC_BACKUP_FOLDER_ID 설정 필요: 회원 인증 정보가 포함된 백업은 접근 제한 폴더에 저장해야 합니다.');
   const backup=await collectBackupData();
   const data=JSON.stringify(backup);
   const boundary='gmcbackup_'+randomHex(12);
-  const metadata=JSON.stringify({name:'GMC-Archive-AutoBackup-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json',mimeType:'application/json',parents:[CFG.ROOT_FOLDER_ID],description:'GMC Mission Archive automatic backup. Contains sensitive member authentication data.'});
+  const metadata=JSON.stringify({name:'GMC-Archive-AutoBackup-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json',mimeType:'application/json',parents:[CFG.BACKUP_FOLDER_ID],description:'GMC Mission Archive automatic backup. Contains sensitive member authentication data. Restricted access only.'});
   const body='--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+metadata+'\r\n--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+data+'\r\n--'+boundary+'--\r\n';
   const file=await driveJson('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,createdTime,webViewLink',{method:'POST',headers:{'content-type':'multipart/related; boundary='+boundary},body});
   return {id:file.id,name:file.name,createdTime:file.createdTime,rows:Object.fromEntries(Object.entries(backup.sheets).map(([k,v])=>[k,Math.max(0,v.length-1)]))};
