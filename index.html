@@ -953,10 +953,9 @@ async function search(category, restoring=false){
   if(!cards)return;
   cards.innerHTML='<div class="notice">검색 중...</div>';
   try{
-    let d;
-    // Keep compatibility with the current Worker API.
-    try{d=await A('listMaterials',[T,{q,category:state.category}])}
-    catch(e){d=await A('listMaterials',[T,{q,category:state.category}])}
+    // Send one request only. Repeating the identical call on every error
+    // can amplify Worker/Sheets load and does not recover from persistent failures.
+    const d=await A('listMaterials',[T,{q,category:state.category}]);
     let items=d.materials||d.items||d.data||[];
     if(count){
       count.textContent = q
