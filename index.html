@@ -837,6 +837,38 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
   .card h3, .card p, .card .meta, .card .tag { min-width: 0; }
   .card h3 { margin-top: 8px; }
 }
+</style><style id="desktop-card-flow-fix">
+@media (min-width: 701px) {
+  /* Keep each result in the established vertical reading order: category, title, description, metadata. */
+  .cards > .card {
+    display: block !important;
+    position: relative;
+    padding: 22px 30px !important;
+  }
+  .cards > .card .card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 7px;
+  }
+  .cards > .card h3 {
+    margin: 0 0 7px !important;
+    font-size: 18px;
+    line-height: 1.45;
+  }
+  .cards > .card p {
+    margin: 0 0 7px;
+    max-width: 100%;
+  }
+  .cards > .card .meta {
+    display: block;
+    line-height: 1.6;
+  }
+  .cards > .card .favorite-btn {
+    flex: 0 0 auto;
+  }
+}
 </style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
