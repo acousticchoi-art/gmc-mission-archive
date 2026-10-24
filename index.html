@@ -825,6 +825,7 @@ function showMaterialViewer(m,link,materialId=''){
     '</div>'+
     '<div class="viewer-actions">'+
     (link?'<a class="btn primary material-original-link" href="'+E(link)+'" target="_blank" rel="noopener"><span>자료 원문 보기</span><span class="material-open-arrow" aria-hidden="true">↗</span></a>':'')+
+    (m.downloadUrl?'<a class="btn light material-download-link" href="'+E(m.downloadUrl)+'" target="_blank" rel="noopener" aria-label="자료 파일 바로 다운로드"><span>바로 다운로드</span><span aria-hidden="true">↓</span></a>':'')+
     (materialId?'<button class="btn light viewer-share" aria-label="공유" onclick="shareMaterial(\''+E(materialId).replace(/'/g,"&#039;")+'\')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V3m-5 5 5-5 5 5M5 13v7h14v-7"/></svg><span>공유</span></button>':'')+
     '<button class="btn light" onclick="closeMaterialViewer()">닫기</button></div>'+
     '</section>';
