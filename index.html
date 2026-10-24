@@ -1507,14 +1507,17 @@ function restoreBackupView(){
 function inspectRestoreFile(input){
   const out=document.getElementById('restorePreview'),btn=document.getElementById('restoreRun');RESTORE_BACKUP_DATA=null;btn.disabled=true;
   const file=input.files&&input.files[0];if(!file){out.textContent='백업 파일을 선택하세요.';return;}
-  const reader=new FileReader();reader.onload=()=>{
+  const reader=new FileReader();reader.onload=async()=>{
     try{
       const b=JSON.parse(String(reader.result||''));
       if(b.format!=='GMC-Mission-Archive-Backup'||b.version!==1||!b.sheets)throw new Error('GMC 아카이브 백업 파일이 아닙니다.');
       const names=['회원','자료','즐겨찾기','댓글','최근본자료','로그인이력'];
       for(const n of names)if(!Array.isArray(b.sheets[n])||!b.sheets[n].length||!Array.isArray(b.sheets[n][0]))throw new Error('필수 시트가 없거나 손상되었습니다: '+n);
       RESTORE_BACKUP_DATA=b;
-      out.innerHTML='<b>백업 파일 확인 완료</b><br>생성일: '+E(b.createdAt||'알 수 없음')+'<br>'+names.map(n=>E(n)+': '+Math.max(0,b.sheets[n].length-1)+'개 행').join('<br>')+'<br><br>실행하면 현재 데이터가 이 백업 내용으로 교체됩니다.';
+      out.innerHTML='<b>백업 파일 확인 완료</b><br>생성일: '+E(b.createdAt||'알 수 없음')+'<br>'+names.map(n=>E(n)+': '+Math.max(0,b.sheets[n].length-1)+'개 행').join('<br>')+'<br><br>현재 데이터 개수를 확인하는 중...';
+      const st=await A('backupStatus',[T]);
+      if(!st||!st.ok||!st.counts)throw new Error('현재 데이터 개수를 확인하지 못했습니다. 복구는 실행하지 마세요.');
+      out.innerHTML='<b>백업 파일 확인 완료</b><br>생성일: '+E(b.createdAt||'알 수 없음')+'<br><br><b>백업 파일 / 현재 데이터 비교</b><br>'+names.map(n=>E(n)+': 백업 '+Math.max(0,b.sheets[n].length-1)+'개 · 현재 '+Number(st.counts[n]||0)+'개'+(Math.max(0,b.sheets[n].length-1)!==Number(st.counts[n]||0)?' <b>(차이 있음)</b>':'')).join('<br>')+'<br><br>복구하면 현재 데이터가 백업 파일 내용으로 교체됩니다.';
       btn.disabled=false;
     }catch(e){out.textContent='파일 확인 실패: '+(e.message||e);}
   };reader.onerror=()=>{out.textContent='파일을 읽을 수 없습니다.';};reader.readAsText(file,'UTF-8');
