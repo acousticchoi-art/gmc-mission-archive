@@ -925,6 +925,12 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
 .archive-filters .filter-reset{min-height:36px;padding:0 12px;border:1px solid #d7e0e7;border-radius:8px;background:transparent;color:#536575;font-size:12px;font-weight:700}
 .archive-filters .filter-reset:hover{background:#edf3f7}
 @media(max-width:700px){.archive-filters{gap:8px}.archive-filters label{flex:1;min-width:130px}.archive-filters select{flex:1;min-width:0;max-width:none}.archive-filters .filter-reset{width:100%}}
+</style><style id="member-list-filter-polish">
+.member-tools{display:grid;grid-template-columns:minmax(220px,1fr) minmax(130px,160px) minmax(130px,160px) auto;gap:10px;align-items:center;margin-bottom:16px}
+.member-tools input,.member-tools select{width:100%;min-width:0;min-height:42px;padding:0 12px;border:1px solid #d7e0e7;border-radius:9px;background:#fff;color:#263b4c;font:inherit;font-size:14px;box-sizing:border-box}
+.member-tools input:focus,.member-tools select:focus{outline:3px solid rgba(23,52,79,.1);border-color:#7890a5}
+.member-tools .btn{min-height:42px;white-space:nowrap}
+@media(max-width:760px){.member-tools{grid-template-columns:1fr 1fr}.member-tools input{grid-column:1/-1}.member-tools .btn{width:100%}}
 </style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><button id="backToTop" type="button" aria-label="페이지 맨 위로 이동" title="맨 위로" onclick="window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})">↑</button><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
@@ -1491,56 +1497,68 @@ function userAdmin(){
   <label>권한</label><select id="ur"><option>일반회원</option></select>
   <label>초기 비밀번호</label><input id="up" type="password" minlength="6" value="gmcgmc">
   <button class="btn" style="margin-top:16px" onclick="createUser()">회원 등록</button><div id="umsg"></div></div>
-  <div class="panel"><h3>회원 목록</h3><div id="users"><div class="notice">불러오는 중...</div></div></div></div>`;
+  <div class="panel"><div class="member-tools">
+    <input id="memberSearch" type="search" placeholder="이름, 아이디, 이메일, 소속 검색" oninput="filterUsers()">
+    <select id="memberStatusFilter" onchange="filterUsers()" aria-label="회원 상태"><option value="">전체 상태</option><option value="활성">활성</option><option value="비활성">비활성</option></select>
+    <select id="memberRoleFilter" onchange="filterUsers()" aria-label="회원 권한"><option value="">전체 권한</option><option value="관리자">관리자</option><option value="일반회원">일반회원</option></select>
+    <button class="btn light" onclick="loadUsers()">새로고침</button>
+  </div><div id="users"><div class="notice">불러오는 중...</div></div></div></div>`;
   loadUsers();
 }
+let ADMIN_USERS=[];
 async function loadUsers(){
+  const el=document.getElementById('users');if(!el)return;
+  el.innerHTML='<div class="notice">회원 목록을 불러오는 중...</div>';
   try{
     const r=await A('listUsers',[T]);
-    const users=r.users||r.items||r.data||[];
-    const el=document.getElementById('users');
-    if(!Array.isArray(users)||!users.length){
-      el.innerHTML='<div class="notice">등록된 회원이 없습니다.</div>';
-      return;
-    }
-    el.innerHTML=`
-      <div class="member-list-wrap">
-        <div class="member-list-head">
-          <span>회원 목록</span>
-          <span class="member-list-count">${users.length}명</span>
-        </div>
-        ${users.map(u=>{
-          const id=E(u.id||'').replace(/'/g,"&#039;");
-          const active=u.status==='활성';
-          return `
-            <div class="member-row">
-              <div class="member-main member-cell">
-                <div>
-                  <div class="member-name">${E(u.name||'-')}</div>
-                  <div class="member-id">${E(u.username||'-')}</div>
-                </div>
-                <span class="member-status ${active?'active':'inactive'}">${E(u.status||'-')}</span>
-              </div>
-              <div class="member-cell member-email" title="${E(u.email||'')}">${E(u.email||'-')}</div>
-              <div class="member-cell member-role">${E(u.role||'-')}</div>
-              <div class="member-cell member-branch">${E(u.branch||'-')}</div>
-              <div class="member-cell" style="display:none"></div>
-              <div class="member-actions">
-                <button class="btn light" onclick="editUser('${id}')">수정</button>
-                <button class="btn light" onclick="resetMemberPassword('${id}','${E(u.name||u.username||'회원').replace(/'/g,"&#039;")}')">비밀번호 초기화</button>
-                <button class="btn light" onclick="toggleUser('${id}','${active?'비활성':'활성'}')">${active?'비활성화':'활성화'}</button>
-              </div>
-              <div class="member-details">
-                <div class="member-detail"><span class="member-detail-label">이메일</span><span class="member-detail-value">${E(u.email||'-')}</span></div>
-                <div class="member-detail"><span class="member-detail-label">권한</span><span class="member-detail-value">${E(u.role||'-')}</span></div>
-                <div class="member-detail"><span class="member-detail-label">소속 지부</span><span class="member-detail-value">${E(u.branch||'-')}</span></div>
-              </div>
-            </div>`;
-        }).join('')}
-      </div>`;
-  }catch(e){
-    document.getElementById('users').innerHTML='<div class="notice error">'+E(e.message)+'</div>'
+    ADMIN_USERS=r.users||r.items||r.data||[];
+    filterUsers();
+  }catch(e){el.innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
+}
+function filterUsers(){
+  const q=(document.getElementById('memberSearch')?.value||'').trim().toLocaleLowerCase();
+  const status=document.getElementById('memberStatusFilter')?.value||'';
+  const role=document.getElementById('memberRoleFilter')?.value||'';
+  const users=ADMIN_USERS.filter(u=>
+    (!q||[u.name,u.username,u.email,u.branch].some(v=>String(v||'').toLocaleLowerCase().includes(q)))&&
+    (!status||u.status===status)&&(!role||u.role===role)
+  ).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'ko'));
+  renderUsers(users);
+}
+function renderUsers(users){
+  const el=document.getElementById('users');if(!el)return;
+  if(!users.length){
+    el.innerHTML='<div class="notice">'+(ADMIN_USERS.length?'검색 조건에 맞는 회원이 없습니다.':'등록된 회원이 없습니다.')+'</div>';
+    return;
   }
+  el.innerHTML=`
+    <div class="member-list-wrap">
+      <div class="member-list-head"><span>회원 목록</span><span class="member-list-count">${users.length}명 표시 / 전체 ${ADMIN_USERS.length}명</span></div>
+      ${users.map(u=>{
+        const id=E(u.id||'').replace(/'/g,"&#039;");
+        const active=u.status==='활성';
+        return `
+          <div class="member-row">
+            <div class="member-main member-cell">
+              <div><div class="member-name">${E(u.name||'-')}</div><div class="member-id">${E(u.username||'-')}</div></div>
+              <span class="member-status ${active?'active':'inactive'}">${E(u.status||'-')}</span>
+            </div>
+            <div class="member-cell member-email" title="${E(u.email||'')}">${E(u.email||'-')}</div>
+            <div class="member-cell member-role">${E(u.role||'-')}</div>
+            <div class="member-cell member-branch">${E(u.branch||'-')}</div>
+            <div class="member-actions">
+              <button class="btn light" onclick="editUser('${id}')">수정</button>
+              <button class="btn light" onclick="resetMemberPassword('${id}','${E(u.name||u.username||'회원').replace(/'/g,"&#039;")}')">비밀번호 초기화</button>
+              <button class="btn light" onclick="toggleUser('${id}','${active?'비활성':'활성'}')">${active?'비활성화':'활성화'}</button>
+            </div>
+            <div class="member-details">
+              <div class="member-detail"><span class="member-detail-label">이메일</span><span class="member-detail-value">${E(u.email||'-')}</span></div>
+              <div class="member-detail"><span class="member-detail-label">권한</span><span class="member-detail-value">${E(u.role||'-')}</span></div>
+              <div class="member-detail"><span class="member-detail-label">소속 지부</span><span class="member-detail-value">${E(u.branch||'-')}</span></div>
+            </div>
+          </div>`;
+      }).join('')}
+    </div>`;
 }
 function loginHistory(){
   document.getElementById('app').innerHTML=`<div class="container admin-page"><div class="title"><h2>로그인 이력</h2><button class="btn light" onclick="admin()">← 관리자</button></div>
