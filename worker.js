@@ -296,6 +296,20 @@ async function prepareDriveUpload(data){
 }
 
 
+async function collectBackupData(){
+  const [users,materials,favorites,comments,recentViews,loginHistory]=await Promise.all([sheetGet('회원!A:M'),sheetGet('자료!A:O'),sheetGet('즐겨찾기!A:D'),sheetGet('댓글!A:G'),sheetGet('최근본자료!A:D'),loginHistoryRows()]);
+  return {format:'GMC-Mission-Archive-Backup',version:1,createdAt:nowText(),sheets:{회원:users,자료:materials,즐겨찾기:favorites,댓글:comments,최근본자료:recentViews,로그인이력:loginHistory}};
+}
+async function saveScheduledBackup(){
+  const backup=await collectBackupData();
+  const data=JSON.stringify(backup);
+  const boundary='gmcbackup_'+randomHex(12);
+  const metadata=JSON.stringify({name:'GMC-Archive-AutoBackup-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json',mimeType:'application/json',parents:[CFG.ROOT_FOLDER_ID],description:'GMC Mission Archive automatic backup. Contains sensitive member authentication data.'});
+  const body='--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+metadata+'\r\n--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+data+'\r\n--'+boundary+'--\r\n';
+  const file=await driveJson('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,createdTime,webViewLink',{method:'POST',headers:{'content-type':'multipart/related; boundary='+boundary},body});
+  return {id:file.id,name:file.name,createdTime:file.createdTime,rows:Object.fromEntries(Object.entries(backup.sheets).map(([k,v])=>[k,Math.max(0,v.length-1)]))};
+}
+
 async function api(action,args,ctx=null){
   switch(action){
     case 'login':{const u=await findUserByUsername(args[0]);if(!u||u.status!=='활성')return {ok:false,message:'아이디 또는 비밀번호가 올바르지 않습니다.'};const h=await hashPassword(args[1],u.salt);if(!constEq(h,u.hash))return {ok:false,message:'아이디 또는 비밀번호가 올바르지 않습니다.'};const loginAt=nowText();const token=await makeSession(u);const recordLogin=async()=>{try{await sheetUpdate('회원!M'+u.row+':M'+u.row,[[loginAt]]);const lrows=await loginHistoryRows(),lid=maxNextId(lrows,'L');await sheetAppend('로그인이력',[lid,u.id,safe(u.name),safe(u.username),u.role,safe(u.branch),loginAt]);}catch(e){}};if(ctx?.waitUntil)ctx.waitUntil(recordLogin());else await recordLogin();return {ok:true,token,user:publicUser(u)};}
@@ -479,23 +493,50 @@ async function api(action,args,ctx=null){
     case 'updateUser':{const s=await requireRole(args[0],['관리자']),data=args[1]||{},u=await findUserById(data.id);if(!u)throw new Error('회원이 없습니다.');const nextName=data.name!==undefined?data.name:u.name,nextUsername=data.username!==undefined?data.username:u.username,nextEmail=data.email!==undefined?data.email:u.email,nextPhone=data.phone!==undefined?data.phone:u.phone,nextBranch=data.branch!==undefined?data.branch:u.branch,nextRole=data.role!==undefined?data.role:u.role,nextStatus=data.status!==undefined?data.status:u.status;if(!ROLES.includes(nextRole))throw new Error('권한은 관리자 또는 일반회원만 선택할 수 있습니다.');if(data.id===s.uid&&nextStatus==='비활성')throw new Error('현재 로그인한 관리자 계정은 비활성화할 수 없습니다.');await sheetUpdate('회원!B'+u.row+':G'+u.row,[[safe(nextName),safe(nextUsername),safe(nextEmail),safe(nextPhone),safe(nextBranch),nextRole]]);await sheetUpdate('회원!K'+u.row+':K'+u.row,[[nextStatus==='비활성'?'비활성':'활성']]);return {ok:true};}
     case 'resetUserPassword':{const s=await requireRole(args[0],['관리자']);validatePassword(args[2]);const u=await findUserById(args[1]);if(!u)throw new Error('회원이 없습니다.');const salt=randomHex(16),hash=await hashPassword(args[2],salt);await sheetUpdate('회원!H'+u.row+':J'+u.row,[[hash,salt,true]]);return {ok:true};}
     case 'makeAllMaterialsPublic':{await requireRole(args[0],['관리자']);const rows=await materialsRows();let count=0,fail=0;for(let i=1;i<rows.length;i++){const driveId=String(rows[i][7]||'');if(!driveId||String(rows[i][12]||'')==='삭제')continue;try{await ensurePublic(driveId);count++;}catch(e){fail++;}}return {ok:true,count,fail};}
-    case 'exportBackup':{await requireRole(args[0],['관리자']);const [users,materials,favorites,comments,recentViews,loginHistory]=await Promise.all([sheetGet('회원!A:M'),sheetGet('자료!A:O'),sheetGet('즐겨찾기!A:D'),sheetGet('댓글!A:G'),sheetGet('최근본자료!A:D'),loginHistoryRows()]);return {ok:true,backup:{format:'GMC-Mission-Archive-Backup',version:1,createdAt:nowText(),sheets:{회원:users,자료:materials,즐겨찾기:favorites,댓글:comments,최근본자료:recentViews,로그인이력:loginHistory}}};}
+    case 'exportBackup':{await requireRole(args[0],['관리자']);return {ok:true,backup:await collectBackupData()};}
     case 'restoreBackup':{
       await requireRole(args[0],['관리자']);
       const b=args[1];
       const names={'회원':'A:M','자료':'A:O','즐겨찾기':'A:D','댓글':'A:G','최근본자료':'A:D','로그인이력':'A:G'};
       if(!b||b.format!=='GMC-Mission-Archive-Backup'||b.version!==1||!b.sheets||typeof b.sheets!=='object')throw new Error('GMC 아카이브 백업 파일이 아니거나 버전이 맞지 않습니다.');
-      for(const name of Object.keys(names)){const rows=b.sheets[name];if(!Array.isArray(rows)||!rows.length||!Array.isArray(rows[0]))throw new Error('백업 파일에 필수 시트가 없거나 형식이 올바르지 않습니다: '+name);}
-      if(!b.sheets['회원'][0].some(v=>String(v)==='아이디')||!b.sheets['자료'][0].some(v=>String(v)==='자료ID'||String(v)==='ID'))throw new Error('회원 또는 자료 시트의 제목 행을 확인할 수 없습니다.');
-      // Restore only after a complete backup has been downloaded by the UI. No Drive files are deleted or replaced.
+      const expected={'회원':['아이디','이름'],'자료':['ID','제목']};
       for(const [name,cols] of Object.entries(names)){
-        const range=name+'!'+cols;
-        await googleJson(sheetUrl(range)+':clear',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({})});
         const rows=b.sheets[name];
-        if(rows.length)await googleJson(sheetUrl(name+'!A1')+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({range:name+'!A1',majorDimension:'ROWS',values:rows})});
+        if(!Array.isArray(rows)||!rows.length||!Array.isArray(rows[0])||rows.length>200000)throw new Error('필수 시트가 없거나 행 수/형식이 올바르지 않습니다: '+name);
+        if(rows.some(row=>!Array.isArray(row)))throw new Error('시트 행 형식이 올바르지 않습니다: '+name);
+        if(rows[0].length===0)throw new Error('제목 행이 비어 있습니다: '+name);
+      }
+      for(const [name,headers] of Object.entries(expected)){
+        const head=b.sheets[name][0].map(v=>String(v||'').trim());
+        if(!headers.every(h=>head.includes(h)) && !(name==='자료'&&head.includes('자료ID')&&head.includes('제목')))throw new Error(name+' 시트의 필수 제목 열이 없습니다.');
+      }
+      const current={};
+      for(const [name,cols] of Object.entries(names))current[name]=await sheetGet(name+'!'+cols);
+      const counts=Object.fromEntries(Object.entries(b.sheets).map(([k,v])=>[k,Math.max(0,v.length-1)]));
+      const currentCounts=Object.fromEntries(Object.entries(current).map(([k,v])=>[k,Math.max(0,v.length-1)]));
+      const changed=Object.keys(names).filter(k=>counts[k]!==currentCounts[k]);
+      const written=[];
+      try{
+        for(const [name,cols] of Object.entries(names)){
+          const range=name+'!'+cols;
+          await googleJson(sheetUrl(range)+':clear',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({})});
+          await googleJson(sheetUrl(name+'!A1')+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({range:name+'!A1',majorDimension:'ROWS',values:b.sheets[name]})});
+          written.push(name);
+        }
+      }catch(err){
+        const rollbackErrors=[];
+        for(const name of written.reverse()){
+          try{
+            const cols=names[name];
+            await googleJson(sheetUrl(name+'!'+cols)+':clear',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({})});
+            if(current[name].length)await googleJson(sheetUrl(name+'!A1')+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({range:name+'!A1',majorDimension:'ROWS',values:current[name]})});
+          }catch(re){rollbackErrors.push(name+': '+String(re.message||re));}
+        }
+        invalidateSheetReadCache();
+        throw new Error('복구 중 오류가 발생했습니다: '+String(err.message||err)+(rollbackErrors.length?' / 자동 되돌리기에도 오류: '+rollbackErrors.join('; '):' / 변경한 시트는 가능한 범위에서 복구를 시도했습니다.'));
       }
       invalidateSheetReadCache();
-      return {ok:true,message:'백업 데이터를 복원했습니다. Google Drive 파일 자체는 변경하지 않았습니다.',counts:Object.fromEntries(Object.entries(b.sheets).map(([k,v])=>[k,Math.max(0,v.length-1)]))};
+      return {ok:true,message:'복구 완료. Google Drive 파일 자체는 변경하지 않았습니다.',counts,currentCounts,changed};
     }
     case 'dashboard':{await requireRole(args[0],['관리자']);const us=await usersRows(),ms=await materialsRows();return {ok:true,stats:{users:Math.max(0,us.length-1),activeUsers:us.slice(1).filter(r=>r[10]==='활성').length,materials:ms.slice(1).filter(r=>r[12]==='공개').length,views:ms.slice(1).reduce((a,r)=>a+Number(r[14]||0),0)}};}
     default:throw new Error('지원하지 않는 요청입니다.');
@@ -517,7 +558,7 @@ export default {
     if(url.pathname==='/'||url.pathname==='/index.html')return new Response(INDEX_HTML,{headers:{'content-type':'text/html; charset=UTF-8','cache-control':'no-store'}});
     if(url.pathname==='/oauth/start')return oauthStart(request);
     if(url.pathname==='/oauth/callback')return oauthCallback(request);
-    if(url.pathname==='/api/health')return jsonResponse({ok:true,service:'gmc-worker',version:'v33-direct-drive-upload'});
+    if(url.pathname==='/api/health')return jsonResponse({ok:true,service:'gmc-worker',version:'v34-backup-safety'});
     if(url.pathname==='/api'){if(request.method==='OPTIONS')return new Response(null,{status:204,headers:{'access-control-allow-origin':'https://gmc-mission-archive-mm.netlify.app','access-control-allow-methods':'POST, OPTIONS','access-control-allow-headers':'Content-Type'}});if(request.method!=='POST')return jsonResponse({ok:false,message:'POST only'},405);return handleApi(request,env,ctx);}
     return new Response('Not Found',{status:404});
   }
