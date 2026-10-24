@@ -931,6 +931,30 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
 .member-tools input:focus,.member-tools select:focus{outline:3px solid rgba(23,52,79,.1);border-color:#7890a5}
 .member-tools .btn{min-height:42px;white-space:nowrap}
 @media(max-width:760px){.member-tools{grid-template-columns:1fr 1fr}.member-tools input{grid-column:1/-1}.member-tools .btn{width:100%}}
+</style><style id="member-admin-layout-repair">
+/* Repair member rows: five visible columns, with action buttons given their natural width. */
+.member-list-wrap{width:100%;min-width:0}
+.member-row{grid-template-columns:minmax(130px,1.1fr) minmax(160px,1.4fr) minmax(74px,.55fr) minmax(90px,.7fr) minmax(250px,auto)!important;gap:14px;padding:16px 0}
+.member-main,.member-cell{min-width:0}
+.member-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;white-space:normal}
+.member-actions .btn{flex:0 0 auto;min-height:36px;padding:8px 11px;font-size:12px;line-height:1.25}
+.member-email{max-width:100%}
+.member-role,.member-branch{overflow-wrap:anywhere}
+.member-tools{grid-template-columns:minmax(240px,1fr) minmax(135px,170px) minmax(135px,170px) auto;gap:12px}
+@media(min-width:701px) and (max-width:1100px){
+  .member-row{grid-template-columns:minmax(120px,1fr) minmax(140px,1.2fr) 80px 90px minmax(210px,auto)!important;gap:10px}
+  .member-actions .btn{padding:7px 8px;font-size:11px}
+  .member-tools{grid-template-columns:minmax(200px,1fr) 140px 140px auto}
+}
+@media(max-width:700px){
+  .member-row{display:block!important;padding:16px 0!important}
+  .member-actions{display:flex;gap:8px;margin-top:12px}
+  .member-actions .btn{flex:1 1 0;min-width:0;white-space:normal}
+  .member-details{display:grid}
+  .member-tools{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+  .member-tools input{grid-column:1/-1}
+  .member-tools .btn{width:100%;grid-column:1/-1}
+}
 </style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><button id="backToTop" type="button" aria-label="페이지 맨 위로 이동" title="맨 위로" onclick="window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})">↑</button><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
