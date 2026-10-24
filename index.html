@@ -918,6 +918,13 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
   #backToTop { width: 44px; height: 44px; right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); }
 }
 @media(prefers-reduced-motion:reduce) { #backToTop { transition:none; } }
+</style><style id="archive-filter-polish">
+.archive-filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0 14px}
+.archive-filters label{display:flex;align-items:center;gap:7px;color:#6f7d89;font-size:12px;font-weight:700}
+.archive-filters select{min-height:36px;max-width:190px;padding:0 10px;border:1px solid #d7e0e7;border-radius:8px;background:#fff;color:#344b5e;font-size:12px}
+.archive-filters .filter-reset{min-height:36px;padding:0 12px;border:1px solid #d7e0e7;border-radius:8px;background:transparent;color:#536575;font-size:12px;font-weight:700}
+.archive-filters .filter-reset:hover{background:#edf3f7}
+@media(max-width:700px){.archive-filters{gap:8px}.archive-filters label{flex:1;min-width:130px}.archive-filters select{flex:1;min-width:0;max-width:none}.archive-filters .filter-reset{width:100%}}
 </style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><button id="backToTop" type="button" aria-label="페이지 맨 위로 이동" title="맨 위로" onclick="window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})">↑</button><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
@@ -988,7 +995,12 @@ async function home(){
     <div class="heroResult" id="heroResultCount">전체 자료를 불러오는 중...</div>
   </div></section>
   <div class="container">
-    <div class="search-result-head"><div class="title"><h2>검색 결과</h2></div><select id="searchSort" onchange="search()"><option value="related">관련도순</option><option value="date">최신 등록순</option><option value="title">제목순</option><option value="year">작성연도순</option><option value="views">조회수순</option><option value="comments">댓글순</option></select></div>
+    <div class="search-result-head"><div class="title"><h2>검색 결과</h2></div><select id="searchSort" aria-label="검색 결과 정렬" onchange="search()"><option value="related">관련도순</option><option value="date">최신 등록순</option><option value="title">제목순</option><option value="year">작성연도순</option><option value="views">조회수순</option><option value="comments">댓글순</option></select></div>
+    <div class="archive-filters" id="archiveFilters">
+      <label>언어 <select id="filterLanguage" onchange="search()"><option value="">전체 언어</option></select></label>
+      <label>작성연도 <select id="filterYear" onchange="search()"><option value="">전체 연도</option></select></label>
+      <button type="button" class="filter-reset" onclick="resetArchiveFilters()">필터 초기화</button>
+    </div>
     <div class="cards" id="cards"><div class="notice">자료를 불러오는 중...</div></div>
   </div>`;
   loadFavorites().catch(()=>{});
@@ -1290,30 +1302,42 @@ function restoreSearchState(){
 }
 async function search(category, restoring=false){
   const state=readSearchState();
-  if(category!==undefined){state.category=category||''}
-  else if(state.category===undefined){state.category=''}
+  if(category!==undefined)state.category=category||'';
+  if(state.category===undefined)state.category='';
   const q=(document.getElementById('q')?.value||state.q||'').trim();
   state.q=q;
   const cards=document.getElementById('cards'), count=document.getElementById('heroResultCount');
   const sortSelect=document.getElementById('searchSort');
+  const languageSelect=document.getElementById('filterLanguage');
+  const yearSelect=document.getElementById('filterYear');
   if(sortSelect&&state.sort)sortSelect.value=state.sort;
+  if(languageSelect&&state.language)languageSelect.value=state.language;
+  if(yearSelect&&state.year)yearSelect.value=state.year;
   window.__gmcSearchState=state;
   if(!restoring)persistSearchState();
   if(!cards)return;
   cards.innerHTML='<div class="notice">검색 중...</div>';
   try{
-    let d;
-    // Keep compatibility with the current Worker API.
-    try{d=await A('listMaterials',[T,{q,category:state.category}])}
-    catch(e){d=await A('listMaterials',[T,{q,category:state.category}])}
+    const d=await A('listMaterials',[T,{q,category:state.category}]);
     let items=d.materials||d.items||d.data||[];
-    if(count){
-      count.textContent = q
-        ? `'${q}' 검색 결과 ${Array.isArray(items)?items.length:0}건`
-        : (state.category ? `${state.category} 자료 ${Array.isArray(items)?items.length:0}건` : `전체 자료 ${Array.isArray(items)?items.length:0}건`);
+    if(!Array.isArray(items))items=[];
+    const languages=[...new Set(items.map(m=>String(m.language||m.lang||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ko'));
+    const years=[...new Set(items.map(m=>String(m.year||'').trim()).filter(y=>/^\\d{4}$/.test(y)))].sort((a,b)=>Number(b)-Number(a));
+    if(languageSelect){
+      const selected=state.language||languageSelect.value||'';
+      languageSelect.innerHTML='<option value="">전체 언어</option>'+languages.map(v=>'<option value="'+E(v)+'">'+E(v)+'</option>').join('');
+      languageSelect.value=languages.includes(selected)?selected:'';
+      state.language=languageSelect.value;
     }
-    if(!Array.isArray(items)||!items.length){cards.innerHTML='<div class="notice">검색 결과가 없습니다.</div>';return}
-    const sort=document.getElementById('searchSort')?.value||state.sort||(q?'related':'date');
+    if(yearSelect){
+      const selected=state.year||yearSelect.value||'';
+      yearSelect.innerHTML='<option value="">전체 연도</option>'+years.map(v=>'<option value="'+E(v)+'">'+E(v)+'년</option>').join('');
+      yearSelect.value=years.includes(selected)?selected:'';
+      state.year=yearSelect.value;
+    }
+    if(languageSelect?.value)items=items.filter(m=>String(m.language||m.lang||'').trim()===languageSelect.value);
+    if(yearSelect?.value)items=items.filter(m=>String(m.year||'').trim()===yearSelect.value);
+    const sort=sortSelect?.value||state.sort||(q?'related':'date');
     if(sortSelect)sortSelect.value=sort;
     state.q=q;state.sort=sort;window.__gmcSearchState=state;
     try{sessionStorage.setItem('gmcArchiveSearchState',JSON.stringify(state))}catch(e){}
@@ -1324,42 +1348,49 @@ async function search(category, restoring=false){
       if(sort==='comments')return Number(b.commentCount||0)-Number(a.commentCount||0);
       if(sort==='year')return Number(b.year||0)-Number(a.year||0);
       if(sort==='date'){
-        // Compare normalized timestamps; records without a valid registration date belong at the bottom.
         const timestamp=v=>{
           if(v===null||v===undefined||String(v).trim()==='')return null;
-          const raw=String(v).trim();
-          let t=Date.parse(raw);
+          const raw=String(v).trim();let t=Date.parse(raw);
           if(Number.isFinite(t))return t;
-          const m=raw.match(/^(\d{4})[./-](\d{1,2})[./-](\d{1,2})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
-          if(m){t=Date.UTC(Number(m[1]),Number(m[2])-1,Number(m[3]),Number(m[4]||0),Number(m[5]||0),Number(m[6]||0));return Number.isFinite(t)?t:null;}
+          const m=raw.match(/^(\\d{4})[./-](\\d{1,2})[./-](\\d{1,2})(?:\\s+(\\d{1,2}):(\\d{2})(?::(\\d{2}))?)?$/);
+          if(m){t=Date.UTC(Number(m[1]),Number(m[2])-1,Number(m[3]),Number(m[4]||0),Number(m[5]||0),Number(m[6]||0));return Number.isFinite(t)?t:null}
           return null;
         };
         const da=timestamp(a.date||a.createdAt),db=timestamp(b.date||b.createdAt);
-        if(da===null&&db===null)return 0;
-        if(da===null)return 1;
-        if(db===null)return -1;
-        return db-da;
+        if(da===null&&db===null)return 0;if(da===null)return 1;if(db===null)return -1;return db-da;
       }
       return 0;
     });
+    if(count){
+      const parts=[];
+      if(q)parts.push("'"+q+"' 검색");
+      if(state.category)parts.push(state.category);
+      if(state.language)parts.push(state.language);
+      if(state.year)parts.push(state.year+'년');
+      count.textContent=(parts.length?parts.join(' · ')+' 결과 ':'전체 자료 ')+items.length+'건';
+    }
+    if(!items.length){cards.innerHTML='<div class="notice">조건에 맞는 자료가 없습니다. 필터를 바꾸거나 초기화해 보세요.</div>';return}
     cards.innerHTML=items.map(m=>`
       <article class="card" style="cursor:pointer" onclick="openMaterialById('${E(m.id||m.materialId||m.ID||'').replace(/'/g,"&#039;")}','${E(m.url||m.viewUrl||m.driveUrl||m.webViewLink||'').replace(/'/g,"&#039;")}',this)">
         <div class="card-top"><div class="tag">${E(m.category||'기타')}</div><button class="favorite-btn ${FAVS.has(String(m.id||m.materialId||m.ID||''))?'active':''}" title="${FAVS.has(String(m.id||m.materialId||m.ID||''))?'내 보관함에서 제거':'내 보관함에 저장'}" onclick="event.stopPropagation();toggleFavorite('${E(m.id||m.materialId||m.ID||'').replace(/'/g,"&#039;")}',this)">${FAVS.has(String(m.id||m.materialId||m.ID||''))?'★':'☆'}</button></div>
         <h3>${E(m.title||m.name||'제목 없음')}</h3>
         <p>${E(m.description||m.content||'')}</p>
         <div class="meta">${E(m.author||m.writer||'')} ${m.year?'· '+E(m.year):''} · 조회 ${Number(m.views||0)} · 댓글 ${Number(m.commentCount||0)}</div>
-
       </article>`).join('');
     const sharedId=new URLSearchParams(window.location.search).get('material');
-    if(sharedId && !window.__gmcSharedMaterialOpened){
+    if(sharedId&&!window.__gmcSharedMaterialOpened){
       const match=items.find(m=>String(m.id||m.materialId||m.ID||'')===String(sharedId));
-      if(match){
-        window.__gmcSharedMaterialOpened=true;
-        openMaterialById(String(sharedId),match.url||match.viewUrl||match.driveUrl||match.webViewLink||'',null);
-      }
+      if(match){window.__gmcSharedMaterialOpened=true;openMaterialById(String(sharedId),match.url||match.viewUrl||match.driveUrl||match.webViewLink||'',null)}
     }
   }catch(e){if(count)count.textContent='';cards.innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
 }
+function resetArchiveFilters(){
+  const language=document.getElementById('filterLanguage'),year=document.getElementById('filterYear');
+  if(language)language.value='';if(year)year.value='';
+  window.__gmcSearchState={...(window.__gmcSearchState||{}),language:'',year:''};
+  search();
+}
+
 
 
 async function admin(){
