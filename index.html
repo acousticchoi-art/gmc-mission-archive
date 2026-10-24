@@ -869,7 +869,56 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
     flex: 0 0 auto;
   }
 }
-</style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><script>
+</style><style id="desktop-content-width-and-back-to-top">
+@media (min-width: 701px) {
+  /* Match the results column to the search field instead of stretching across the viewport. */
+  .container {
+    width: min(820px, calc(100% - 64px)) !important;
+    max-width: 820px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding: 30px 0 64px !important;
+  }
+  .search-result-head { gap: 16px; }
+  .search-result-head .title { min-width: 0; }
+  .search-result-head select { margin-left: auto; }
+  .cards { width: 100%; }
+  .cards > .card { padding: 22px 24px !important; }
+}
+@media (min-width: 701px) and (max-width: 900px) {
+  .container { width: calc(100% - 48px) !important; }
+}
+#backToTop {
+  position: fixed;
+  right: max(22px, env(safe-area-inset-right));
+  bottom: max(22px, env(safe-area-inset-bottom));
+  z-index: 999;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 50%;
+  background: #17344f;
+  color: #fff;
+  box-shadow: 0 5px 18px rgba(15,35,52,.25);
+  font-size: 23px;
+  line-height: 1;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  transition: opacity .18s ease, transform .18s ease, visibility .18s ease, background .18s ease;
+  cursor: pointer;
+}
+#backToTop.visible { opacity: 1; visibility: visible; transform: translateY(0); }
+#backToTop:hover { background: #244b6b; }
+#backToTop:focus-visible { outline: 3px solid #b18a55; outline-offset: 3px; }
+@media(max-width:700px) {
+  #backToTop { width: 44px; height: 44px; right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); }
+}
+@media(prefers-reduced-motion:reduce) { #backToTop { transition:none; } }
+</style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><button id="backToTop" type="button" aria-label="페이지 맨 위로 이동" title="맨 위로" onclick="window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})">↑</button><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
 let T=localStorage.getItem('gmc_token')||'',ME=null,CATS=[],FAVS=new Set();
@@ -1686,5 +1735,14 @@ async function boot(){
     ME=d.user||d; await home();
   }catch(e){T='';ME=null;localStorage.removeItem('gmc_token');loginPage();}
 }
+
+(function(){
+  const topButton=document.getElementById('backToTop');
+  if(!topButton)return;
+  const updateTopButton=()=>topButton.classList.toggle('visible',window.scrollY>280);
+  window.addEventListener('scroll',updateTopButton,{passive:true});
+  window.addEventListener('resize',updateTopButton,{passive:true});
+  updateTopButton();
+})();
 window.addEventListener('DOMContentLoaded',boot);
 </script></body></html>
