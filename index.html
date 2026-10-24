@@ -955,6 +955,33 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
   .member-tools input{grid-column:1/-1}
   .member-tools .btn{width:100%;grid-column:1/-1}
 }
+</style><style id="member-admin-tabs-layout">
+.member-admin-tabs{display:flex;gap:6px;border-bottom:1px solid #dbe3e9;margin:0 0 20px;padding:0 0 0 2px}
+.member-admin-tabs button{appearance:none;border:1px solid transparent;border-bottom:0;background:transparent;color:#657585;padding:13px 22px;margin-bottom:-1px;border-radius:10px 10px 0 0;font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.member-admin-tabs button:hover{background:#f2f6f8;color:#17344f}
+.member-admin-tabs button.active{background:#fff;color:#17344f;border-color:#dbe3e9;box-shadow:0 -2px 0 #b18a55 inset}
+.member-admin-tabs button span{display:inline-flex;align-items:center;justify-content:center;margin-left:4px;min-width:20px;height:20px;padding:0 5px;border-radius:20px;background:#edf2f6;color:#526678;font-size:11px}
+.member-register-panel[hidden],.member-manage-panel[hidden]{display:none!important}
+.member-register-panel{max-width:900px;margin:0 auto}
+.member-panel-heading{margin-bottom:22px;padding-bottom:15px;border-bottom:1px solid #e6ebef}
+.member-panel-heading h3{margin:0;color:#17344f;font-size:18px}
+.member-panel-heading p{margin:6px 0 0;color:#7a8792;font-size:13px}
+.member-register-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 20px}
+.member-register-field{min-width:0}
+.member-register-field label{display:block;margin:0 0 7px;color:#526575;font-size:13px;font-weight:700}
+.member-register-field input,.member-register-field select{display:block;width:100%;box-sizing:border-box;min-height:44px;padding:10px 12px;border:1px solid #d7e0e7;border-radius:8px;background:#fff;color:#24394a;font:inherit;font-size:14px}
+.member-register-field input:focus,.member-register-field select:focus{outline:3px solid rgba(23,52,79,.09);border-color:#7890a5}
+.member-register-footer{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:24px;padding-top:18px;border-top:1px solid #e6ebef}
+.member-form-note{color:#84909a;font-size:12px;line-height:1.5}
+.member-register-footer .btn{min-width:132px;min-height:42px}
+.member-manage-panel{min-width:0}
+@media(max-width:700px){
+ .member-admin-tabs{margin-bottom:14px}
+ .member-admin-tabs button{flex:1;padding:12px 8px;font-size:13px}
+ .member-register-grid{grid-template-columns:minmax(0,1fr);gap:14px}
+ .member-register-footer{align-items:stretch;flex-direction:column}
+ .member-register-footer .btn{width:100%}
+}
 </style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><button id="backToTop" type="button" aria-label="페이지 맨 위로 이동" title="맨 위로" onclick="window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})">↑</button><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
@@ -1514,21 +1541,51 @@ async function deleteMaterialAdmin(id,title){
 }
 
 function userAdmin(){
-  document.getElementById('app').innerHTML=`<div class="container"><div class="title"><h2>회원 관리</h2><button class="btn light" onclick="admin()">← 관리자</button></div>
-  <div class="panel form"><h3>회원 등록</h3>
-  <div class="row"><div><label>이름</label><input id="un"></div><div><label>아이디</label><input id="uid"></div></div>
-  <div class="row"><div><label>이메일</label><input id="ue"></div><div><label>소속 지부</label><input id="ub"></div></div>
-  <label>권한</label><select id="ur"><option>일반회원</option></select>
-  <label>초기 비밀번호</label><input id="up" type="password" minlength="6" value="gmcgmc">
-  <button class="btn" style="margin-top:16px" onclick="createUser()">회원 등록</button><div id="umsg"></div></div>
-  <div class="panel"><div class="member-tools">
-    <input id="memberSearch" type="search" placeholder="이름, 아이디, 이메일, 소속 검색" oninput="filterUsers()">
-    <select id="memberStatusFilter" onchange="filterUsers()" aria-label="회원 상태"><option value="">전체 상태</option><option value="활성">활성</option><option value="비활성">비활성</option></select>
-    <select id="memberRoleFilter" onchange="filterUsers()" aria-label="회원 권한"><option value="">전체 권한</option><option value="관리자">관리자</option><option value="일반회원">일반회원</option></select>
-    <button class="btn light" onclick="loadUsers()">새로고침</button>
-  </div><div id="users"><div class="notice">불러오는 중...</div></div></div></div>`;
-  loadUsers();
+  window.__memberAdminLoaded=false;
+  document.getElementById('app').innerHTML=`<div class="container admin-page member-admin-page"><div class="title"><h2>회원 관리</h2><button class="btn light" onclick="admin()">← 관리자</button></div>
+  <div class="member-admin-tabs" role="tablist" aria-label="회원 관리 메뉴">
+    <button type="button" id="memberTabRegister" class="active" role="tab" aria-selected="true" onclick="showMemberAdminTab('register')">회원 등록</button>
+    <button type="button" id="memberTabManage" role="tab" aria-selected="false" onclick="showMemberAdminTab('manage')">회원 관리 <span id="memberTabCount"></span></button>
+  </div>
+  <section id="memberRegisterPanel" class="panel form member-register-panel" role="tabpanel" aria-labelledby="memberTabRegister">
+    <div class="member-panel-heading"><div><h3>회원 등록</h3><p>새 회원의 계정 정보를 입력하세요.</p></div></div>
+    <div class="member-register-grid">
+      <div class="member-register-field"><label for="un">이름</label><input id="un" autocomplete="name" placeholder="이름 입력"></div>
+      <div class="member-register-field"><label for="uid">아이디</label><input id="uid" autocomplete="username" placeholder="로그인 아이디 입력"></div>
+      <div class="member-register-field"><label for="ue">이메일</label><input id="ue" type="email" autocomplete="email" placeholder="이메일 입력"></div>
+      <div class="member-register-field"><label for="ub">소속 지부</label><input id="ub" placeholder="소속 지부 입력"></div>
+      <div class="member-register-field"><label for="ur">권한</label><select id="ur"><option>일반회원</option></select></div>
+      <div class="member-register-field"><label for="up">초기 비밀번호</label><input id="up" type="password" minlength="6" autocomplete="new-password" value="gmcgmc"></div>
+    </div>
+    <div class="member-register-footer"><span class="member-form-note">등록 후 회원 목록에서 계정을 관리할 수 있습니다.</span><button class="btn" onclick="createUser()">회원 등록</button></div>
+    <div id="umsg"></div>
+  </section>
+  <section id="memberManagePanel" class="panel member-manage-panel" role="tabpanel" aria-labelledby="memberTabManage" hidden>
+    <div class="member-tools">
+      <input id="memberSearch" type="search" placeholder="이름, 아이디, 이메일, 소속 검색" oninput="filterUsers()">
+      <select id="memberStatusFilter" onchange="filterUsers()" aria-label="회원 상태"><option value="">전체 상태</option><option value="활성">활성</option><option value="비활성">비활성</option></select>
+      <select id="memberRoleFilter" onchange="filterUsers()" aria-label="회원 권한"><option value="">전체 권한</option><option value="관리자">관리자</option><option value="일반회원">일반회원</option></select>
+      <button class="btn light" onclick="loadUsers()">새로고침</button>
+    </div>
+    <div id="users"><div class="notice">회원 목록을 불러오는 중...</div></div>
+  </section></div>`;
+  showMemberAdminTab('register');
 }
+function showMemberAdminTab(tab){
+  const register=tab==='register';
+  const registerPanel=document.getElementById('memberRegisterPanel');
+  const managePanel=document.getElementById('memberManagePanel');
+  const registerButton=document.getElementById('memberTabRegister');
+  const manageButton=document.getElementById('memberTabManage');
+  if(!registerPanel||!managePanel)return;
+  registerPanel.hidden=!register;managePanel.hidden=register;
+  registerButton?.classList.toggle('active',register);
+  manageButton?.classList.toggle('active',!register);
+  registerButton?.setAttribute('aria-selected',String(register));
+  manageButton?.setAttribute('aria-selected',String(!register));
+  if(!register&&!window.__memberAdminLoaded){window.__memberAdminLoaded=true;loadUsers();}
+}
+
 let ADMIN_USERS=[];
 async function loadUsers(){
   const el=document.getElementById('users');if(!el)return;
@@ -1536,6 +1593,8 @@ async function loadUsers(){
   try{
     const r=await A('listUsers',[T]);
     ADMIN_USERS=r.users||r.items||r.data||[];
+    window.__memberAdminLoaded=true;
+    const tabCount=document.getElementById('memberTabCount');if(tabCount)tabCount.textContent=' '+ADMIN_USERS.length;
     filterUsers();
   }catch(e){el.innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
 }
@@ -1603,7 +1662,7 @@ async function loadLoginHistory(){
 }
 async function createUser(){
   const data={name:document.getElementById('un').value,username:document.getElementById('uid').value,email:document.getElementById('ue').value,branch:document.getElementById('ub').value,role:document.getElementById('ur').value,initialPassword:document.getElementById('up').value};
-  try{await A('createUser',[T,data]);document.getElementById('umsg').innerHTML='<div class="notice ok">회원이 등록되었습니다.</div>';loadUsers()}
+  try{await A('createUser',[T,data]);document.getElementById('umsg').innerHTML='<div class="notice ok">회원이 등록되었습니다.</div>';window.__memberAdminLoaded=false;ADMIN_USERS=[];if(document.getElementById('memberTabCount'))document.getElementById('memberTabCount').textContent='';}
   catch(e){document.getElementById('umsg').innerHTML='<div class="notice error">'+E(e.message)+'</div>'}
 }
 async function toggleUser(id,status){
