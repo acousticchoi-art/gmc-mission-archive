@@ -1,0 +1,19 @@
+{
+  "id": "/",
+  "name": "GMC Mission Archive",
+  "short_name": "GMC Archive",
+  "description": "GMC 선교 자료 아카이브",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f6f8fa",
+  "theme_color": "#17344f",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
