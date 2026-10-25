@@ -1,4 +1,4 @@
-const INDEX_HTML = `<!doctype html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GMC Mission Archive</title>
+const INDEX_HTML = `<!doctype html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#17344f"><link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/icon.svg"><title>GMC Mission Archive</title>
 <style>
 :root{--n:#17344f;--a:#b18a55;--bg:#f5f7f9;--line:#e1e7ec;--muted:#6d7883;--white:#fff;--danger:#a33d3d}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:#1d2a35;font-family:Arial,"Noto Sans KR",sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}
@@ -58,6 +58,7 @@ function b64(f){return new Promise((ok,no)=>{let r=new FileReader();r.onload=()=
 async function upload(){const f=t8.files[0];if(!f){upm.innerHTML='<div class="notice error">파일을 선택하세요.</div>';return}upm.innerHTML='<div class="notice">업로드 중...</div>';try{await A('uploadMaterial',[T,{title:t1.value,description:t2.value,category:t3.value,language:t4.value,author:t5.value,year:t6.value,fileType:t7.value||f.type,fileName:f.name,mimeType:f.type,base64:await b64(f)}]);upm.innerHTML='<div class="notice ok">등록되었습니다.</div>'}catch(e){upm.innerHTML=\`<div class="notice error">\${E(e.message)}</div>\`}}
 async function logout(){await A('logout',[T]);T='';ME=null;localStorage.removeItem('gmc_token');loginView()}
 async function init(){if(T){try{let r=await A('me',[T]);if(r.ok){ME=r.user;nav();return ME.firstLogin?pw(true):home()}}catch(e){}}loginView()}init();
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));}
 </script></body></html>`;
 
 let CFG = null;
@@ -558,6 +559,9 @@ export default {
   async fetch(request,env,ctx){
     CFG=config(env);
     const url=new URL(request.url);
+    if(url.pathname==='/manifest.webmanifest')return new Response(JSON.stringify({id:'/',name:'GMC Mission Archive',short_name:'GMC Archive',description:'GMC 선교 자료 아카이브',start_url:'/',scope:'/',display:'standalone',background_color:'#f5f7f9',theme_color:'#17344f',icons:[{src:'/icon.svg',sizes:'any',type:'image/svg+xml',purpose:'any maskable'}]}),{headers:{'content-type':'application/manifest+json; charset=UTF-8','cache-control':'public, max-age=3600'}});
+    if(url.pathname==='/icon.svg')return new Response('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#17344f"/><path d="M108 358V154h48l100 122 100-122h48v204h-52V233L256 348 160 233v125z" fill="#fff"/><path d="M108 390h296" stroke="#b18a55" stroke-width="18" stroke-linecap="round"/></svg>',{headers:{'content-type':'image/svg+xml','cache-control':'public, max-age=86400'}});
+    if(url.pathname==='/sw.js')return new Response("const CACHE='gmc-archive-shell-v1';const SHELL=['/','/manifest.webmanifest','/icon.svg'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting())));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith('gmc-archive-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));self.addEventListener('fetch',e=>{const r=e.request,u=new URL(r.url);if(r.method!=='GET'||u.origin!==self.location.origin||u.pathname==='/api'||u.pathname.startsWith('/api/'))return;if(r.mode==='navigate'){e.respondWith(fetch(r).then(x=>{if(x.ok){const c=x.clone();caches.open(CACHE).then(k=>k.put('/',c));}return x;}).catch(()=>caches.match('/')));return;}if(SHELL.includes(u.pathname))e.respondWith(fetch(r).then(x=>{if(x.ok){const c=x.clone();caches.open(CACHE).then(k=>k.put(r,c));}return x;}).catch(()=>caches.match(r)));});",{headers:{'content-type':'application/javascript; charset=UTF-8','cache-control':'no-cache'}});
     if(url.pathname==='/'||url.pathname==='/index.html')return new Response(INDEX_HTML,{headers:{'content-type':'text/html; charset=UTF-8','cache-control':'no-store'}});
     if(url.pathname==='/oauth/start')return oauthStart(request);
     if(url.pathname==='/oauth/callback')return oauthCallback(request);
