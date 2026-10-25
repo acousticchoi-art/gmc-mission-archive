@@ -99,13 +99,14 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
 }
 
 
-/* Compact shortcut action in the top-right corner */
+/* Compact shortcut action at the top-right */
 header{position:relative}
-.install-cta{position:absolute;top:10px;right:clamp(14px,2.2vw,28px);z-index:10;display:inline-flex;align-items:center;justify-content:center;gap:5px;border:1px solid #e0e6eb;background:rgba(255,255,255,.94);color:#526779;border-radius:7px;padding:5px 8px;font-size:11px;font-weight:600;line-height:1.2;white-space:nowrap;box-shadow:none;transition:background .15s,border-color .15s}
+.install-cta{position:absolute;top:8px;right:clamp(12px,2vw,26px);z-index:10;display:inline-flex;align-items:center;justify-content:center;gap:5px;border:0;background:transparent;color:#778590;border-radius:6px;padding:5px 7px;font-size:10px;font-weight:600;line-height:1.2;white-space:nowrap;box-shadow:none;transition:background .15s,color .15s}
 .install-cta svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.install-cta:hover{background:#f2f6f8;border-color:#bac9d4}
+.install-cta:hover{background:#f0f4f7;color:#17344f}
 .install-cta:focus-visible{outline:2px solid #b8cbd9;outline-offset:2px}
-@media(max-width:760px){header{padding-top:42px;gap:8px}.install-cta{top:8px;right:14px;padding:5px 7px;font-size:10px}.install-cta svg{width:12px;height:12px}}
+@media(min-width:761px){header{padding-right:175px}.install-cta{top:50%;right:clamp(14px,2vw,26px);transform:translateY(-50%)}}
+@media(max-width:760px){header{padding-top:38px;gap:8px}.install-cta{top:6px;right:12px;padding:5px 6px;font-size:10px}.install-cta svg{width:12px;height:12px}}
 </style><style id="search-layout-refresh">
 /* Search controls: clearer alignment and more balanced button proportions */
 .hero{padding-top:24px}
