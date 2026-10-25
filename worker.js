@@ -10,14 +10,14 @@ table{width:100%;border-collapse:collapse}th,td{padding:10px;border-bottom:1px s
 .login{min-height:calc(100vh - 70px);display:grid;place-items:center;padding:30px}.loginbox{background:#fff;border:1px solid var(--line);border-radius:15px;padding:34px;width:min(440px,100%);box-shadow:0 12px 35px #17344f12}footer{text-align:center;padding:45px;color:#8b959e}
 @media(max-width:700px){.hero h1{font-size:36px}.hero{padding:52px 22px}.search{display:block}.search button{width:100%;padding:14px}.row{display:block}.row>*{margin-bottom:8px}.statgrid{grid-template-columns:repeat(2,1fr)}header{padding:0 16px}nav button{margin-left:5px}}
 
-/* GMC shortcut action */
+
+/* Compact shortcut action in the top-right corner */
 header{position:relative}
-.install-cta{display:inline-flex;align-items:center;justify-content:center;gap:7px;flex:0 0 auto;border:1px solid #d7e0e8;background:#f7f9fb;color:#17344f;border-radius:999px;padding:9px 13px;font-size:12px;font-weight:750;letter-spacing:-.02em;white-space:nowrap;box-shadow:0 2px 5px rgba(23,52,79,.05);transition:background .18s,border-color .18s,transform .18s}
-.install-cta svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.install-cta:hover{background:#edf3f7;border-color:#9eb1c1;transform:translateY(-1px)}
-.install-cta:focus-visible{outline:3px solid #c3d5e3;outline-offset:2px}
-@media(max-width:760px){header{padding:12px 14px;gap:8px;flex-wrap:wrap;min-height:unset}.logo{font-size:14px}nav{order:3;width:100%;justify-content:flex-start;overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px}nav button{flex:0 0 auto;padding:8px 9px}.install-cta{margin-left:auto;padding:8px 10px;font-size:11px}.install-cta svg{width:15px;height:15px}}
-@media(max-width:360px){.install-cta{gap:5px;padding:8px}.install-cta span{font-size:10px}}
+.install-cta{position:absolute;top:10px;right:clamp(14px,2.2vw,28px);z-index:10;display:inline-flex;align-items:center;justify-content:center;gap:5px;border:1px solid #e0e6eb;background:rgba(255,255,255,.94);color:#526779;border-radius:7px;padding:5px 8px;font-size:11px;font-weight:600;line-height:1.2;white-space:nowrap;box-shadow:none;transition:background .15s,border-color .15s}
+.install-cta svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.install-cta:hover{background:#f2f6f8;border-color:#bac9d4}
+.install-cta:focus-visible{outline:2px solid #b8cbd9;outline-offset:2px}
+@media(max-width:760px){header{padding-top:42px;gap:8px}.install-cta{top:8px;right:14px;padding:5px 7px;font-size:10px}.install-cta svg{width:12px;height:12px}}
 </style></head><body><header><div class="logo">GMC <span>MISSION ARCHIVE</span></div><nav id="nav"></nav><button id="installAppBtn" class="install-cta" type="button" aria-label="GMC 아카이브를 바탕화면에 추가"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v5h14v-5"/></svg><span>바탕화면에 추가</span></button></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer>
 <script>
 let T=localStorage.getItem('gmc_token')||'',ME=null,CATS=[];
