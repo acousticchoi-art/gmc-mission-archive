@@ -1,1 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#17344f"/><path d="M108 358V154h48l100 122 100-122h48v204h-52V233L256 348 160 233v125z" fill="#fff"/><path d="M108 390h296" stroke="#b18a55" stroke-width="18" stroke-linecap="round"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <title>GMC</title>
+  <g fill="none" stroke="#06265f" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M48 222 Q82 217 121 177 L165 130 L213 151 L287 89 Q309 76 322 106 L348 164 Q365 207 406 221"/>
+    <path d="M250 28 V130 M218 60 H282"/>
+    <path d="M276 116 L224 162 Q211 175 232 185 L273 197 Q294 207 270 223 L223 247"/>
+  </g>
+  <g fill="none" stroke="#06265f" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M28 405 Q38 373 91 345 Q126 328 153 337 Q168 345 149 365 L96 410 Q81 423 95 428 Q115 436 147 405 L178 374 L161 433 L207 365 Q224 341 235 355 Q241 363 229 386 L207 428 L278 357 Q300 337 311 350 Q319 359 302 380 L269 420 Q257 437 274 437 Q299 437 324 403 L358 365 Q383 338 406 346 Q427 353 403 376 L377 398 Q362 413 378 423 Q404 439 446 402"/>
+  </g>
+</svg>
