@@ -11,14 +11,15 @@ table{width:100%;border-collapse:collapse}th,td{padding:10px;border-bottom:1px s
 @media(max-width:700px){.hero h1{font-size:36px}.hero{padding:52px 22px}.search{display:block}.search button{width:100%;padding:14px}.row{display:block}.row>*{margin-bottom:8px}.statgrid{grid-template-columns:repeat(2,1fr)}header{padding:0 16px}nav button{margin-left:5px}}
 
 
-/* Compact shortcut action at the top-right */
+/* Balanced, compact install icon aligned with the site header */
 header{position:relative}
-.install-cta{position:absolute;top:8px;right:clamp(12px,2vw,26px);z-index:10;display:inline-flex;align-items:center;justify-content:center;gap:5px;border:0;background:transparent;color:#778590;border-radius:6px;padding:5px 7px;font-size:10px;font-weight:600;line-height:1.2;white-space:nowrap;box-shadow:none;transition:background .15s,color .15s}
-.install-cta svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.install-cta:hover{background:#f0f4f7;color:#17344f}
+.install-cta{position:absolute;top:12px;right:clamp(14px,2.2vw,28px);z-index:10;width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;border:1px solid #e4e9ee;background:#fff;color:#657887;border-radius:50%;padding:0;box-shadow:none;transition:background .15s,border-color .15s,color .15s}
+.install-cta svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.install-cta span{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.install-cta:hover{background:#f2f6f8;border-color:#cbd7df;color:#17344f}
 .install-cta:focus-visible{outline:2px solid #b8cbd9;outline-offset:2px}
-@media(min-width:761px){header{padding-right:175px}.install-cta{top:50%;right:clamp(14px,2vw,26px);transform:translateY(-50%)}}
-@media(max-width:760px){header{padding-top:38px;gap:8px}.install-cta{top:6px;right:12px;padding:5px 6px;font-size:10px}.install-cta svg{width:12px;height:12px}}
+@media(min-width:761px){header{padding-right:clamp(18px,5vw,72px)}.install-cta{top:12px;right:clamp(18px,5vw,72px)}}
+@media(max-width:760px){header{padding-top:12px;gap:8px}.install-cta{top:12px;right:14px;width:32px;height:32px}.install-cta svg{width:15px;height:15px}.logo{padding-right:42px}}
 </style></head><body><header><div class="logo">GMC <span>MISSION ARCHIVE</span></div><nav id="nav"></nav><button id="installAppBtn" class="install-cta" type="button" aria-label="GMC 아카이브를 바탕화면에 추가"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v5h14v-5"/></svg><span>바탕화면에 추가</span></button></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer>
 <script>
 let T=localStorage.getItem('gmc_token')||'',ME=null,CATS=[];
