@@ -982,7 +982,7 @@ nav button{border:0;background:transparent;color:#56616b;padding:9px 10px;border
  .member-register-footer{align-items:stretch;flex-direction:column}
  .member-register-footer .btn{width:100%}
 }
-</style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><button id="backToTop" type="button" aria-label="페이지 맨 위로 이동" title="맨 위로" onclick="window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})">↑</button><script>
+</style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav><button id="installAppBtn" type="button" style="border:1px solid #17344f;background:#17344f;color:#fff;border-radius:8px;padding:9px 12px;font-weight:700;white-space:nowrap">바탕화면에 추가</button></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><button id="backToTop" type="button" aria-label="페이지 맨 위로 이동" title="맨 위로" onclick="window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})">↑</button><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
 let T=localStorage.getItem('gmc_token')||'',ME=null,CATS=[],FAVS=new Set();
@@ -1950,6 +1950,16 @@ async function boot(){
   window.addEventListener('resize',updateTopButton,{passive:true});
   updateTopButton();
 })();
+let gmcInstallPrompt=null;
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();gmcInstallPrompt=e;});
+window.addEventListener('appinstalled',function(){gmcInstallPrompt=null;alert('GMC 아카이브가 기기에 추가되었습니다.');});
+document.getElementById('installAppBtn')?.addEventListener('click',async function(){
+  if(gmcInstallPrompt){gmcInstallPrompt.prompt();try{await gmcInstallPrompt.userChoice;}catch(e){}gmcInstallPrompt=null;return;}
+  const ua=navigator.userAgent||'';
+  const ios=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  if(ios){alert('아이폰/아이패드에서는 Safari로 이 사이트를 연 뒤 공유 버튼을 누르고 “홈 화면에 추가”를 선택하세요.');}
+  else{alert('브라우저 메뉴에서 “앱 설치” 또는 “홈 화면에 추가”를 선택하세요. Chrome에서는 주소창 오른쪽의 설치 아이콘이나 ⋮ 메뉴를 확인하세요. 설치 메뉴가 보이지 않으면 브라우저가 이 기능을 지원하지 않거나 설치 조건을 충족하지 않은 상태일 수 있습니다.');}
+});
 window.addEventListener('DOMContentLoaded',boot);
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));}
 </script></body></html>
