@@ -9,7 +9,7 @@ header{height:70px;background:#fff;border-bottom:1px solid var(--line);display:f
 table{width:100%;border-collapse:collapse}th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}th{background:#f7f9fa}#loginHistoryRows td,#loginHistoryRows th{white-space:nowrap} .login-history-table-wrap{width:100%;max-width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain} .login-history-table-wrap table{min-width:900px;table-layout:auto} .login-history-table-wrap th,.login-history-table-wrap td{white-space:nowrap}.statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px}.stat b{display:block;font-size:28px;color:var(--n);margin-top:6px}
 .login{min-height:calc(100vh - 70px);display:grid;place-items:center;padding:30px}.loginbox{background:#fff;border:1px solid var(--line);border-radius:15px;padding:34px;width:min(440px,100%);box-shadow:0 12px 35px #17344f12}footer{text-align:center;padding:45px;color:#8b959e}
 @media(max-width:700px){.hero h1{font-size:36px}.hero{padding:52px 22px}.search{display:block}.search button{width:100%;padding:14px}.row{display:block}.row>*{margin-bottom:8px}.statgrid{grid-template-columns:repeat(2,1fr)}header{padding:0 16px}nav button{margin-left:5px}}
-</style></head><body><header><div class="logo">GMC <span>MISSION ARCHIVE</span></div><nav id="nav"></nav></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer>
+</style></head><body><header><div class="logo">GMC <span>MISSION ARCHIVE</span></div><nav id="nav"></nav><button id="installAppBtn" type="button" style="border:1px solid #17344f;background:#17344f;color:#fff;border-radius:8px;padding:9px 12px;font-weight:700;white-space:nowrap">바탕화면에 추가</button></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer>
 <script>
 let T=localStorage.getItem('gmc_token')||'',ME=null,CATS=[];
 const A=async(action,args=[])=>{
@@ -58,6 +58,15 @@ function b64(f){return new Promise((ok,no)=>{let r=new FileReader();r.onload=()=
 async function upload(){const f=t8.files[0];if(!f){upm.innerHTML='<div class="notice error">파일을 선택하세요.</div>';return}upm.innerHTML='<div class="notice">업로드 중...</div>';try{await A('uploadMaterial',[T,{title:t1.value,description:t2.value,category:t3.value,language:t4.value,author:t5.value,year:t6.value,fileType:t7.value||f.type,fileName:f.name,mimeType:f.type,base64:await b64(f)}]);upm.innerHTML='<div class="notice ok">등록되었습니다.</div>'}catch(e){upm.innerHTML=\`<div class="notice error">\${E(e.message)}</div>\`}}
 async function logout(){await A('logout',[T]);T='';ME=null;localStorage.removeItem('gmc_token');loginView()}
 async function init(){if(T){try{let r=await A('me',[T]);if(r.ok){ME=r.user;nav();return ME.firstLogin?pw(true):home()}}catch(e){}}loginView()}init();
+let gmcInstallPrompt=null;
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();gmcInstallPrompt=e;});
+window.addEventListener('appinstalled',function(){gmcInstallPrompt=null;alert('GMC 아카이브가 기기에 추가되었습니다.');});
+document.getElementById('installAppBtn')?.addEventListener('click',async function(){
+if(gmcInstallPrompt){gmcInstallPrompt.prompt();try{await gmcInstallPrompt.userChoice;}catch(e){}gmcInstallPrompt=null;return;}
+const ua=navigator.userAgent||'';const ios=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+if(ios){alert('아이폰/아이패드에서는 Safari로 이 사이트를 연 뒤 공유 버튼을 누르고 “홈 화면에 추가”를 선택하세요.');}
+else{alert('브라우저 메뉴에서 “앱 설치” 또는 “홈 화면에 추가”를 선택하세요. Chrome에서는 주소창 오른쪽의 설치 아이콘이나 ⋮ 메뉴를 확인하세요. 설치 메뉴가 보이지 않으면 브라우저가 이 기능을 지원하지 않거나 설치 조건을 충족하지 않은 상태일 수 있습니다.');}
+});
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));}
 </script></body></html>`;
 
