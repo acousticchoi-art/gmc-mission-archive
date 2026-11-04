@@ -1067,6 +1067,43 @@ header nav{position:static;flex:1 1 auto;min-width:0}
   .ops-form-actions .btn{min-height:42px}
 }
 
+
+/* Operations dashboard: wider workspace and compact navigation */
+.container.ops-page{
+  width:min(1660px,calc(100% - 56px));
+  max-width:none;
+  box-sizing:border-box;
+  padding:28px 0 64px;
+}
+.ops-page .admin-head{margin-bottom:18px}
+.ops-page .ops-summary{display:none}
+.ops-page .ops-tabs{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(128px,1fr));
+  gap:7px;
+  overflow:visible;
+  padding:0 0 16px;
+  margin:0 0 18px;
+}
+.ops-page .ops-tab{
+  min-width:0;
+  width:100%;
+  white-space:normal;
+  min-height:44px;
+  line-height:1.35;
+}
+.ops-page .ops-section-head{margin-bottom:12px}
+.ops-page .ops-table-tools{margin-top:4px}
+.ops-page .ops-table-wrap{max-height:calc(100vh - 300px);overflow:auto}
+.ops-page .ops-table th{position:sticky;top:0}
+.ops-page .ops-table .ops-actions-head{right:0}
+@media(max-width:700px){
+  .container.ops-page{width:calc(100% - 28px);padding:20px 0 42px}
+  .ops-page .ops-tabs{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+  .ops-page .ops-tab{font-size:12px;padding:9px 7px}
+  .ops-page .ops-table-wrap{max-height:none}
+}
+
 </style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav><button id="installAppBtn" class="install-cta" type="button" aria-label="GMC 아카이브를 바탕화면에 추가"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v5h14v-5"/></svg><span>바탕화면 추가</span></button></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><button id="backToTop" type="button" aria-label="페이지 맨 위로 이동" title="맨 위로" onclick="window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})">↑</button><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
@@ -1551,9 +1588,9 @@ async function opsDashboard(selected){
   selected=selected||'대시보드';
   document.getElementById('app').innerHTML=
     '<div class="container admin-page ops-page">'+
-      '<div class="admin-head ops-page-head"><div><div class="admin-kicker">GMC 29TH TERM · MANAGEMENT</div><h2>운영 대시보드</h2><p>운영자료를 탭별로 조회하고 관리합니다.</p></div>'+
+      '<div class="admin-head ops-page-head"><div><h2>운영 대시보드</h2></div>'+
       '<button class="btn light" onclick="admin()">← 관리자</button></div>'+
-      '<div id="opsSummary" class="ops-summary"></div>'+
+      ''+
       '<div id="opsTabs" class="ops-tabs" role="tablist" aria-label="운영 대시보드 메뉴"></div>'+
       '<div id="opsContent" class="ops-content"><div class="notice">운영자료를 불러오는 중입니다.</div></div>'+
     '</div>';
@@ -1620,7 +1657,7 @@ function opsRenderTable(){
   const headers=OPS_HEADERS;
   const rows=OPS_RECORDS;
   content.innerHTML=
-    '<div class="ops-section-head"><div><div class="admin-kicker">DATA MANAGEMENT</div><h3>'+E(OPS_CURRENT_TAB)+'</h3><p>총 '+rows.length.toLocaleString()+'개 항목</p></div>'+
+    '<div class="ops-section-head"><div><h3>'+E(OPS_CURRENT_TAB)+'</h3></div>'+
     '<div class="ops-head-actions"><button class="btn light" onclick="opsOpenTab(\''+E(OPS_CURRENT_TAB)+'\')">새로고침</button><button class="btn" onclick="opsOpenForm()">＋ 항목 추가</button></div></div>'+
     '<div class="ops-table-tools"><input id="opsSearch" type="search" placeholder="항목 내용 검색" oninput="opsFilterRows()"><span id="opsRowCount">'+rows.length+'개 항목</span></div>'+
     '<div class="ops-table-wrap"><table class="ops-table"><thead><tr>'+headers.map(h=>'<th>'+E(h)+'</th>').join('')+'<th class="ops-actions-head">관리</th></tr></thead><tbody id="opsRows">'+opsRowsHtml(rows)+'</tbody></table></div>'+
