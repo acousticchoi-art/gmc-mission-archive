@@ -640,6 +640,31 @@ async function api(action,args,ctx=null){
       });
       return {ok:true,tabs,serviceAccountEmail:CFG.SA_EMAIL};
     }
+    case 'hrGetFamilies':{
+      await requireRole(args[0],['관리자']);
+      const meta=await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+'?fields=sheets.properties.title');
+      if(!(meta.sheets||[]).some(x=>x.properties?.title==='가족관리')){
+        await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+':batchUpdate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requests:[{addSheet:{properties:{title:'가족관리'}}}]})});
+        await googleJson(opsUrl("'가족관리'!A1:D1")+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({values:[['가족ID','회원명','가족관계','대표자']]})});
+      }
+      const values=(await googleJson(opsUrl("'가족관리'!A:D")+'?valueRenderOption=FORMATTED_VALUE')).values||[];
+      return {ok:true,records:values.slice(1).filter(r=>r.some(v=>String(v||'').trim())).map(r=>({familyId:String(r[0]||''),name:String(r[1]||''),relationship:String(r[2]||''),isHead:String(r[3]||'')==='TRUE'||String(r[3]||'')==='예'}))};
+    }
+    case 'hrSaveFamilies':{
+      await requireRole(args[0],['관리자']);
+      const records=Array.isArray(args[1])?args[1]:[];
+      if(records.length>500)throw new Error('가족 구성원이 너무 많습니다.');
+      const meta=await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+'?fields=sheets.properties.title');
+      if(!(meta.sheets||[]).some(x=>x.properties?.title==='가족관리')){
+        await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+':batchUpdate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requests:[{addSheet:{properties:{title:'가족관리'}}}]})});
+      }
+      const rows=[['가족ID','회원명','가족관계','대표자'],...records.map(x=>[String(x.familyId||''),String(x.name||''),String(x.relationship||''),x.isHead?'TRUE':'FALSE'])];
+      const range="'가족관리'!A:D";
+      await googleJson(opsUrl(range)+':clear',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({})});
+      await googleJson(opsUrl(range)+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({majorDimension:'ROWS',values:rows})});
+      invalidateSheetReadCache();
+      return {ok:true,count:records.length};
+    }
     case 'opsDashboardData':{
       await requireRole(args[0],['관리자']);
       const sections=await Promise.all(OPS_TAB_NAMES.map(async name=>{
