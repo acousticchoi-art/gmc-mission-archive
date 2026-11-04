@@ -1595,13 +1595,11 @@ async function opsDashboard(selected){
       '<div id="opsContent" class="ops-content"><div class="notice">운영자료를 불러오는 중입니다.</div></div>'+
     '</div>';
   const content=document.getElementById('opsContent');
+  if(!content)return;
   try{
     const r=await A('opsListTabs',[T]);
     OPS_TAB_INFO=Array.isArray(r.tabs)?r.tabs:[];
     const available=OPS_TAB_INFO.filter(x=>x.exists);
-    document.getElementById('opsSummary').innerHTML=available.filter(x=>x.name!=='대시보드').map((x,i)=>
-      '<button class="ops-summary-card" onclick="opsOpenTab(\''+E(x.name)+'\')"><span>'+E(String(i+1).padStart(2,'0'))+'</span><b>'+E(x.name)+'</b></button>'
-    ).join('');
     document.getElementById('opsTabs').innerHTML=OPS_TAB_INFO.map(x=>
       '<button type="button" class="ops-tab'+(x.name===selected?' active':'')+'" '+(!x.exists?'disabled':'')+' onclick="opsOpenTab(\''+E(x.name)+'\')">'+E(x.name)+'</button>'
     ).join('');
@@ -1612,7 +1610,9 @@ async function opsDashboard(selected){
     if(!available.some(x=>x.name===selected))selected=available[0].name;
     await opsOpenTab(selected);
   }catch(e){
-    content.innerHTML='<div class="panel ops-error"><h3>운영 스프레드시트 연결을 확인해 주세요.</h3><p>'+E(e.message)+'</p>'+
+    const target=document.getElementById('opsContent');
+    if(!target)return;
+    target.innerHTML='<div class="panel ops-error"><h3>운영 스프레드시트 연결을 확인해 주세요.</h3><p>'+E(e.message)+'</p>'+
       '<p>운영 스프레드시트를 읽고 수정할 수 있도록 GMC 서비스 계정을 편집자로 공유해야 합니다.</p>'+
       '<button class="btn light" onclick="opsDashboard()">다시 연결</button></div>';
   }
