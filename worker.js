@@ -86,6 +86,7 @@ let CFG = null;
 function config(env){
   return {
     SHEET_ID: env.GMC_SHEET_ID || '',
+    OPS_SHEET_ID: env.GMC_OPS_SHEET_ID || '11gc83rRet_nPPix_ol3pbH3qH3a2QAAbAu8C1GZGYlE',
     ROOT_FOLDER_ID: env.GMC_ROOT_FOLDER_ID || '',
     BACKUP_FOLDER_ID: env.GMC_BACKUP_FOLDER_ID || '',
     SA_EMAIL: env.GMC_SA_EMAIL || '',
@@ -232,6 +233,55 @@ async function sheetAppend(sheet,values){
   invalidateSheetReadCache();return result;
 }
 async function sheetUpdate(range,values){const result=await googleJson(sheetUrl(range)+'?valueInputOption=USER_ENTERED',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({range,majorDimension:'ROWS',values})});invalidateSheetReadCache();return result;}
+
+const OPS_TAB_NAMES = ['대시보드','회원명단','MK 명단','지부현황','행사관리','사무실 예약','업무관리','운영위원회','임시총회 참여자 명단','사무실 비품대장','신입회원 커리큘럼'];
+function opsQuoteSheet(name){return "'"+String(name).replace(/'/g,"''")+"'";}
+function opsRange(name,start='A1',end='AZ'){return opsQuoteSheet(name)+'!'+start+':'+end;}
+function opsUrl(range){return 'https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+'/values/'+encodeURIComponent(range);}
+function opsValidateTab(name){
+  const tab=String(name||'');
+  if(!OPS_TAB_NAMES.includes(tab))throw new Error('허용되지 않은 운영 탭입니다.');
+  return tab;
+}
+async function opsGet(name){
+  if(!CFG.OPS_SHEET_ID)throw new Error('운영 스프레드시트 ID가 설정되지 않았습니다.');
+  const range=opsRange(opsValidateTab(name),'A1','AZ');
+  const data=await googleJson(opsUrl(range)+'?valueRenderOption=FORMATTED_VALUE');
+  return data.values||[];
+}
+async function opsMeta(){
+  if(!CFG.OPS_SHEET_ID)throw new Error('운영 스프레드시트 ID가 설정되지 않았습니다.');
+  return await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+'?fields=sheets.properties(title,sheetId,hidden,gridProperties(rowCount,columnCount))');
+}
+function opsLastColumn(count){
+  let n=Math.max(1,Number(count)||1),out='';
+  while(n>0){const r=(n-1)%26;out=String.fromCharCode(65+r)+out;n=Math.floor((n-1)/26);}
+  return out;
+}
+function opsHasValues(row){return Array.isArray(row)&&row.some(v=>String(v??'').trim()!=='');}
+async function opsAppend(name,values){
+  const range=opsRange(name,'A','AZ');
+  const url=opsUrl(range)+':append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS';
+  const result=await googleJson(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({majorDimension:'ROWS',values:[values.map(v=>safe(v))]})});
+  invalidateSheetReadCache();
+  return result;
+}
+async function opsUpdateRow(name,rowNumber,values,headerCount){
+  const last=opsLastColumn(headerCount);
+  const range=opsQuoteSheet(name)+'!A'+rowNumber+':'+last+rowNumber;
+  const payload=values.slice(0,headerCount).map(v=>safe(v));
+  while(payload.length<headerCount)payload.push('');
+  const result=await googleJson(opsUrl(range)+'?valueInputOption=USER_ENTERED',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({range,majorDimension:'ROWS',values:[payload]})});
+  invalidateSheetReadCache();
+  return result;
+}
+async function opsClearRow(name,rowNumber){
+  const range=opsQuoteSheet(name)+'!A'+rowNumber+':AZ'+rowNumber;
+  const result=await googleJson(opsUrl(range)+':clear',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({})});
+  invalidateSheetReadCache();
+  return result;
+}
+
 function normalizeRole(v){return String(v||'')==='관리자'?'관리자':'일반회원';}
 function rowObj(r,row){return {id:String(r[0]||''),name:String(r[1]||''),username:String(r[2]||''),email:String(r[3]||''),phone:String(r[4]||''),branch:String(r[5]||''),role:normalizeRole(r[6]),hash:String(r[7]||''),salt:String(r[8]||''),firstLogin:String(r[9]).toLowerCase()==='true',status:String(r[10]||''),created:String(r[11]||''),lastLogin:String(r[12]||''),row};}
 async function ensureFavoritesSheet(){
@@ -564,6 +614,80 @@ async function api(action,args,ctx=null){
       return {ok:true,message:'복구 완료. Google Drive 파일 자체는 변경하지 않았습니다.',counts,currentCounts,changed};
     }
     case 'dashboard':{await requireRole(args[0],['관리자']);const us=await usersRows(),ms=await materialsRows();return {ok:true,stats:{users:Math.max(0,us.length-1),activeUsers:us.slice(1).filter(r=>r[10]==='활성').length,materials:ms.slice(1).filter(r=>r[12]==='공개').length,views:ms.slice(1).reduce((a,r)=>a+Number(r[14]||0),0)}};}
+
+    case 'opsListTabs':{
+      await requireRole(args[0],['관리자']);
+      let meta;
+      try{meta=await opsMeta();}
+      catch(e){throw new Error('운영 스프레드시트에 접근하지 못했습니다. 공유 설정에서 다음 계정을 편집자로 추가했는지 확인해 주세요: '+CFG.SA_EMAIL+' / 원인: '+String(e.message||e));}
+      const byName=new Map((meta.sheets||[]).map(s=>[String(s.properties?.title||''),s.properties||{}]));
+      const tabs=await Promise.all(OPS_TAB_NAMES.map(async name=>{
+        const properties=byName.get(name);
+        if(!properties)return {name,exists:false,recordCount:0,headers:[]};
+        try{
+          const rows=await opsGet(name);
+          const header=(rows[0]||[]).map((v,i)=>String(v??'').trim()||('항목 '+(i+1)));
+          return {name,exists:true,hidden:!!properties.hidden,recordCount:rows.slice(1).filter(opsHasValues).length,headers:header};
+        }catch(e){return {name,exists:true,hidden:!!properties.hidden,recordCount:0,headers:[],error:String(e.message||e)};}
+      }));
+      return {ok:true,tabs,serviceAccountEmail:CFG.SA_EMAIL};
+    }
+    case 'opsListRows':{
+      await requireRole(args[0],['관리자']);
+      const name=opsValidateTab(args[1]);
+      const rows=await opsGet(name);
+      const headers=(rows[0]||[]).map((v,i)=>String(v??'').trim()||('항목 '+(i+1)));
+      const records=[];
+      for(let i=1;i<rows.length;i++)if(opsHasValues(rows[i]))records.push({rowNumber:i+1,values:headers.map((_,j)=>String(rows[i][j]??''))});
+      return {ok:true,name,headers,records,needsHeaders:headers.length===0||!(rows[0]||[]).some(v=>String(v??'').trim()),readOnly:name==='대시보드',matrix:rows.filter(opsHasValues)};
+    }
+    case 'opsSetHeaders':{
+      await requireRole(args[0],['관리자']);
+      const name=opsValidateTab(args[1]);
+      if(name==='대시보드')throw new Error('대시보드 탭은 요약용으로 열 이름을 설정할 수 없습니다.');
+      const headers=Array.isArray(args[2])?args[2].map(v=>String(v??'').trim()).filter(Boolean):[];
+      if(!headers.length||headers.length>52)throw new Error('열 이름을 1개 이상, 52개 이하로 입력하세요.');
+      if(new Set(headers).size!==headers.length)throw new Error('중복된 열 이름이 있습니다.');
+      const rows=await opsGet(name);
+      if(rows.some(opsHasValues))throw new Error('이미 데이터가 있어 열 이름을 새로 만들 수 없습니다. 첫 행에 열 이름을 먼저 입력하거나 데이터가 없는 시트에서만 사용하세요.');
+      const last=opsLastColumn(headers.length),range=opsQuoteSheet(name)+'!A1:'+last+'1';
+      await googleJson(opsUrl(range)+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({range,majorDimension:'ROWS',values:[headers]})});
+      invalidateSheetReadCache();
+      return {ok:true,headers};
+    }
+    case 'opsCreateRow':{
+      await requireRole(args[0],['관리자']);
+      const name=opsValidateTab(args[1]);
+      if(name==='대시보드')throw new Error('대시보드 탭은 요약용이며 직접 입력할 수 없습니다.');
+      const rows=await opsGet(name),headers=rows[0]||[];
+      if(!headers.length||!headers.some(v=>String(v??'').trim()))throw new Error('먼저 열 이름을 설정해 주세요.');
+      const values=Array.isArray(args[2])?args[2]:[];
+      await opsAppend(name,headers.map((_,i)=>values[i]??''));
+      return {ok:true};
+    }
+    case 'opsUpdateRow':{
+      await requireRole(args[0],['관리자']);
+      const name=opsValidateTab(args[1]);
+      if(name==='대시보드')throw new Error('대시보드 탭은 요약용이며 직접 수정할 수 없습니다.');
+      const rowNumber=Number(args[2]),values=Array.isArray(args[3])?args[3]:[];
+      if(!Number.isInteger(rowNumber)||rowNumber<2)throw new Error('수정할 행 번호가 올바르지 않습니다.');
+      const rows=await opsGet(name),headers=rows[0]||[];
+      if(!headers.length||rowNumber>rows.length||!opsHasValues(rows[rowNumber-1]))throw new Error('수정할 행을 찾지 못했습니다. 새로고침 후 다시 시도해 주세요.');
+      await opsUpdateRow(name,rowNumber,values,headers.length);
+      return {ok:true};
+    }
+    case 'opsDeleteRow':{
+      await requireRole(args[0],['관리자']);
+      const name=opsValidateTab(args[1]);
+      if(name==='대시보드')throw new Error('대시보드 탭은 요약용이며 직접 삭제할 수 없습니다.');
+      const rowNumber=Number(args[2]);
+      if(!Number.isInteger(rowNumber)||rowNumber<2)throw new Error('삭제할 행 번호가 올바르지 않습니다.');
+      const rows=await opsGet(name);
+      if(rowNumber>rows.length||!opsHasValues(rows[rowNumber-1]))throw new Error('삭제할 행을 찾지 못했습니다. 새로고침 후 다시 시도해 주세요.');
+      await opsClearRow(name,rowNumber);
+      return {ok:true};
+    }
+
     default:throw new Error('지원하지 않는 요청입니다.');
   }
 }
