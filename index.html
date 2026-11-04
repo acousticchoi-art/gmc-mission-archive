@@ -1778,20 +1778,26 @@ async function opsRenderOverview(){
   }
 }
 
-let HR_STATE={people:[],mk:[],mode:'전체',branch:'전체',query:'',selected:null};
+let HR_STATE={people:[],mk:[],families:[],mode:'전체',branch:'전체',query:'',selected:null};
 function hrNorm(v){return String(v||'').toLowerCase().replace(/[\\s·ㆍ,，、/]+/g,'').trim();}
+function hrFamilyGroups(){
+ const map=new Map();
+ HR_STATE.families.forEach(x=>{if(!map.has(x.familyId))map.set(x.familyId,[]);map.get(x.familyId).push(x);});
+ return [...map.entries()].map(([id,members])=>({id,members,head:members.find(x=>x.isHead)||members[0]}));
+}
+function hrFamilyFor(name){return hrFamilyGroups().find(g=>g.members.some(x=>x.name===name));}
 function hrOpenPerson(name){
  const p=HR_STATE.people.find(x=>x.name===name);if(!p)return;
- const sameUnit=p.unit?HR_STATE.people.filter(x=>x.branch===p.branch&&x.unit===p.unit):[p];
- const familyAdults=sameUnit.filter(x=>x.name!==p.name);
- const kids=HR_STATE.mk.filter(k=>hrNorm(k.parent).includes(hrNorm(name))||hrNorm(name).includes(hrNorm(k.parent)));
- const fields=p.headers.map((h,i)=>({h,v:p.v[i]})).filter(x=>String(x.v||'').trim()&&!/No\\.?/.test(x.h));
+ const family=hrFamilyFor(name), adultNames=family?family.members.map(x=>x.name):[name];
+ const familyAdults=adultNames.filter(n=>n!==name).map(n=>HR_STATE.people.find(x=>x.name===n)).filter(Boolean);
+ const kids=HR_STATE.mk.filter(k=>adultNames.some(n=>hrNorm(k.parent).includes(hrNorm(n))||hrNorm(n).includes(hrNorm(k.parent))));
+ const fields=p.headers.map((h,i)=>({h,v:p.v[i]})).filter(x=>String(x.v||'').trim()&&!/No\\.?|유닛/i.test(x.h));
  const fieldsHtml=fields.map(x=>'<div class="hr-detail-field"><small>'+E(x.h)+'</small><b>'+E(x.v)+'</b></div>').join('');
- const adultHtml=familyAdults.map(x=>'<div class="hr-child"><b>'+E(x.name)+'</b><span>'+E(x.role||'회원')+'</span><small>'+E(x.place||'')+'</small></div>').join('');
+ const adultHtml=familyAdults.map(x=>{const rel=family.members.find(m=>m.name===x.name)?.relationship||'가족';return '<div class="hr-child"><b>'+E(x.name)+'</b><span>'+E(rel)+'</span><small>'+E(x.role||'')+'</small></div>';}).join('');
  const familyHtml=(adultHtml||'')+(kids.length?kids.map(k=>'<div class="hr-child"><b>'+E(k.name)+'</b><span>'+E(k.birth||'출생연도 미입력')+'</span><small>'+E(k.resident||'')+'</small></div>').join(''):'');
  let modal=document.getElementById('hrPersonModal');
  if(!modal){modal=document.createElement('div');modal.id='hrPersonModal';modal.className='hr-modal';modal.onclick=e=>{if(e.target===modal)hrClosePerson();};document.body.appendChild(modal);}
- modal.innerHTML='<div class="hr-modal-card" role="dialog" aria-modal="true" aria-label="선교사 가정 상세 정보"><div class="hr-detail-head"><div><small>MISSIONARY FAMILY</small><h3>'+E(p.name)+'</h3><p>'+E(p.branch)+' · '+E(p.unit||'유닛 미입력')+'</p></div><button class="btn light ops-small-btn" onclick="hrClosePerson()">닫기 ✕</button></div><div class="hr-detail-grid">'+fieldsHtml+'</div><div class="hr-family"><h4>가족 구성원</h4><div class="hr-family-parent"><b>'+E(p.name)+'</b><span>대표 선교사</span></div>'+(familyHtml||'<p class="hr-empty">같은 지부·유닛으로 연결된 가족 구성원 정보가 없습니다.</p>')+'</div></div>';
+ modal.innerHTML='<div class="hr-modal-card" role="dialog" aria-modal="true" aria-label="선교사 가정 상세 정보"><div class="hr-detail-head"><div><small>MISSIONARY FAMILY</small><h3>'+E(p.name)+'</h3><p>'+E(p.branch)+'</p></div><button class="btn light ops-small-btn" onclick="hrClosePerson()">닫기 ✕</button></div><div class="hr-detail-grid">'+fieldsHtml+'</div><div class="hr-family"><h4>가족 구성원</h4><div class="hr-family-parent"><b>'+E(family?.head?.name||p.name)+'</b><span>가정 대표</span></div>'+(familyHtml||'<p class="hr-empty">등록된 가족 구성원 정보가 없습니다.</p>')+'</div></div>';
  modal.classList.add('show');document.body.style.overflow='hidden';
 }
 function hrClosePerson(){const m=document.getElementById('hrPersonModal');if(m)m.classList.remove('show');document.body.style.overflow='';}
@@ -1801,38 +1807,45 @@ function hrSetQuery(q){HR_STATE.query=q;hrRenderList();}
 function hrRenderList(){
  const host=document.getElementById('hrList');if(!host)return;
  const q=hrNorm(HR_STATE.query),branch=HR_STATE.branch;
- let people=HR_STATE.people.filter(p=>(branch==='전체'||p.branch===branch)&&(!q||hrNorm([p.name,p.branch,p.unit,p.role,p.place].join(' ')).includes(q)));
+ let people=HR_STATE.people.filter(p=>(branch==='전체'||p.branch===branch)&&(!q||hrNorm([p.name,p.branch,p.role,p.place].join(' ')).includes(q)));
  const modes=['전체','지부별','가정별'];
  const modeBtns=modes.map(x=>'<button class="hr-mode '+(HR_STATE.mode===x?'active':'')+'" onclick="hrSetMode(\''+x+'\')">'+x+'</button>').join('');
- const personRow=p=>'<button class="hr-person-row" onclick="hrOpenPerson(\''+E(p.name).replace(/\\'/g,'&#039;')+'\')"><span><b>'+E(p.name)+'</b><small>'+E(p.unit||'유닛 미입력')+' · '+E(p.role||'직책 미입력')+'</small></span><span class="hr-row-arrow">›</span></button>';
+ const personRow=p=>'<button class="hr-person-row" onclick="hrOpenPerson(\''+E(p.name).replace(/\\'/g,'&#039;')+'\')"><span><b>'+E(p.name)+'</b><small>'+E(p.role||'직책 미입력')+'</small></span><span class="hr-row-arrow">›</span></button>';
  let html='';
  if(HR_STATE.mode==='가정별'){
-  const groups=new Map();
-  people.forEach(p=>{
-   const key=p.unit? p.branch+'::'+p.unit : p.branch+'::individual::'+p.name;
-   if(!groups.has(key))groups.set(key,[]);
-   groups.get(key).push(p);
-  });
-  html=Array.from(groups.values()).map(members=>{
-   const head=members[0];
-   const kids=HR_STATE.mk.filter(k=>hrNorm(k.parent).includes(hrNorm(head.name))||hrNorm(head.name).includes(hrNorm(k.parent)));
-   const total=members.length+kids.length;
-   return '<button class="hr-person-row" onclick="hrOpenPerson(\''+E(head.name).replace(/\\'/g,'&#039;')+'\')"><span><b>'+E(head.name)+'</b><small>'+E(head.branch)+' · '+E(head.unit||'유닛 미입력')+'</small></span><span class="hr-family-count">'+total+'명 가족</span></button>';
-  }).join('');
+  const groups=hrFamilyGroups().filter(g=>g.members.some(m=>people.some(p=>p.name===m.name)));
+  html=groups.map(g=>{const head=HR_STATE.people.find(p=>p.name===g.head.name);if(!head)return '';const kids=HR_STATE.mk.filter(k=>g.members.some(m=>hrNorm(k.parent).includes(hrNorm(m.name))||hrNorm(m.name).includes(hrNorm(k.parent))));return '<button class="hr-person-row" onclick="hrOpenPerson(\''+E(head.name).replace(/\\'/g,'&#039;')+'\')"><span><b>'+E(head.name)+'</b><small>'+E(head.branch)+'</small></span><span class="hr-family-count">'+(g.members.length+kids.length)+'명 가족</span></button>';}).join('');
  }else if(HR_STATE.mode==='지부별'){
   const grouped=new Map();people.forEach(p=>{if(!grouped.has(p.branch))grouped.set(p.branch,[]);grouped.get(p.branch).push(p);});
-  html=Array.from(grouped.entries()).sort((a,b)=>a[0].localeCompare(b[0],'ko')).map(([b,members])=>{
-   const units=new Map();
-   members.forEach(p=>{const key=p.unit||'유닛 미입력 · '+p.name;if(!units.has(key))units.set(key,[]);units.get(key).push(p);});
-   const unitHtml=Array.from(units.entries()).map(([u,group])=>{
-    const head=group[0];
-    return '<div class="hr-unit-group"><div class="hr-unit-label">'+E(u)+' <small>'+group.length+'명</small></div>'+group.map(personRow).join('')+'</div>';
-   }).join('');
-   return '<details class="hr-branch-accordion"><summary><b>'+E(b)+'</b><span>'+members.length+'명 · '+units.size+'개 유닛</span></summary><div class="hr-branch-content">'+unitHtml+'</div></details>';
-  }).join('');
+  html=Array.from(grouped.entries()).sort((a,b)=>a[0].localeCompare(b[0],'ko')).map(([b,members])=>'<details class="hr-branch-accordion"><summary><b>'+E(b)+'</b><span>'+members.length+'명</span></summary><div class="hr-branch-content">'+members.map(personRow).join('')+'</div></details>').join('');
  }else html=people.map(personRow).join('');
- const familyCount=HR_STATE.mode==='가정별'?html? (html.match(/hr-family-count/g)||[]).length:0:people.length;
- host.innerHTML='<div class="hr-controls"><div class="hr-mode-switch">'+modeBtns+'</div><input type="search" value="'+E(HR_STATE.query)+'" placeholder="이름·지부·유닛 검색" oninput="hrSetQuery(this.value)"><select onchange="hrSetBranch(this.value)">'+['전체',...new Set(HR_STATE.people.map(p=>p.branch).filter(Boolean))].map(x=>'<option '+(x===branch?'selected':'')+'>'+E(x)+'</option>').join('')+'</select></div><div class="hr-list-count">'+(HR_STATE.mode==='가정별'?familyCount+'가정':people.length+'명')+'</div>'+(html||'<div class="hr-empty">검색 결과가 없습니다.</div>');
+ const familyCount=hrFamilyGroups().filter(g=>g.members.some(m=>people.some(p=>p.name===m.name))).length;
+ host.innerHTML='<div class="hr-controls"><div class="hr-mode-switch">'+modeBtns+'</div><input type="search" value="'+E(HR_STATE.query)+'" placeholder="이름·지부·직책 검색" oninput="hrSetQuery(this.value)"><select onchange="hrSetBranch(this.value)">'+['전체',...new Set(HR_STATE.people.map(p=>p.branch).filter(Boolean))].map(x=>'<option '+(x===branch?'selected':'')+'>'+E(x)+'</option>').join('')+'</select></div><div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0"><div class="hr-list-count">'+(HR_STATE.mode==='가정별'?familyCount+'가정':people.length+'명')+'</div><button class="btn" onclick="hrFamilyManager()">가족 관리</button></div>'+(html||'<div class="hr-empty">'+(HR_STATE.mode==='가정별'?'등록된 가족이 없습니다. 가족 관리를 눌러 가족을 등록하세요.':'검색 결과가 없습니다.')+'</div>');
+}
+function hrFamilyManager(){
+ const groups=hrFamilyGroups(),host=document.getElementById('hrList');if(!host)return;
+ host.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0"><h3 style="margin:0">가족 관리</h3><button class="btn light" onclick="hrRenderList()">목록으로</button></div><div class="panel"><button class="btn" onclick="hrEditFamily()">＋ 가족 만들기</button><div style="margin-top:14px">'+(groups.map(g=>'<div class="hr-person-row"><span><b>'+E(g.head.name)+'</b><small>'+E(g.members.map(m=>m.name+' · '+m.relationship).join(', '))+'</small></span><span><button class="btn light" onclick="hrEditFamily(\''+E(g.id)+'\')">수정</button> <button class="btn danger" onclick="hrDeleteFamily(\''+E(g.id)+'\')">삭제</button></span></div>').join('')||'<div class="hr-empty">등록된 가족이 없습니다.</div>')+'</div></div>';
+}
+function hrEditFamily(id){
+ const existing=hrFamilyGroups().find(g=>g.id===id),current=existing?.members||[];
+ const host=document.getElementById('hrList');if(!host)return;
+ const rels=['본인','배우자','자녀','부모','형제자매','기타'];
+ host.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0"><h3 style="margin:0">'+(id?'가족 수정':'가족 만들기')+'</h3><button class="btn light" onclick="hrFamilyManager()">취소</button></div><div class="panel"><p class="meta">가족으로 연결할 회원을 선택하고 관계와 대표자를 지정하세요.</p><div id="hrFamilyMembers">'+HR_STATE.people.map(p=>{const m=current.find(x=>x.name===p.name),checked=!!m;return '<div style="display:grid;grid-template-columns:24px minmax(90px,1fr) minmax(100px,140px) auto;gap:8px;align-items:center;padding:9px 0;border-bottom:1px solid #edf0f2"><input type="checkbox" data-family-name="'+E(p.name)+'" '+(checked?'checked':'')+'><span><b>'+E(p.name)+'</b><small style="display:block;color:#7b8791">'+E(p.branch)+'</small></span><select data-family-rel="'+E(p.name)+'">'+rels.map(r=>'<option '+((m?.relationship||'기타')===r?'selected':'')+'>'+r+'</option>').join('')+'</select><label style="font-size:12px;white-space:nowrap"><input type="radio" name="hrFamilyHead" value="'+E(p.name)+'" '+(m?.isHead?'checked':'')+'> 대표</label></div>';}).join('')+'</div><div style="display:flex;gap:8px;margin-top:18px"><button class="btn" onclick="hrSaveFamilyEdit(\''+(id||'')+'\')">저장</button><button class="btn light" onclick="hrFamilyManager()">취소</button></div><div id="hrFamilyMsg"></div></div>';
+}
+async function hrSaveFamilyEdit(id){
+ const selected=[...document.querySelectorAll('#hrFamilyMembers input[type=checkbox]:checked')];
+ if(!selected.length){alert('가족 구성원을 한 명 이상 선택하세요.');return;}
+ const head=document.querySelector('input[name="hrFamilyHead"]:checked')?.value;
+ if(!head||!selected.some(x=>x.dataset.familyName===head)){alert('선택한 가족 중 대표자를 지정하세요.');return;}
+ const familyId=id||('F'+Date.now());
+ const next=HR_STATE.families.filter(x=>x.familyId!==familyId);
+ selected.forEach(el=>{const name=el.dataset.familyName;next.push({familyId,name,relationship:document.querySelector('[data-family-rel="'+CSS.escape(name)+'"]').value,isHead:name===head});});
+ try{await A('hrSaveFamilies',[T,next]);const check=await A('hrGetFamilies',[T]);HR_STATE.families=check.records||[];hrFamilyManager();}catch(e){const m=document.getElementById('hrFamilyMsg');if(m)m.innerHTML='<div class="notice error">'+E(e.message)+'</div>';}
+}
+async function hrDeleteFamily(id){
+ if(!confirm('이 가족 그룹을 삭제할까요? 회원명부의 원본 정보는 변경되지 않습니다.'))return;
+ const next=HR_STATE.families.filter(x=>x.familyId!==id);
+ try{await A('hrSaveFamilies',[T,next]);const check=await A('hrGetFamilies',[T]);HR_STATE.families=check.records||[];hrFamilyManager();}catch(e){alert(e.message);}
 }
 async function opsRenderHR(){
  if(!ME||ME.role!=='관리자')return;
@@ -1841,13 +1854,13 @@ async function opsRenderHR(){
  const content=document.getElementById('opsContent');if(!content)return;
  content.innerHTML='<div class="notice">회원 및 가족 정보를 불러오는 중입니다.</div>';
  try{
-  const r=await A('opsDashboardData',[T]),ss=r.sections||[],get=n=>ss.find(x=>x.name===n)||{headers:[],records:[]};
-  const m=get('회원명단'),mk=get('MK 명단');
-  const ix=(hs,re)=>hs.findIndex(h=>re.test(String(h)));
+  const [r,f]=await Promise.all([A('opsDashboardData',[T]),A('hrGetFamilies',[T])]),ss=r.sections||[],get=n=>ss.find(x=>x.name===n)||{headers:[],records:[]};
+  const m=get('회원명단'),mk=get('MK 명단'),ix=(hs,re)=>hs.findIndex(h=>re.test(String(h)));
   const ni=ix(m.headers,/성명|이름/),bi=ix(m.headers,/지부/),ui=ix(m.headers,/유닛/),ri=ix(m.headers,/GMC.*직책|직책/),li=ix(m.headers,/사역지역/);
   HR_STATE.people=m.records.map(x=>({name:x.values[ni]||'',branch:x.values[bi]||'미분류',unit:x.values[ui]||'',role:x.values[ri]||'',place:x.values[li]||'',v:x.values,headers:m.headers})).filter(x=>x.name);
   const pi=ix(mk.headers,/부모|선교사/),mi=ix(mk.headers,/MK 이름|이름/),yi=ix(mk.headers,/출생연도/),ri2=ix(mk.headers,/거주 여부|거주/);
   HR_STATE.mk=mk.records.map(x=>({parent:x.values[pi]||'',name:x.values[mi]||'',birth:x.values[yi]||'',resident:x.values[ri2]||''})).filter(x=>x.name);
+  HR_STATE.families=f.records||[];
   HR_STATE.mode='전체';HR_STATE.branch='전체';HR_STATE.query='';HR_STATE.selected=null;
   content.innerHTML='<div class="ops-overview-head"><div><h3>선교사 및 가정</h3></div><button class="btn light" onclick="opsRenderHR()">새로고침</button></div><div id="hrList"></div>';
   hrRenderList();
