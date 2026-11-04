@@ -259,27 +259,40 @@ function opsLastColumn(count){
   return out;
 }
 function opsHasValues(row){return Array.isArray(row)&&row.some(v=>String(v??'').trim()!=='');}
+function opsPermissionError(error){
+  const message=String(error?.message||error||'');
+  if(/403|permission|insufficient|not authorized|forbidden/i.test(message)){
+    return new Error('운영 스프레드시트 편집 권한이 없습니다. Google Sheets 공유 설정에서 다음 계정을 편집자로 추가해 주세요: '+CFG.SA_EMAIL+' / 원인: '+message);
+  }
+  return error instanceof Error?error:new Error(message);
+}
 async function opsAppend(name,values){
   const range=opsRange(name,'A','AZ');
   const url=opsUrl(range)+':append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS';
-  const result=await googleJson(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({majorDimension:'ROWS',values:[values.map(v=>safe(v))]})});
-  invalidateSheetReadCache();
-  return result;
+  try{
+    const result=await googleJson(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({majorDimension:'ROWS',values:[values.map(v=>safe(v))]})});
+    invalidateSheetReadCache();
+    return result;
+  }catch(e){throw opsPermissionError(e);}
 }
 async function opsUpdateRow(name,rowNumber,values,headerCount){
   const last=opsLastColumn(headerCount);
   const range=opsQuoteSheet(name)+'!A'+rowNumber+':'+last+rowNumber;
   const payload=values.slice(0,headerCount).map(v=>safe(v));
   while(payload.length<headerCount)payload.push('');
-  const result=await googleJson(opsUrl(range)+'?valueInputOption=USER_ENTERED',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({range,majorDimension:'ROWS',values:[payload]})});
-  invalidateSheetReadCache();
-  return result;
+  try{
+    const result=await googleJson(opsUrl(range)+'?valueInputOption=USER_ENTERED',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({range,majorDimension:'ROWS',values:[payload]})});
+    invalidateSheetReadCache();
+    return result;
+  }catch(e){throw opsPermissionError(e);}
 }
 async function opsClearRow(name,rowNumber){
   const range=opsQuoteSheet(name)+'!A'+rowNumber+':AZ'+rowNumber;
-  const result=await googleJson(opsUrl(range)+':clear',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({})});
-  invalidateSheetReadCache();
-  return result;
+  try{
+    const result=await googleJson(opsUrl(range)+':clear',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({})});
+    invalidateSheetReadCache();
+    return result;
+  }catch(e){throw opsPermissionError(e);}
 }
 
 function normalizeRole(v){return String(v||'')==='관리자'?'관리자':'일반회원';}
@@ -621,15 +634,10 @@ async function api(action,args,ctx=null){
       try{meta=await opsMeta();}
       catch(e){throw new Error('운영 스프레드시트에 접근하지 못했습니다. 공유 설정에서 다음 계정을 편집자로 추가했는지 확인해 주세요: '+CFG.SA_EMAIL+' / 원인: '+String(e.message||e));}
       const byName=new Map((meta.sheets||[]).map(s=>[String(s.properties?.title||''),s.properties||{}]));
-      const tabs=await Promise.all(OPS_TAB_NAMES.map(async name=>{
+      const tabs=OPS_TAB_NAMES.map(name=>{
         const properties=byName.get(name);
-        if(!properties)return {name,exists:false,recordCount:0,headers:[]};
-        try{
-          const rows=await opsGet(name);
-          const header=(rows[0]||[]).map((v,i)=>String(v??'').trim()||('항목 '+(i+1)));
-          return {name,exists:true,hidden:!!properties.hidden,recordCount:rows.slice(1).filter(opsHasValues).length,headers:header};
-        }catch(e){return {name,exists:true,hidden:!!properties.hidden,recordCount:0,headers:[],error:String(e.message||e)};}
-      }));
+        return {name,exists:!!properties,hidden:!!properties?.hidden};
+      });
       return {ok:true,tabs,serviceAccountEmail:CFG.SA_EMAIL};
     }
     case 'opsListRows':{
@@ -651,8 +659,10 @@ async function api(action,args,ctx=null){
       const rows=await opsGet(name);
       if(rows.some(opsHasValues))throw new Error('이미 데이터가 있어 열 이름을 새로 만들 수 없습니다. 첫 행에 열 이름을 먼저 입력하거나 데이터가 없는 시트에서만 사용하세요.');
       const last=opsLastColumn(headers.length),range=opsQuoteSheet(name)+'!A1:'+last+'1';
-      await googleJson(opsUrl(range)+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({range,majorDimension:'ROWS',values:[headers]})});
-      invalidateSheetReadCache();
+      try{
+        await googleJson(opsUrl(range)+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({range,majorDimension:'ROWS',values:[headers]})});
+        invalidateSheetReadCache();
+      }catch(e){throw opsPermissionError(e);}
       return {ok:true,headers};
     }
     case 'opsCreateRow':{
