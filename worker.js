@@ -234,7 +234,7 @@ async function sheetAppend(sheet,values){
 }
 async function sheetUpdate(range,values){const result=await googleJson(sheetUrl(range)+'?valueInputOption=USER_ENTERED',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({range,majorDimension:'ROWS',values})});invalidateSheetReadCache();return result;}
 
-const OPS_TAB_NAMES = ['대시보드','회원명단','MK 명단','지부현황','행사관리','사무실 예약','업무관리','운영위원회','임시총회 참여자 명단','사무실 비품대장','신입회원 커리큘럼'];
+const OPS_TAB_NAMES = ['회원명단','MK 명단','지부현황','행사관리','사무실 예약','업무관리','운영위원회','사무실 비품대장'];
 function opsQuoteSheet(name){return "'"+String(name).replace(/'/g,"''")+"'";}
 function opsRange(name,start='A1',end='AZ'){return opsQuoteSheet(name)+'!'+start+':'+end;}
 function opsUrl(range){return 'https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+'/values/'+encodeURIComponent(range);}
@@ -639,6 +639,18 @@ async function api(action,args,ctx=null){
         return {name,exists:!!properties,hidden:!!properties?.hidden};
       });
       return {ok:true,tabs,serviceAccountEmail:CFG.SA_EMAIL};
+    }
+    case 'opsDashboardData':{
+      await requireRole(args[0],['관리자']);
+      const sections=await Promise.all(OPS_TAB_NAMES.map(async name=>{
+        const rows=await opsGet(name);
+        const rawHeaders=rows[0]||[];
+        const headers=rawHeaders.map((v,i)=>String(v??'').trim()||('항목 '+(i+1)));
+        const records=[];
+        for(let i=1;i<rows.length;i++)if(opsHasValues(rows[i]))records.push({rowNumber:i+1,values:headers.map((_,j)=>String(rows[i][j]??''))});
+        return {name,headers,records,count:records.length,needsHeaders:!rawHeaders.some(v=>String(v??'').trim())};
+      }));
+      return {ok:true,sections};
     }
     case 'opsListRows':{
       await requireRole(args[0],['관리자']);
