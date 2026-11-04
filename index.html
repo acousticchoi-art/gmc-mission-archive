@@ -1131,6 +1131,55 @@ html body #app > .container.ops-page .ops-table-wrap{
   html body #app > .container.ops-page .ops-table-wrap{max-height:none !important}
 }
 
+
+/* Operations overview dashboard */
+.ops-overview-head{display:flex;justify-content:space-between;align-items:center;margin:8px 0 18px}
+.ops-overview-eyebrow{font-size:10px;letter-spacing:.16em;font-weight:800;color:#a78352;margin-bottom:5px}
+.ops-overview-head h3{font-size:24px;color:#17344f;margin:0}
+.ops-kpi-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.ops-kpi-card{position:relative;text-align:left;display:flex;flex-direction:column;gap:5px;padding:17px 18px;border:1px solid #e1e7ed;border-radius:12px;background:#fff;color:#17344f;min-height:132px;cursor:pointer;transition:transform .15s,border-color .15s}
+.ops-kpi-card:hover,.ops-quick-card:hover{transform:translateY(-2px);border-color:#9eb1c1}
+.ops-kpi-icon{font-size:10px;font-weight:900;letter-spacing:.1em;color:#b18a55}
+.ops-kpi-label{font-size:12px;font-weight:700;color:#667786}
+.ops-kpi-card strong{font-size:31px;line-height:1.15;letter-spacing:-.04em}
+.ops-kpi-card small{font-size:11px;color:#9aa5ae}
+.ops-overview-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);gap:14px}
+.ops-dash-panel{min-width:0;padding:20px 22px;border:1px solid #e1e7ed;border-radius:12px;background:#fff}
+.ops-dash-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.ops-dash-title h4{font-size:16px;color:#17344f;margin:0 0 4px}
+.ops-dash-title p{font-size:11px;color:#87939d;margin:0}
+.ops-dash-title>strong{font-size:24px;color:#17344f}
+.ops-chart-list{display:flex;flex-direction:column;gap:13px}
+.ops-chart-row{display:grid;grid-template-columns:112px minmax(50px,1fr) 42px;align-items:center;gap:10px;border:0;background:transparent;padding:0;text-align:left;color:#536779;cursor:pointer}
+.ops-chart-label{font-size:12px;font-weight:700;white-space:nowrap}
+.ops-chart-track,.ops-status-track{height:10px;border-radius:20px;background:#eef2f5;overflow:hidden}
+.ops-chart-track i{display:block;height:100%;border-radius:20px;background:linear-gradient(90deg,#294d6b,#8aa2b5)}
+.ops-chart-row b{font-size:12px;text-align:right;color:#17344f}
+.ops-status-list{display:flex;flex-direction:column;gap:17px;padding-top:4px}
+.ops-status-item{display:grid;grid-template-columns:62px minmax(60px,1fr) 28px;align-items:center;gap:10px;font-size:12px;color:#667786}
+.ops-status-item b{text-align:right;color:#17344f}
+.ops-status-track i{display:block;height:100%;border-radius:20px;background:#91a8b9}
+.ops-status-track .ops-status-done{background:#4d8a74}
+.ops-status-track .ops-status-progress{background:#6e94b2}
+.ops-status-track .ops-status-waiting{background:#c5a16b}
+.ops-status-track .ops-status-other{background:#aab5bf}
+.ops-dash-empty{padding:18px 14px;background:#f6f8fa;border-radius:8px;font-size:12px;line-height:1.6;color:#83909b}
+.ops-quick-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}
+.ops-quick-card{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:15px 17px;border:1px solid #e1e7ed;border-radius:10px;background:#fff;color:#526779;text-align:left;cursor:pointer}
+.ops-quick-card span{font-size:12px;font-weight:700}
+.ops-quick-card b{font-size:20px;color:#17344f}
+@media(max-width:1050px){.ops-kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.ops-overview-grid{grid-template-columns:1fr}}
+@media(max-width:650px){
+ .ops-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .ops-kpi-card{padding:13px;min-height:112px}
+ .ops-kpi-card strong{font-size:26px}
+ .ops-dash-panel{padding:16px 14px}
+ .ops-chart-row{grid-template-columns:94px minmax(40px,1fr) 32px;gap:7px}
+ .ops-chart-label,.ops-chart-row b{font-size:11px}
+ .ops-quick-grid{grid-template-columns:1fr;gap:8px}
+ .ops-overview-head h3{font-size:21px}
+}
+
 </style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav><button id="installAppBtn" class="install-cta" type="button" aria-label="GMC 아카이브를 바탕화면에 추가"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v5h14v-5"/></svg><span>바탕화면 추가</span></button></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><button id="backToTop" type="button" aria-label="페이지 맨 위로 이동" title="맨 위로" onclick="window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})">↑</button><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
@@ -1607,41 +1656,84 @@ function resetArchiveFilters(){
 
 
 
-const OPS_TAB_NAMES = ['대시보드','회원명단','MK 명단','지부현황','행사관리','사무실 예약','업무관리','운영위원회','임시총회 참여자 명단','사무실 비품대장','신입회원 커리큘럼'];
+const OPS_TAB_NAMES = ['회원명단','MK 명단','지부현황','행사관리','사무실 예약','업무관리','운영위원회','사무실 비품대장'];
 let OPS_TAB_INFO=[],OPS_CURRENT_TAB='대시보드',OPS_HEADERS=[],OPS_RECORDS=[],OPS_EDIT_ROW=null,OPS_READ_ONLY=false;
 
 async function opsDashboard(selected){
   if(!ME||ME.role!=='관리자')return;
-  selected=selected||'대시보드';
+  selected=selected||'운영현황';
   document.getElementById('app').innerHTML=
     '<div class="container admin-page ops-page">'+
       '<div class="admin-head ops-page-head"><div><h2>운영 대시보드</h2></div>'+
       '<button class="btn light" onclick="admin()">← 관리자</button></div>'+
-      ''+
       '<div id="opsTabs" class="ops-tabs" role="tablist" aria-label="운영 대시보드 메뉴"></div>'+
-      '<div id="opsContent" class="ops-content"><div class="notice">운영자료를 불러오는 중입니다.</div></div>'+
+      '<div id="opsContent" class="ops-content"><div class="notice">불러오는 중</div></div>'+
     '</div>';
   const content=document.getElementById('opsContent');
   if(!content)return;
   try{
     const r=await A('opsListTabs',[T]);
     OPS_TAB_INFO=Array.isArray(r.tabs)?r.tabs:[];
-    const available=OPS_TAB_INFO.filter(x=>x.exists);
-    document.getElementById('opsTabs').innerHTML=OPS_TAB_INFO.map(x=>
-      '<button type="button" class="ops-tab'+(x.name===selected?' active':'')+'" '+(!x.exists?'disabled':'')+' onclick="opsOpenTab(\''+E(x.name)+'\')">'+E(x.name)+'</button>'
-    ).join('');
-    if(!available.length){
-      content.innerHTML='<div class="notice error">운영 스프레드시트에서 사용할 탭을 찾지 못했습니다. 공유 권한과 탭 이름을 확인해 주세요.</div>';
-      return;
-    }
-    if(!available.some(x=>x.name===selected))selected=available[0].name;
+    const menu=['운영현황',...OPS_TAB_NAMES];
+    document.getElementById('opsTabs').innerHTML=menu.map(name=>{
+      const exists=name==='운영현황'||!!OPS_TAB_INFO.find(x=>x.name===name&&x.exists);
+      if(name==='운영현황')return '<button type="button" class="ops-tab'+(name===selected?' active':'')+'" onclick="opsRenderOverview()">운영현황</button>';
+      return '<button type="button" class="ops-tab'+(name===selected?' active':'')+'" '+(!exists?'disabled':'')+' data-tab="'+E(name)+'" onclick="opsOpenTab(this.dataset.tab)">'+E(name)+'</button>';
+    }).join('');
+    if(selected==='운영현황'||!OPS_TAB_NAMES.includes(selected)||!OPS_TAB_INFO.some(x=>x.name===selected&&x.exists)){await opsRenderOverview();return;}
     await opsOpenTab(selected);
   }catch(e){
     const target=document.getElementById('opsContent');
-    if(!target)return;
-    target.innerHTML='<div class="panel ops-error"><h3>운영 스프레드시트 연결을 확인해 주세요.</h3><p>'+E(e.message)+'</p>'+
-      '<p>운영 스프레드시트를 읽고 수정할 수 있도록 GMC 서비스 계정을 편집자로 공유해야 합니다.</p>'+
-      '<button class="btn light" onclick="opsDashboard()">다시 연결</button></div>';
+    if(target)target.innerHTML='<div class="panel ops-error"><h3>운영 데이터를 불러오지 못했습니다.</h3><p>'+E(e.message)+'</p><button class="btn light" onclick="opsDashboard()">다시 시도</button></div>';
+  }
+}
+
+async function opsRenderOverview(){
+  if(!ME||ME.role!=='관리자')return;
+  OPS_CURRENT_TAB='운영현황';
+  OPS_EDIT_ROW=null;
+  document.querySelectorAll('.ops-tab').forEach(b=>b.classList.toggle('active',b.textContent==='운영현황'));
+  const content=document.getElementById('opsContent');
+  if(!content)return;
+  content.innerHTML='<div class="notice">운영 현황 집계 중</div>';
+  try{
+    const r=await A('opsDashboardData',[T]);
+    const sections=r.sections||[];
+    const get=n=>sections.find(x=>x.name===n)||{name:n,headers:[],records:[],count:0};
+    const member=get('회원명단'),mk=get('MK 명단'),branches=get('지부현황'),events=get('행사관리'),reservations=get('사무실 예약'),tasks=get('업무관리'),committee=get('운영위원회'),assets=get('사무실 비품대장');
+    const kpis=[
+      {label:'전체 회원',value:member.count,sub:'회원명단',tab:'회원명단',icon:'01'},
+      {label:'MK 명단',value:mk.count,sub:'등록된 MK',tab:'MK 명단',icon:'02'},
+      {label:'지부',value:branches.count,sub:'등록된 지부',tab:'지부현황',icon:'03'},
+      {label:'행사',value:events.count,sub:'등록된 행사',tab:'행사관리',icon:'04'},
+      {label:'업무',value:tasks.count,sub:'등록된 업무',tab:'업무관리',icon:'05'}
+    ];
+    const max=Math.max(1,...sections.map(x=>x.count||0));
+    const bars=sections.map(x=>'<button class="ops-chart-row" data-tab="'+E(x.name)+'" onclick="opsOpenTab(this.dataset.tab)"><span class="ops-chart-label">'+E(x.name)+'</span><span class="ops-chart-track"><i style="width:'+Math.max(x.count?3:0,(x.count/max)*100)+'%"></i></span><b>'+Number(x.count||0).toLocaleString()+'</b></button>').join('');
+    const statusHeader=tasks.headers.findIndex(h=>/상태|진행|status/i.test(h));
+    const statuses={done:0,progress:0,waiting:0,other:0};
+    if(statusHeader>=0)tasks.records.forEach(row=>{
+      const v=String(row.values[statusHeader]||'').toLowerCase();
+      if(/완료|종료|완성|done|complete|closed/.test(v))statuses.done++;
+      else if(/진행|중|working|progress|ongoing/.test(v))statuses.progress++;
+      else if(/대기|예정|미착수|보류|pending|todo|not started/.test(v))statuses.waiting++;
+      else statuses.other++;
+    });
+    const statusTotal=Object.values(statuses).reduce((a,b)=>a+b,0);
+    const statusItems=[['완료',statuses.done,'done'],['진행 중',statuses.progress,'progress'],['대기',statuses.waiting,'waiting'],['기타',statuses.other,'other']];
+    const statusHtml=statusHeader<0?'<div class="ops-dash-empty">업무 상태 열이 없어 진행 현황을 표시할 수 없습니다.</div>':
+      statusItems.map(x=>'<div class="ops-status-item"><span>'+x[0]+'</span><div class="ops-status-track"><i class="ops-status-'+x[2]+'" style="width:'+(statusTotal?x[1]/statusTotal*100:0)+'%"></i></div><b>'+x[1]+'</b></div>').join('');
+    const quick=[{name:'사무실 예약',count:reservations.count},{name:'운영위원회',count:committee.count},{name:'사무실 비품대장',count:assets.count}];
+    content.innerHTML=
+      '<div class="ops-overview-head"><div><div class="ops-overview-eyebrow">GMC · 29TH TERM</div><h3>운영 현황</h3></div><button class="btn light" onclick="opsRenderOverview()">새로고침</button></div>'+
+      '<div class="ops-kpi-grid">'+kpis.map(x=>'<button class="ops-kpi-card" data-tab="'+x.tab+'" onclick="opsOpenTab(this.dataset.tab)"><span class="ops-kpi-icon">'+x.icon+'</span><span class="ops-kpi-label">'+x.label+'</span><strong>'+Number(x.value||0).toLocaleString()+'</strong><small>'+x.sub+'</small></button>').join('')+'</div>'+
+      '<div class="ops-overview-grid">'+
+        '<section class="ops-dash-panel ops-chart-panel"><div class="ops-dash-title"><div><h4>분야별 등록 현황</h4><p>각 관리 탭에 등록된 항목 수</p></div></div><div class="ops-chart-list">'+bars+'</div></section>'+
+        '<section class="ops-dash-panel ops-status-panel"><div class="ops-dash-title"><div><h4>업무 진행 현황</h4><p>업무관리의 상태 항목 기준</p></div><strong>'+tasks.count+'</strong></div><div class="ops-status-list">'+statusHtml+'</div></section>'+
+      '</div>'+
+      '<div class="ops-quick-grid">'+quick.map(x=>'<button class="ops-quick-card" data-tab="'+x.name+'" onclick="opsOpenTab(this.dataset.tab)"><span>'+x.name+'</span><b>'+Number(x.count||0).toLocaleString()+'</b></button>').join('')+'</div>';
+  }catch(e){
+    content.innerHTML='<div class="panel ops-error"><h3>운영 현황을 집계하지 못했습니다.</h3><p>'+E(e.message)+'</p><button class="btn light" onclick="opsRenderOverview()">다시 시도</button></div>';
   }
 }
 
@@ -1659,14 +1751,6 @@ async function opsOpenTab(name){
     OPS_HEADERS=r.headers||[];
     OPS_RECORDS=r.records||[];
     OPS_READ_ONLY=!!r.readOnly;
-    if(name==='대시보드'){
-      const matrix=r.matrix||[];
-      const width=Math.max(1,...matrix.map(row=>row.length));
-      content.innerHTML='<div class="ops-section-head"><div><div class="admin-kicker">OVERVIEW</div><h3>운영 현황</h3><p>스프레드시트의 대시보드 탭 내용을 표시합니다.</p></div><button class="btn light" onclick="opsDashboard()">새로고침</button></div>'+
-        '<div class="ops-matrix-wrap"><table class="ops-matrix"><tbody>'+matrix.map(row=>'<tr>'+Array.from({length:width},(_,i)=>'<td>'+E(row[i]??'')+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>'+
-        '<div class="ops-readonly-note">대시보드 탭은 요약 화면으로 표시됩니다. 개별 자료의 입력과 수정은 아래 관리 탭에서 진행하세요.</div>';
-      return;
-    }
     if(r.needsHeaders){
       content.innerHTML='<div class="panel ops-empty"><div class="ops-empty-mark">FIELD SETUP</div><h3>'+E(name)+' 항목 설정</h3><p>첫 행에 열 이름이 없습니다. 각 항목 이름을 한 줄에 하나씩 입력하면 입력·수정 화면이 자동으로 만들어집니다.</p>'+
         '<button class="btn" onclick="opsConfigureHeaders()">열 이름 설정</button></div>';
