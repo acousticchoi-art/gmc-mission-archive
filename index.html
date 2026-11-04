@@ -1068,40 +1068,67 @@ header nav{position:static;flex:1 1 auto;min-width:0}
 }
 
 
-/* Operations dashboard: wider workspace and compact navigation */
-.container.ops-page{
-  width:min(1660px,calc(100% - 56px));
-  max-width:none;
-  box-sizing:border-box;
-  padding:28px 0 64px;
+
+/* GMC operations dashboard layout override */
+html body #app > .container.ops-page{
+  width:calc(100vw - 64px) !important;
+  max-width:none !important;
+  margin-left:32px !important;
+  margin-right:32px !important;
+  padding:26px 0 64px !important;
+  box-sizing:border-box !important;
 }
-.ops-page .admin-head{margin-bottom:18px}
-.ops-page .ops-summary{display:none}
-.ops-page .ops-tabs{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(128px,1fr));
-  gap:7px;
-  overflow:visible;
-  padding:0 0 16px;
-  margin:0 0 18px;
+html body #app > .container.ops-page .ops-summary{display:none !important}
+html body #app > .container.ops-page .ops-tabs{
+  display:grid !important;
+  grid-template-columns:repeat(6,minmax(0,1fr)) !important;
+  gap:8px !important;
+  width:100% !important;
+  overflow:visible !important;
+  padding:0 0 16px !important;
+  margin:0 0 18px !important;
+  border-bottom:1px solid #dfe6ec !important;
 }
-.ops-page .ops-tab{
-  min-width:0;
-  width:100%;
-  white-space:normal;
-  min-height:44px;
-  line-height:1.35;
+html body #app > .container.ops-page .ops-tab{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:100% !important;
+  min-width:0 !important;
+  min-height:46px !important;
+  padding:9px 10px !important;
+  white-space:normal !important;
+  text-align:center !important;
+  line-height:1.35 !important;
+  box-sizing:border-box !important;
 }
-.ops-page .ops-section-head{margin-bottom:12px}
-.ops-page .ops-table-tools{margin-top:4px}
-.ops-page .ops-table-wrap{max-height:calc(100vh - 300px);overflow:auto}
-.ops-page .ops-table th{position:sticky;top:0}
-.ops-page .ops-table .ops-actions-head{right:0}
-@media(max-width:700px){
-  .container.ops-page{width:calc(100% - 28px);padding:20px 0 42px}
-  .ops-page .ops-tabs{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
-  .ops-page .ops-tab{font-size:12px;padding:9px 7px}
-  .ops-page .ops-table-wrap{max-height:none}
+html body #app > .container.ops-page .ops-table-wrap{
+  width:100% !important;
+  max-width:100% !important;
+  max-height:calc(100vh - 270px) !important;
+  overflow:auto !important;
+}
+@media(max-width:900px){
+  html body #app > .container.ops-page{
+    width:calc(100vw - 32px) !important;
+    margin-left:16px !important;
+    margin-right:16px !important;
+  }
+  html body #app > .container.ops-page .ops-tabs{
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  }
+}
+@media(max-width:600px){
+  html body #app > .container.ops-page{
+    width:calc(100vw - 24px) !important;
+    margin-left:12px !important;
+    margin-right:12px !important;
+  }
+  html body #app > .container.ops-page .ops-tabs{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:6px !important;
+  }
+  html body #app > .container.ops-page .ops-table-wrap{max-height:none !important}
 }
 
 </style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav><button id="installAppBtn" class="install-cta" type="button" aria-label="GMC 아카이브를 바탕화면에 추가"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v5h14v-5"/></svg><span>바탕화면 추가</span></button></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><button id="backToTop" type="button" aria-label="페이지 맨 위로 이동" title="맨 위로" onclick="window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})">↑</button><script>
