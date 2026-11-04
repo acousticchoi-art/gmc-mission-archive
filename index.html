@@ -1600,7 +1600,7 @@ async function opsDashboard(selected){
     OPS_TAB_INFO=Array.isArray(r.tabs)?r.tabs:[];
     const available=OPS_TAB_INFO.filter(x=>x.exists);
     document.getElementById('opsSummary').innerHTML=available.filter(x=>x.name!=='대시보드').map((x,i)=>
-      '<button class="ops-summary-card" onclick="opsOpenTab(\''+E(x.name)+'\')"><span>'+E(String(i+1).padStart(2,'0'))+'</span><b>'+E(x.name)+'</b><small>관리 화면 열기</small></button>'
+      '<button class="ops-summary-card" onclick="opsOpenTab(\''+E(x.name)+'\')"><span>'+E(String(i+1).padStart(2,'0'))+'</span><b>'+E(x.name)+'</b></button>'
     ).join('');
     document.getElementById('opsTabs').innerHTML=OPS_TAB_INFO.map(x=>
       '<button type="button" class="ops-tab'+(x.name===selected?' active':'')+'" '+(!x.exists?'disabled':'')+' onclick="opsOpenTab(\''+E(x.name)+'\')">'+E(x.name)+'</button>'
