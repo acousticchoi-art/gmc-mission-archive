@@ -1133,6 +1133,7 @@ html body #app > .container.ops-page .ops-table-wrap{
 
 
 .hr-intro{font-size:13px;color:#788794;margin:8px 0;line-height:1.6}.hr-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}.hr-kpis>div{padding:18px;border:1px solid #e1e7ed;border-radius:12px;background:#fff;display:flex;flex-direction:column;gap:7px}.hr-kpis small{font-size:12px;color:#748392;font-weight:700}.hr-kpis strong{font-size:29px;color:#17344f}.hr-panel{margin-top:14px}.hr-branches{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.hr-branch-card{padding:14px;border:1px solid #e6ebef;border-radius:10px;background:#fbfcfd;min-width:0}.hr-branch-card>b{display:block;color:#536b7e;font-size:12px}.hr-branch-card>strong{display:block;font-size:27px;color:#17344f;margin:7px 0 2px}.hr-branch-card small,.hr-branch-card p{font-size:11px;color:#778692;line-height:1.5;margin:4px 0}.hr-muted{color:#a17a46;font-size:11px;font-weight:700}.hr-notice{margin-top:14px;padding:16px 18px;border-radius:10px;background:#f4f7f9;color:#687b8b;font-size:12px;line-height:1.7}@media(max-width:900px){.hr-branches{grid-template-columns:repeat(3,minmax(0,1fr))}.hr-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){.hr-branches{grid-template-columns:repeat(2,minmax(0,1fr))}.hr-kpis>div{padding:13px}.hr-kpis strong{font-size:24px}}
+.hr-modal{display:none;position:fixed;inset:0;z-index:10000;background:rgba(13,28,40,.48);padding:24px;align-items:center;justify-content:center}.hr-modal.show{display:flex}.hr-modal-card{width:min(760px,100%);max-height:85vh;overflow:auto;background:#fff;border-radius:16px;padding:24px;box-shadow:0 20px 70px #10283c40}.hr-modal-card .hr-detail-grid{max-height:42vh;overflow:auto}@media(max-width:650px){.hr-modal{padding:10px;align-items:flex-end}.hr-modal-card{max-height:88vh;border-radius:16px 16px 0 0;padding:18px}.hr-modal-card .hr-detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 /* Simple people and family directory */
 .hr-controls{display:grid;grid-template-columns:auto minmax(180px,1fr) 160px;gap:10px;align-items:center;margin:14px 0}
 .hr-mode-switch{display:flex;gap:4px;padding:4px;border-radius:10px;background:#f0f3f5}
@@ -1710,15 +1711,16 @@ async function opsDashboard(selected){
   try{
     const r=await A('opsListTabs',[T]);
     OPS_TAB_INFO=Array.isArray(r.tabs)?r.tabs:[];
-    const menu=['운영현황','인사관리',...OPS_TAB_NAMES];
+    const menu=['인사관리','회원명단','MK 명단','조직관리','행사관리','업무관리','사무실 예약','사무실 비품대장'];
     document.getElementById('opsTabs').innerHTML=menu.map(name=>{
-      const exists=name==='운영현황'||!!OPS_TAB_INFO.find(x=>x.name===name&&x.exists);
-      if(name==='운영현황')return '<button type="button" class="ops-tab'+(name===selected?' active':'')+'" onclick="opsRenderOverview()">운영현황</button>';
+      const exists=name==='인사관리'||!!OPS_TAB_INFO.find(x=>x.name===name&&x.exists);
+      if(name==='조직관리')return '<button type="button" class="ops-tab'+(name===selected?' active':'')+'" onclick="opsOpenTab(\'지부현황\')">조직관리</button>';
       if(name==='인사관리')return '<button type="button" class="ops-tab'+(name===selected?' active':'')+'" onclick="opsRenderHR()">인사관리</button>';
       return '<button type="button" class="ops-tab'+(name===selected?' active':'')+'" '+(!exists?'disabled':'')+' data-tab="'+E(name)+'" onclick="opsOpenTab(this.dataset.tab)">'+E(name)+'</button>';
     }).join('');
     if(selected==='인사관리'){await opsRenderHR();return;}
-    if(selected==='운영현황'||!OPS_TAB_NAMES.includes(selected)||!OPS_TAB_INFO.some(x=>x.name===selected&&x.exists)){await opsRenderOverview();return;}
+    if(selected==='조직관리'){await opsOpenTab('지부현황');return;}
+    if(!OPS_TAB_NAMES.includes(selected)||!OPS_TAB_INFO.some(x=>x.name===selected&&x.exists)){await opsRenderHR();return;}
     await opsOpenTab(selected);
   }catch(e){
     const target=document.getElementById('opsContent');
@@ -1778,17 +1780,17 @@ async function opsRenderOverview(){
 let HR_STATE={people:[],mk:[],mode:'전체',branch:'전체',query:'',selected:null};
 function hrNorm(v){return String(v||'').toLowerCase().replace(/[\\s·ㆍ,，、/]+/g,'').trim();}
 function hrOpenPerson(name){
- HR_STATE.selected=name;
  const p=HR_STATE.people.find(x=>x.name===name);if(!p)return;
  const kids=HR_STATE.mk.filter(k=>hrNorm(k.parent).includes(hrNorm(name))||hrNorm(name).includes(hrNorm(k.parent)));
- const detail=document.getElementById('hrDetail');if(!detail)return;
- const v=p.v,fields=p.headers.map((h,i)=>({h,v:v[i]})).filter(x=>String(x.v||'').trim()&& !/No\\.?/.test(x.h));
+ const fields=p.headers.map((h,i)=>({h,v:p.v[i]})).filter(x=>String(x.v||'').trim()&&!/No\\.?/.test(x.h));
  const fieldsHtml=fields.map(x=>'<div class="hr-detail-field"><small>'+E(x.h)+'</small><b>'+E(x.v)+'</b></div>').join('');
  const familyHtml=kids.length?kids.map(k=>'<div class="hr-child"><b>'+E(k.name)+'</b><span>'+E(k.birth||'출생연도 미입력')+'</span><small>'+E(k.resident||'')+'</small></div>').join(''):'<p class="hr-empty">연결된 MK 정보가 없습니다.</p>';
- detail.innerHTML='<div class="hr-detail-head"><div><small>MISSIONARY PROFILE</small><h3>'+E(p.name)+'</h3><p>'+E(p.branch)+' · '+E(p.unit||'유닛 미입력')+'</p></div><button class="btn light ops-small-btn" onclick="hrClosePerson()">닫기</button></div><div class="hr-detail-grid">'+fieldsHtml+'</div><div class="hr-family"><h4>가족 정보</h4><div class="hr-family-parent"><b>'+E(p.name)+'</b><span>선교사 회원</span></div>'+familyHtml+'</div>';
- detail.hidden=false;detail.scrollIntoView({behavior:'smooth',block:'start'});
+ let modal=document.getElementById('hrPersonModal');
+ if(!modal){modal=document.createElement('div');modal.id='hrPersonModal';modal.className='hr-modal';modal.onclick=e=>{if(e.target===modal)hrClosePerson();};document.body.appendChild(modal);}
+ modal.innerHTML='<div class="hr-modal-card" role="dialog" aria-modal="true" aria-label="선교사 상세 정보"><div class="hr-detail-head"><div><small>MISSIONARY PROFILE</small><h3>'+E(p.name)+'</h3><p>'+E(p.branch)+' · '+E(p.unit||'유닛 미입력')+'</p></div><button class="btn light ops-small-btn" onclick="hrClosePerson()">닫기 ✕</button></div><div class="hr-detail-grid">'+fieldsHtml+'</div><div class="hr-family"><h4>가족 정보</h4><div class="hr-family-parent"><b>'+E(p.name)+'</b><span>선교사 회원</span></div>'+familyHtml+'</div></div>';
+ modal.classList.add('show');document.body.style.overflow='hidden';
 }
-function hrClosePerson(){HR_STATE.selected=null;const d=document.getElementById('hrDetail');if(d){d.hidden=true;d.innerHTML='';}}
+function hrClosePerson(){const m=document.getElementById('hrPersonModal');if(m)m.classList.remove('show');document.body.style.overflow='';}
 function hrSetMode(mode){HR_STATE.mode=mode;HR_STATE.selected=null;hrRenderList();}
 function hrSetBranch(branch){HR_STATE.branch=branch;HR_STATE.selected=null;hrRenderList();}
 function hrSetQuery(q){HR_STATE.query=q;hrRenderList();}
@@ -1825,7 +1827,7 @@ async function opsRenderHR(){
   const pi=ix(mk.headers,/부모|선교사/),mi=ix(mk.headers,/MK 이름|이름/),yi=ix(mk.headers,/출생연도/),ri2=ix(mk.headers,/거주 여부|거주/);
   HR_STATE.mk=mk.records.map(x=>({parent:x.values[pi]||'',name:x.values[mi]||'',birth:x.values[yi]||'',resident:x.values[ri2]||''})).filter(x=>x.name);
   HR_STATE.mode='전체';HR_STATE.branch='전체';HR_STATE.query='';HR_STATE.selected=null;
-  content.innerHTML='<div class="ops-overview-head"><div><div class="ops-overview-eyebrow">GMC · PEOPLE & FAMILIES</div><h3>인사관리</h3></div><button class="btn light" onclick="opsRenderHR()">새로고침</button></div><div id="hrList"></div><section id="hrDetail" class="hr-detail" hidden></section>';
+  content.innerHTML='<div class="ops-overview-head"><div><h3>선교사 및 가정</h3></div><button class="btn light" onclick="opsRenderHR()">새로고침</button></div><div id="hrList"></div>';
   hrRenderList();
  }catch(e){content.innerHTML='<div class="panel ops-error"><h3>인사정보를 불러오지 못했습니다.</h3><p>'+E(e.message)+'</p><button class="btn light" onclick="opsRenderHR()">다시 시도</button></div>';}
 }
