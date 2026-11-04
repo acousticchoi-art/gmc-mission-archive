@@ -1543,7 +1543,6 @@ function resetArchiveFilters(){
 
 
 
-async 
 const OPS_TAB_NAMES = ['대시보드','회원명단','MK 명단','지부현황','행사관리','사무실 예약','업무관리','운영위원회','임시총회 참여자 명단','사무실 비품대장','신입회원 커리큘럼'];
 let OPS_TAB_INFO=[],OPS_CURRENT_TAB='대시보드',OPS_HEADERS=[],OPS_RECORDS=[],OPS_EDIT_ROW=null,OPS_READ_ONLY=false;
 
@@ -1702,7 +1701,7 @@ async function opsSaveHeaders(){
   }
 }
 
-function admin(){
+async function admin(){
   if(!ME || ME.role!=='관리자')return;
   document.getElementById('app').innerHTML=`<div class="container admin-page">
     <div class="admin-head">
