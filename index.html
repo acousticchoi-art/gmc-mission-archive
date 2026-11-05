@@ -1763,7 +1763,7 @@ async function opsDashboard(selected){
     const r=await A('opsListTabs',[T]);
     OPS_TAB_INFO=Array.isArray(r.tabs)?r.tabs:[];
     const menuGroups=[
-      {title:'조직 · 인사',items:['인사관리','회원명단','MK 명단','조직관리']},
+      {title:'조직 · 인사',items:['인사관리','MK 명단','조직관리']},
       {title:'사역 · 행정',items:['행사관리','업무관리']},
       {title:'시설 · 자산',items:['사무실 예약','사무실 비품대장']}
     ];
@@ -1944,7 +1944,7 @@ async function opsRenderHR(){
   HR_STATE.mk=mk.records.map(x=>({parent:x.values[pi]||'',name:x.values[mi]||'',birth:x.values[yi]||'',resident:x.values[ri2]||''})).filter(x=>x.name);
   HR_STATE.families=f.records||[];
   HR_STATE.mode='전체';HR_STATE.branch='전체';HR_STATE.query='';HR_STATE.selected=null;
-  content.innerHTML='<div class="ops-overview-head"><div><h3>선교사 및 가정</h3></div><button class="btn light" onclick="opsRenderHR()">새로고침</button></div><div id="hrList"></div>';
+  content.innerHTML='<div class="ops-overview-head"><div><h3>인사관리</h3></div><div class="ops-head-actions"><button class="btn light" onclick="opsOpenTab(\'회원명단\')">회원명단 관리</button><button class="btn light" onclick="opsRenderHR()">새로고침</button></div></div><div id="hrList"></div>';
   hrRenderList();
  }catch(e){content.innerHTML='<div class="panel ops-error"><h3>인사정보를 불러오지 못했습니다.</h3><p>'+E(e.message)+'</p><button class="btn light" onclick="opsRenderHR()">다시 시도</button></div>';}
 }
@@ -2015,7 +2015,7 @@ function opsRenderTable(){
   const orgNav=(OPS_CURRENT_TAB==='지부현황'||OPS_CURRENT_TAB==='지역선교부 코디')?'<div class="ops-org-subnav"><button class="btn '+(OPS_CURRENT_TAB==='지부현황'?'':'light')+'" onclick="opsOpenTab(\'지부현황\')">지부 현황</button><button class="btn '+(OPS_CURRENT_TAB==='지역선교부 코디'?'':'light')+'" onclick="opsOpenTab(\'지역선교부 코디\')">지역선교부 코디</button></div>':'';
   content.innerHTML=
     orgNav+'<div class="ops-section-head"><div><h3>'+E(OPS_CURRENT_TAB==='지부현황'?'지부 현황':OPS_CURRENT_TAB)+'</h3></div>'+
-    '<div class="ops-head-actions"><button class="btn light" onclick="opsOpenTab(\''+E(OPS_CURRENT_TAB)+'\')">새로고침</button><button class="btn" onclick="opsOpenForm()">＋ 항목 추가</button></div></div>'+
+    '<div class="ops-head-actions">'+(OPS_CURRENT_TAB==='회원명단'?'<button class="btn light" onclick="opsRenderHR()">← 인사관리</button>':'')+'<button class="btn light" onclick="opsOpenTab(\''+E(OPS_CURRENT_TAB)+'\')">새로고침</button><button class="btn" onclick="opsOpenForm()">＋ 항목 추가</button></div></div>'+
     '<div class="ops-table-tools"><input id="opsSearch" type="search" placeholder="항목 내용 검색" oninput="opsFilterRows()"><span id="opsRowCount">'+rows.length+'개 항목</span></div>'+
     '<div class="ops-table-wrap"><table class="ops-table"><thead><tr>'+headers.map(h=>'<th>'+E(h)+'</th>').join('')+'<th class="ops-actions-head">관리</th></tr></thead><tbody id="opsRows">'+opsRowsHtml(rows)+'</tbody></table></div>'+
     (!rows.length?'<div class="ops-empty-inline">등록된 항목이 없습니다. <b>항목 추가</b>를 눌러 첫 자료를 입력하세요.</div>':'');
@@ -2050,7 +2050,7 @@ function opsOpenForm(rowNumber){
       (multiline?'<textarea id="opsField'+i+'" rows="3">'+value+'</textarea>':'<input id="opsField'+i+'" type="text" value="'+value+'">')+'</div>';
   }).join('');
   document.getElementById('opsContent').innerHTML=
-    '<div class="ops-form-panel"><div class="ops-section-head"><div><div class="admin-kicker">DATA ENTRY</div><h3>'+(record?'항목 수정':'새 항목 등록')+'</h3><p>'+E(OPS_CURRENT_TAB)+'</p></div><button class="btn light" onclick="opsRenderTable()">목록으로</button></div>'+
+    '<div class="ops-form-panel"><div class="ops-section-head"><div><div class="admin-kicker">DATA ENTRY</div><h3>'+(record?'항목 수정':'새 항목 등록')+'</h3><p>'+E(OPS_CURRENT_TAB)+'</p></div><div class="ops-head-actions">'+(OPS_CURRENT_TAB==='회원명단'?'<button class="btn light" onclick="opsRenderHR()">← 인사관리</button>':'')+'<button class="btn light" onclick="opsRenderTable()">목록으로</button></div></div>'+
     '<form class="ops-form-grid" onsubmit="event.preventDefault();opsSaveRecord()">'+fields+
     '<div class="ops-form-actions"><button type="button" class="btn light" onclick="opsRenderTable()">취소</button><button type="submit" class="btn">저장</button></div></form></div>';
 }
