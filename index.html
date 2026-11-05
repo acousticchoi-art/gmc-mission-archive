@@ -1805,7 +1805,7 @@ function hrFamilyFor(name){return hrFamilyGroups().find(g=>g.members.some(x=>x.n
 function hrOpenPerson(name){
  const p=HR_STATE.people.find(x=>x.name===name);if(!p)return;
  const family=hrFamilyFor(name), adultNames=family?family.members.map(x=>x.name):[name];
- const familyAdults=adultNames.filter(n=>n!==name).map(n=>HR_STATE.people.find(x=>x.name===n)).filter(Boolean);
+ const familyAdults=adultNames.filter(n=>n!==name&&n!==family?.head?.name).map(n=>HR_STATE.people.find(x=>x.name===n)).filter(Boolean);
  const kids=HR_STATE.mk.filter(k=>adultNames.some(n=>hrNorm(k.parent).includes(hrNorm(n))||hrNorm(n).includes(hrNorm(k.parent))));
  const fields=p.headers.map((h,i)=>({h,v:(/직책/.test(String(h))&&!String(p.v[i]||'').trim()?'사원':p.v[i])})).filter(x=>String(x.v||'').trim()&&!/No\\.?|유닛/i.test(x.h));
  const fieldsHtml=fields.map(x=>'<div class="hr-detail-field"><small>'+E(x.h)+'</small><b>'+E(x.v)+'</b></div>').join('');
