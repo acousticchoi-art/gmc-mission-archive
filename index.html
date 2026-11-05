@@ -1228,7 +1228,21 @@ html body #app > .container.ops-page .ops-table-wrap{
 @media(max-width:900px){.ops-menu-groups{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.ops-menu-groups{grid-template-columns:1fr;gap:10px}.ops-menu-group{padding:15px}.ops-menu-items{grid-template-columns:repeat(2,minmax(0,1fr))}.ops-menu-items .ops-tab{min-height:46px}}
 </style>
-<style id="ops-org-subnav-style">.ops-org-subnav{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}.ops-org-subnav .btn{min-width:120px}</style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav><button id="installAppBtn" class="install-cta" type="button" aria-label="GMC 아카이브를 바탕화면에 추가"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v5h14v-5"/></svg><span>바탕화면 추가</span></button></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><button id="backToTop" type="button" aria-label="페이지 맨 위로 이동" title="맨 위로" onclick="window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})">↑</button><script>
+<style id="ops-org-subnav-style">.ops-org-subnav{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}.ops-org-subnav .btn{min-width:120px}</style><style id="ops-organization-style">
+.org-page-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:4px 0 16px}
+.org-page-head h3{margin:0;color:#183650;font-size:20px}.org-page-head p{margin:5px 0 0;color:#82909d;font-size:13px}
+.org-leadership-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:30px}
+.org-leader-group{min-width:0;padding:14px;border:1px solid #e1e8ee;border-radius:12px;background:#fff}
+.org-leader-group h4{margin:0 0 12px;color:#183650;font-size:15px}
+.org-leader-grid{display:grid;gap:8px}
+.org-leader-card{display:flex;flex-direction:column;gap:4px;padding:12px;border-radius:9px;background:#f5f8fa}
+.org-leader-card b{color:#28465f;font-size:15px}.org-leader-card span,.org-leader-card small{color:#82909d;font-size:12px}
+.org-leader-empty{padding:12px 8px;color:#9aa5af;font-size:12px;background:#f7f9fa;border-radius:8px}
+.org-branch-head{padding-top:20px;border-top:1px solid #e7edf1}
+.org-data-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+@media(max-width:900px){.org-leadership-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.org-leadership-grid{grid-template-columns:1fr 1fr}.org-leader-group{padding:10px}.org-page-head{align-items:flex-start}}
+</style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav><button id="installAppBtn" class="install-cta" type="button" aria-label="GMC 아카이브를 바탕화면에 추가"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v5h14v-5"/></svg><span>바탕화면 추가</span></button></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><button id="backToTop" type="button" aria-label="페이지 맨 위로 이동" title="맨 위로" onclick="window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})">↑</button><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
 let T=localStorage.getItem('gmc_token')||'',ME=null,CATS=[],FAVS=new Set();
@@ -1730,13 +1744,13 @@ async function opsDashboard(selected){
     document.getElementById('opsTabs').innerHTML=menuGroups.map(group=>
       '<section class="ops-menu-group"><h3>'+group.title+'</h3><div class="ops-menu-items">'+group.items.map(name=>{
         const exists=name==='인사관리'||!!OPS_TAB_INFO.find(x=>x.name===name&&x.exists);
-        if(name==='조직관리')return '<button type="button" class="ops-tab'+((selected==='조직관리'||selected==='지부현황'||selected==='지역선교부 코디')?' active':'')+'" onclick="opsOpenTab(\'지부현황\')">조직관리</button>';
+        if(name==='조직관리')return '<button type="button" class="ops-tab'+((selected==='조직관리'||selected==='지부현황'||selected==='지역선교부 코디')?' active':'')+'" onclick="opsRenderOrganization()">조직관리</button>';
         if(name==='인사관리')return '<button type="button" class="ops-tab'+(name===selected?' active':'')+'" onclick="opsRenderHR()">인사관리</button>';
         return '<button type="button" class="ops-tab'+(name===selected?' active':'')+'" '+(!exists?'disabled':'')+' data-tab="'+E(name)+'" onclick="opsOpenTab(this.dataset.tab)">'+E(name)+'</button>';
       }).join('')+'</div></section>'
     ).join('');
     if(selected==='인사관리'){await opsRenderHR();return;}
-    if(selected==='조직관리'){await opsOpenTab('지부현황');return;}
+    if(selected==='조직관리'||selected==='지부현황'||selected==='지역선교부 코디'){await opsRenderOrganization();return;}
     if(!OPS_TAB_NAMES.includes(selected)||!OPS_TAB_INFO.some(x=>x.name===selected&&x.exists)){await opsRenderHR();return;}
     await opsOpenTab(selected);
   }catch(e){
@@ -1909,6 +1923,35 @@ async function opsRenderHR(){
  }catch(e){content.innerHTML='<div class="panel ops-error"><h3>인사정보를 불러오지 못했습니다.</h3><p>'+E(e.message)+'</p><button class="btn light" onclick="opsRenderHR()">다시 시도</button></div>';}
 }
 
+async function opsRenderOrganization(){
+ if(!ME||ME.role!=='관리자')return;
+ OPS_CURRENT_TAB='조직관리';OPS_EDIT_ROW=null;
+ const content=document.getElementById('opsContent');if(!content)return;
+ document.querySelectorAll('.ops-tab').forEach(b=>b.classList.toggle('active',b.textContent==='조직관리'));
+ content.innerHTML='<div class="notice">조직 정보를 불러오는 중입니다.</div>';
+ try{
+  const [coord,branch]=await Promise.all([A('opsListRows',[T,'지역선교부 코디']),A('opsListRows',[T,'지부현황'])]);
+  const ch=coord.headers||[],cr=coord.records||[],bh=branch.headers||[],br=branch.records||[];
+  const findIndex=(headers,re)=>headers.findIndex(x=>re.test(String(x||'')));
+  const ci={region:findIndex(ch,/지역|권역/),role:findIndex(ch,/직책|구분|역할|직위/),name:findIndex(ch,/이름|성명|담당자|코디/),branch:findIndex(ch,/지부/),phone:findIndex(ch,/연락|전화|휴대폰/),email:findIndex(ch,/이메일|메일/),note:findIndex(ch,/비고|메모/)};
+  const roleOf=row=>String(ci.role>=0?row.values[ci.role]:'코디').trim()||'코디';
+  const roleGroups=[['지역대표',/지역대표|대표/],['코디',/코디/],['부코디',/부코디|부 코디|부대표/],['위원',/위원/]];
+  const cards=roleGroups.map(([label,re])=>{
+   const list=cr.filter(r=>re.test(roleOf(r)));
+   return '<section class="org-leader-group"><h4>'+label+'</h4>'+(list.length?'<div class="org-leader-grid">'+list.map(r=>{
+    const v=r.values;return '<article class="org-leader-card"><b>'+E(v[ci.name]||'이름 미등록')+'</b><span>'+E(v[ci.region]||'지역 미지정')+'</span><small>'+E(v[ci.branch]||'')+'</small>'+(ci.phone>=0&&v[ci.phone]?'<small>'+E(v[ci.phone])+'</small>':'')+(ci.email>=0&&v[ci.email]?'<small>'+E(v[ci.email])+'</small>':'')+'</article>';
+   }).join('')+'</div>':'<div class="org-leader-empty">등록된 '+label+' 정보가 없습니다.</div>')+'</section>';
+  }).join('');
+  const branchName=bh.findIndex(x=>/지부명|지부|지회/.test(x)),branchRole=bh.findIndex(x=>/직책|임원|구분|역할|직위/.test(x)),branchPerson=bh.findIndex(x=>/이름|성명|임원|담당자/.test(x));
+  const branchRows=br.map(r=>'<tr>'+bh.map((head,i)=>'<td>'+E(r.values[i]||'')+'</td>').join('')+'<td><button class="btn light ops-small-btn" onclick="opsOpenForm('+r.rowNumber+')">수정</button><button class="btn danger ops-small-btn" onclick="opsDeleteRecord('+r.rowNumber+')">삭제</button></td></tr>').join('');
+  content.innerHTML='<div class="org-page-head"><div><h3>지역선교부 임원</h3><p>지역대표 · 코디 · 부코디 · 위원</p></div><button class="btn light" onclick="opsRenderOrganization()">새로고침</button></div>'+
+   '<div class="org-leadership-grid">'+cards+'</div>'+
+   '<div class="org-page-head org-branch-head"><div><h3>지부 임원 리스트</h3><p>지부별 임원 현황</p></div><button class="btn" onclick="OPS_CURRENT_TAB=\'지부현황\';OPS_HEADERS='+JSON.stringify(bh).replace(/</g,'\\u003c')+';OPS_RECORDS='+JSON.stringify(br).replace(/</g,'\\u003c')+';opsOpenForm()">＋ 임원 추가</button></div>'+
+   (br.length?'<div class="ops-table-wrap"><table class="ops-table"><thead><tr>'+bh.map(x=>'<th>'+E(x)+'</th>').join('')+'<th>관리</th></tr></thead><tbody>'+branchRows+'</tbody></table></div>':'<div class="ops-empty-inline">등록된 지부 임원 정보가 없습니다.</div>')+
+   '<div class="org-data-actions"><button class="btn light" onclick="opsOpenTab(\'지역선교부 코디\')">지역선교부 임원 자료 관리</button><button class="btn light" onclick="opsOpenTab(\'지부현황\')">지부 자료 관리</button></div>';
+  OPS_HEADERS=bh;OPS_RECORDS=br;
+ }catch(e){content.innerHTML='<div class="notice error">조직 정보를 불러오지 못했습니다: '+E(e.message)+'</div><button class="btn light" onclick="opsRenderOrganization()">다시 시도</button>';}
+}
 async function opsOpenTab(name){
   if(!ME||ME.role!=='관리자')return;
   if(!OPS_TAB_NAMES.includes(name))return;
