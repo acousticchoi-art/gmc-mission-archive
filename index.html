@@ -1547,6 +1547,50 @@ html body #app>.container.ops-page{font-family:inherit;color:#263b4d}
  html body #app>.container.ops-page .ops-page-head h2{font-size:24px}
 }
 </style>
+<style id="gmc-member-mobile-refinement">
+/* Member management: clearer controls and readable profile cards on phones */
+@media(max-width:700px){
+ .hr-list-toolbar{display:flex;flex-direction:column;align-items:stretch;gap:11px;margin:12px 0}
+ .hr-mode-switch{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;gap:5px;overflow:visible!important}
+ .hr-mode-switch .hr-mode{min-width:0;min-height:42px;padding:8px 5px;font-size:13px;font-weight:700;white-space:nowrap;border-radius:8px}
+ .hr-filter-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%}
+ .hr-filter-row input{grid-column:1/-1!important;min-height:46px;height:46px!important;font-size:15px!important;padding:0 13px!important}
+ .hr-filter-row select{min-width:0;width:100%;height:44px!important;font-size:13px!important;padding:0 9px!important}
+ .hr-result-toolbar{display:flex;flex-direction:column;align-items:stretch;gap:9px;margin:12px 0}
+ .hr-result-toolbar .hr-list-count{font-size:15px}
+ .hr-result-toolbar .hr-list-count span{font-size:12px}
+ .hr-result-actions{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:7px;width:100%}
+ .hr-result-actions select{grid-column:1/-1;width:100%;height:44px!important;font-size:13px}
+ .hr-result-actions .btn{width:100%;height:44px!important;min-height:44px!important;padding:0 8px!important;font-size:13px!important;white-space:nowrap}
+ .hr-result-actions .btn.light{grid-column:auto!important}
+ .hr-table-wrap{overflow:visible!important;border:0!important;background:transparent!important}
+ .hr-member-table tbody{gap:10px!important}
+ .hr-member-table tbody tr{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px 12px!important;padding:14px!important;border:1px solid #dce5eb!important;border-radius:12px!important;box-shadow:0 2px 7px rgba(23,52,79,.045)!important}
+ .hr-member-table td{font-size:14px!important;line-height:1.45!important;gap:4px!important}
+ .hr-member-table td:before{font-size:11px!important;color:#718596!important}
+ .hr-member-table td:first-child{padding-bottom:10px!important}
+ .hr-member-table td:first-child strong{font-size:17px!important;line-height:1.35}
+ .hr-member-table td:nth-child(2),.hr-member-table td:nth-child(3),.hr-member-table td:nth-child(4){min-height:42px}
+ .hr-member-table td:nth-child(5){grid-column:1/-1!important;padding-top:2px}
+ .hr-member-table td:nth-child(6){grid-column:1/-1!important;min-height:38px;justify-content:center;align-items:center!important;padding-top:8px!important;font-size:13px!important}
+ .hr-role-pill{font-size:12px!important;padding:5px 9px!important}
+ .hr-branch-table-title{padding:10px 2px;font-size:15px}
+ .hr-branch-table-title span{font-size:12px}
+ .hr-family-row{min-height:64px;padding:13px!important}
+ .hr-family-row b{font-size:15px}
+ .hr-family-row small{font-size:12px}
+ .hr-member-detail-modal{max-height:calc(100dvh - 20px)!important;overflow-y:auto!important;overscroll-behavior:contain}
+ .hr-member-detail-modal .hr-detail-grid{max-height:none!important;overflow:visible!important}
+ .hr-member-detail-modal .hr-detail-field{min-width:0}
+}
+@media(max-width:380px){
+ .hr-mode-switch .hr-mode{font-size:12px;padding:7px 3px}
+ .hr-result-actions .btn{font-size:12px!important}
+ .hr-member-table tbody tr{padding:12px!important;gap:9px 10px!important}
+ .hr-member-table td{font-size:13px!important}
+ .hr-member-table td:first-child strong{font-size:16px!important}
+}
+</style>
 </head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav><button id="installAppBtn" class="install-cta" type="button" aria-label="GMC 아카이브를 바탕화면에 추가"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v5h14v-5"/></svg><span>바탕화면 추가</span></button></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><button id="backToTop" type="button" aria-label="페이지 맨 위로 이동" title="맨 위로" onclick="window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})">↑</button><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
