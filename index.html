@@ -1527,6 +1527,26 @@ html body #app>.container.ops-page{font-family:inherit;color:#263b4d}
  .ops-weekdays span{font-size:11px}
 }
 </style>
+<style id="gmc-mobile-header-refinement">
+@media(max-width:700px){
+ header{row-gap:7px;padding:10px 12px}
+ header .logo{font-size:14px;letter-spacing:.07em}
+ header .logo span{font-size:10px;letter-spacing:.04em}
+ header nav{gap:5px;padding:2px 0 5px;scrollbar-width:none;-ms-overflow-style:none}
+ header nav::-webkit-scrollbar{display:none}
+ header nav button{min-height:38px;padding:8px 10px;font-size:13px;white-space:nowrap}
+ header nav button.primary{background:#f0f4f7;color:#17344f;font-weight:800}
+ .install-cta{min-height:36px}
+ html body #app>.container.ops-page .ops-page-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:14px}
+ html body #app>.container.ops-page .ops-page-head>div:first-child{flex:1 1 100%;min-width:0}
+ html body #app>.container.ops-page .ops-page-head h2{font-size:27px;line-height:1.25;margin:0}
+ html body #app>.container.ops-page .ops-page-head>.btn{flex:0 0 auto;margin-left:auto;white-space:nowrap}
+}
+@media(max-width:380px){
+ header nav button{padding:7px 8px;font-size:12px}
+ html body #app>.container.ops-page .ops-page-head h2{font-size:24px}
+}
+</style>
 </head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav><button id="installAppBtn" class="install-cta" type="button" aria-label="GMC 아카이브를 바탕화면에 추가"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v5h14v-5"/></svg><span>바탕화면 추가</span></button></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><button id="backToTop" type="button" aria-label="페이지 맨 위로 이동" title="맨 위로" onclick="window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})">↑</button><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
