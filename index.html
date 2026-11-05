@@ -2207,6 +2207,13 @@ async function opsOpenTab(name){
     const r=await A('opsListRows',[T,name]);
     OPS_HEADERS=r.headers||[];
     OPS_RECORDS=r.records||[];
+    if(name==='업무관리'){
+      const dateIndex=OPS_HEADERS.findIndex(h=>/등록일|작성일|업무일|날짜|일자|시작일/i.test(String(h)));
+      if(dateIndex>=0)OPS_RECORDS.sort((a,b)=>{
+        const da=opsDateIso(a.values?.[dateIndex]),db=opsDateIso(b.values?.[dateIndex]);
+        return (db||'').localeCompare(da||'');
+      });
+    }
     OPS_READ_ONLY=!!r.readOnly;
     if(r.needsHeaders){
       content.innerHTML='<div class="panel ops-empty"><div class="ops-empty-mark">FIELD SETUP</div><h3>'+E(name)+' 항목 설정</h3><p>첫 행에 열 이름이 없습니다. 각 항목 이름을 한 줄에 하나씩 입력하면 입력·수정 화면이 자동으로 만들어집니다.</p>'+
