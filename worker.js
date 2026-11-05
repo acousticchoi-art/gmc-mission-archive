@@ -693,6 +693,56 @@ async function api(action,args,ctx=null){
       invalidateSheetReadCache();
       return {ok:true,families:groups.length,members:records.length,unassigned:people.filter(p=>!records.some(x=>x.name===p.name)).map(p=>p.name)};
     }
+    case 'hrRepairFamilyGroups':{
+      await requireRole(args[0],['관리자']);
+      const [familyRows,members,mks]=await Promise.all([
+        googleJson(opsUrl("'가족관리'!A:D")+'?valueRenderOption=FORMATTED_VALUE'),
+        opsGet('회원명단'),opsGet('MK 명단')
+      ]);
+      const values=familyRows.values||[];
+      const records=values.slice(1).filter(r=>r.some(v=>String(v||'').trim())).map(r=>({
+        familyId:String(r[0]||''),name:String(r[1]||'').trim(),relationship:String(r[2]||''),isHead:String(r[3]||'')==='TRUE'||String(r[3]||'')==='예'
+      })).filter(x=>x.familyId&&x.name);
+      if(!records.length)throw new Error('가족관리 데이터가 없습니다. 먼저 가족 자동 등록을 진행하세요.');
+      const mh=members[0]||[],kh=mks[0]||[];
+      const ix=(hs,re)=>hs.findIndex(h=>re.test(String(h||'')));
+      const ni=ix(mh,/성명|이름/),pi=ix(kh,/부모|선교사/);
+      if(ni<0||pi<0)throw new Error('회원명단 또는 MK 명단의 이름 열을 확인하지 못했습니다.');
+      const roster=new Set(members.slice(1).filter(opsHasValues).map(r=>String(r[ni]||'').trim()).filter(Boolean));
+      const splitParent=v=>String(v||'').split(/[·ㆍ,/、&＋+및]+/).map(x=>x.trim()).filter(Boolean);
+      const byName=new Map(records.map(x=>[x.name,x]));
+      const parentPairs=new Map();
+      mks.slice(1).filter(opsHasValues).forEach(r=>{
+        const pair=splitParent(r[pi]).filter(n=>roster.has(n));
+        if(pair.length===2)parentPairs.set(pair.slice().sort().join('||'),pair);
+      });
+      const parent=new Map(records.map(x=>[x.familyId,x.familyId]));
+      const find=x=>{let p=parent.get(x)||x;while(p!==parent.get(p))p=parent.get(p);let q=x;while(parent.has(q)&&parent.get(q)!==p){const n=parent.get(q);parent.set(q,p);q=n;}return p;};
+      let merged=0,added=0;
+      for(const pair of parentPairs.values()){
+        const a=byName.get(pair[0]),b=byName.get(pair[1]);
+        if(a&&b){
+          const fa=find(a.familyId),fb=find(b.familyId);
+          if(fa!==fb){parent.set(fb,fa);merged++;}
+        }else if(a&&!b){records.push({familyId:find(a.familyId),name:pair[1],relationship:'배우자',isHead:false});byName.set(pair[1],records[records.length-1]);added++;}
+        else if(b&&!a){records.push({familyId:find(b.familyId),name:pair[0],relationship:'배우자',isHead:false});byName.set(pair[0],records[records.length-1]);added++;}
+      }
+      const buckets=new Map();
+      records.forEach(x=>{const id=find(x.familyId);if(!buckets.has(id))buckets.set(id,[]);buckets.get(id).push(x);});
+      const output=[];
+      let n=0;
+      for(const group of buckets.values()){
+        const id=group[0].familyId||'F'+String(++n).padStart(3,'0');
+        let head=group.find(x=>x.isHead)||group.find(x=>x.relationship==='본인')||group[0];
+        group.forEach(x=>{x.familyId=id;x.isHead=x.name===head.name;x.relationship=x.name===head.name?'본인':(x.relationship==='자녀'?'자녀':'배우자');output.push(x);});
+      }
+      if(output.length>500)throw new Error('가족 구성원이 500명을 초과했습니다.');
+      const rows=[['가족ID','회원명','가족관계','대표자'],...output.map(x=>[x.familyId,x.name,x.relationship,x.isHead?'TRUE':'FALSE'])];
+      await googleJson(opsUrl("'가족관리'!A:D")+':clear',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({})});
+      await googleJson(opsUrl("'가족관리'!A:D")+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({majorDimension:'ROWS',values:rows})});
+      invalidateSheetReadCache();
+      return {ok:true,merged,added,families:buckets.size,members:output.length};
+    }
     case 'hrSaveFamilies':{
       await requireRole(args[0],['관리자']);
       const records=Array.isArray(args[1])?args[1]:[];
