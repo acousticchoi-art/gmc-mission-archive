@@ -2222,7 +2222,7 @@ async function opsRenderOrganization(){
   const leadersHtml=group('지역대표',leader?[{role:'지역대표',name:leader.name,work:leader.work}]:[],'등록된 지역대표가 없습니다.');
   const coordinatorHtml='<section class="org-chart-group org-coordinator-group"><h4>코디네이터</h4>'+(coordinators.length?'<div class="org-coordinator-list">'+coordinators.map(x=>'<article class="org-coordinator-card">'+line(x.role+' 코디네이터',x.name,x.work||'')+(x.members.length?'<div class="org-deputy-list">'+x.members.map(name=>line('부코디네이터',name)).join('')+'</div>':'')+'</article>').join('')+'</div>':'<div class="org-leader-empty">등록된 코디네이터가 없습니다.</div>')+'</section>';
   OPS_CURRENT_TAB='지부현황';OPS_HEADERS=bh;OPS_RECORDS=br;
-  const branchRows=br.map(r=>'<tr>'+bh.map((head,i)=>'<td data-label="'+E(head)+'">'+E(r.values[i]||'—')+'</td>').join('')+'<td data-label="관리" class="ops-actions-cell"><button class="btn light ops-small-btn" onclick="opsOpenForm('+r.rowNumber+')">수정</button><button class="btn danger ops-small-btn" onclick="opsDeleteRecord('+r.rowNumber+')">삭제</button></td></tr>').join('');
+  const branchRows=br.map(r=>'<tr>'+bh.map((head,i)=>'<td data-label="'+E(head)+'">'+E(r.values[i]||'—')+'</td>').join('')+'<td data-label="수정" class="ops-actions-cell"><button class="btn light ops-small-btn" onclick="opsOpenForm('+r.rowNumber+')">수정</button></td></tr>').join('');
   content.innerHTML='<div class="org-page-head"><h3>지역선교부 조직도</h3></div>'+
    '<div class="org-chart-root">'+leadersHtml+'</div>'+
    '<div class="org-chart-branches">'+coordinatorHtml+'</div>'+
