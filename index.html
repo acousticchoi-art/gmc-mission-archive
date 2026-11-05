@@ -1791,7 +1791,7 @@ function hrOpenPerson(name){
  const family=hrFamilyFor(name), adultNames=family?family.members.map(x=>x.name):[name];
  const familyAdults=adultNames.filter(n=>n!==name).map(n=>HR_STATE.people.find(x=>x.name===n)).filter(Boolean);
  const kids=HR_STATE.mk.filter(k=>adultNames.some(n=>hrNorm(k.parent).includes(hrNorm(n))||hrNorm(n).includes(hrNorm(k.parent))));
- const fields=p.headers.map((h,i)=>({h,v:p.v[i]})).filter(x=>String(x.v||'').trim()&&!/No\\.?|유닛/i.test(x.h));
+ const fields=p.headers.map((h,i)=>({h,v:(/직책/.test(String(h))&&!String(p.v[i]||'').trim()?'사원':p.v[i])})).filter(x=>String(x.v||'').trim()&&!/No\\.?|유닛/i.test(x.h));
  const fieldsHtml=fields.map(x=>'<div class="hr-detail-field"><small>'+E(x.h)+'</small><b>'+E(x.v)+'</b></div>').join('');
  const adultHtml=familyAdults.map(x=>{const rel=family.members.find(m=>m.name===x.name)?.relationship||'가족';return '<div class="hr-child"><b>'+E(x.name)+'</b><span>'+E(rel)+'</span><small>'+E(x.role||'')+'</small></div>';}).join('');
  const familyHtml=(adultHtml||'')+(kids.length?kids.map(k=>'<div class="hr-child"><b>'+E(k.name)+'</b><span>'+E(k.birth||'출생연도 미입력')+'</span><small>'+E(k.resident||'')+'</small></div>').join(''):'');
@@ -1857,7 +1857,7 @@ async function opsRenderHR(){
   const [r,f]=await Promise.all([A('opsDashboardData',[T]),A('hrGetFamilies',[T])]),ss=r.sections||[],get=n=>ss.find(x=>x.name===n)||{headers:[],records:[]};
   const m=get('회원명단'),mk=get('MK 명단'),ix=(hs,re)=>hs.findIndex(h=>re.test(String(h)));
   const ni=ix(m.headers,/성명|이름/),bi=ix(m.headers,/지부/),ui=ix(m.headers,/유닛/),ri=ix(m.headers,/GMC.*직책|직책/),li=ix(m.headers,/사역지역/);
-  HR_STATE.people=m.records.map(x=>({name:x.values[ni]||'',branch:x.values[bi]||'미분류',unit:x.values[ui]||'',role:x.values[ri]||'',place:x.values[li]||'',v:x.values,headers:m.headers})).filter(x=>x.name);
+  HR_STATE.people=m.records.map(x=>({name:x.values[ni]||'',branch:x.values[bi]||'미분류',unit:x.values[ui]||'',role:String(x.values[ri]||'').trim()||'사원',place:x.values[li]||'',v:x.values,headers:m.headers})).filter(x=>x.name);
   const pi=ix(mk.headers,/부모|선교사/),mi=ix(mk.headers,/MK 이름|이름/),yi=ix(mk.headers,/출생연도/),ri2=ix(mk.headers,/거주 여부|거주/);
   HR_STATE.mk=mk.records.map(x=>({parent:x.values[pi]||'',name:x.values[mi]||'',birth:x.values[yi]||'',resident:x.values[ri2]||''})).filter(x=>x.name);
   HR_STATE.families=f.records||[];
