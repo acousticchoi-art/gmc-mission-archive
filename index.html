@@ -1187,6 +1187,18 @@ html body #app > .container.ops-page .ops-table-wrap{
 .hr-edit-actions{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px;padding-top:10px}
 @media(max-width:600px){.hr-edit-grid{grid-template-columns:1fr}.hr-edit-actions{grid-column:1}}
 
+
+.ops-menu-toggle{display:flex;align-items:center;gap:10px;width:100%;margin:0 0 14px;padding:10px 2px;border:0;border-bottom:1px solid #d9e2e9;background:transparent;color:#29465e;text-align:left;cursor:pointer;font-size:13px;font-weight:800}
+.ops-menu-toggle-current{margin-left:auto;color:#718596;font-size:11px;font-weight:600}
+.ops-menu-toggle-arrow{font-size:17px;color:#718596;transition:transform .15s}
+.ops-menu-toggle.expanded .ops-menu-toggle-arrow{transform:rotate(180deg)}
+.ops-menu-groups[hidden]{display:none!important}
+.ops-menu-groups{margin-top:0}
+.hr-detail-field small{color:#526779;font-size:12px;font-weight:700;letter-spacing:-.01em}
+.hr-detail-field b{color:#1d354b;font-size:13px;font-weight:700}
+.hr-detail-field{background:#f3f6f8;border:1px solid #e8edf1}
+.hr-detail-head p{color:#526779}
+
 /* Member directory compact management layout */
 .hr-list-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:14px 0 12px}
 .hr-filter-row{display:grid;grid-template-columns:minmax(280px,1fr) 170px 170px;gap:8px;flex:1;max-width:900px}
@@ -1792,6 +1804,10 @@ function resetArchiveFilters(){
 const OPS_TAB_NAMES = ['회원명단','MK 명단','지부현황','지역선교부 코디','행사관리','사무실 예약','업무관리','운영위원회','사무실 비품대장'];
 let OPS_TAB_INFO=[],OPS_CURRENT_TAB='대시보드',OPS_HEADERS=[],OPS_RECORDS=[],OPS_EDIT_ROW=null,OPS_READ_ONLY=false;
 
+function opsToggleMenu(){
+ const menu=document.getElementById('opsTabs'),button=document.getElementById('opsMenuToggle'),label=document.getElementById('opsMenuCurrent');
+ if(!menu||!button)return;const expanded=menu.hidden;menu.hidden=!expanded;button.setAttribute('aria-expanded',String(expanded));button.classList.toggle('expanded',expanded);if(label)label.textContent=expanded?'메뉴 접기':'메뉴 펼치기';
+}
 async function opsDashboard(selected){
   if(!ME||ME.role!=='관리자')return;
   selected=selected||'운영현황';
@@ -1799,7 +1815,8 @@ async function opsDashboard(selected){
     '<div class="container admin-page ops-page">'+
       '<div class="admin-head ops-page-head"><div><h2>운영 대시보드</h2></div>'+
       '<button class="btn light" onclick="admin()">← 관리자</button></div>'+
-      '<div id="opsTabs" class="ops-menu-groups" role="tablist" aria-label="운영 대시보드 메뉴"></div>'+
+      '<button type="button" class="ops-menu-toggle" id="opsMenuToggle" aria-expanded="false" onclick="opsToggleMenu()"><span>운영 메뉴</span><span class="ops-menu-toggle-current" id="opsMenuCurrent">메뉴 펼치기</span><span class="ops-menu-toggle-arrow">⌄</span></button>'+
+      '<div id="opsTabs" class="ops-menu-groups" role="tablist" aria-label="운영 대시보드 메뉴" hidden></div>'+
       '<div id="opsContent" class="ops-content"><div class="notice">불러오는 중</div></div>'+
     '</div>';
   const content=document.getElementById('opsContent');
