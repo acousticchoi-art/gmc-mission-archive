@@ -1958,19 +1958,18 @@ async function opsRenderOrganization(){
   const coordinators=rows.filter(x=>x.name&&x!==leader&&!/지역연구소/.test(x.role));
   const research=rows.find(x=>/지역연구소/.test(x.role));
   const deputyItems=coordinators.flatMap(x=>x.members.map(name=>({role:x.role+' 부코디네이터',name})));
-  const committeeNames=[...new Set([...(research?.members||[]),...rows.filter(x=>/위원/.test(x.role)).flatMap(x=>x.members)])];
+  const researchMembers=[...new Set([...(research?.members||[]),'최재형'])];
   const line=(role,name,detail='')=>'<div class="org-chart-line"><span class="org-chart-role">'+E(role)+'</span><strong class="org-chart-name">'+E(name)+'</strong>'+(detail?'<small>'+E(detail)+'</small>':'')+'</div>';
   const group=(title,items,empty)=>'<section class="org-chart-group"><h4>'+title+'</h4>'+(items.length?'<div class="org-chart-items">'+items.map(x=>line(x.role,x.name,x.work||'')).join('')+'</div>':'<div class="org-leader-empty">'+empty+'</div>')+'</section>';
   const leadersHtml=group('지역대표',leader?[{role:'지역대표',name:leader.name,work:leader.work}]:[],'등록된 지역대표가 없습니다.');
   const coordinatorHtml=group('코디네이터',coordinators.map(x=>({role:x.role+' 코디네이터',name:x.name,work:x.work})),'등록된 코디네이터가 없습니다.');
   const deputyHtml=group('부코디네이터',deputyItems,'등록된 부코디네이터가 없습니다.');
-  const committeeHtml=group('위원',committeeNames.map(name=>({role:'위원',name})),'등록된 위원이 없습니다.');
   OPS_CURRENT_TAB='지부현황';OPS_HEADERS=bh;OPS_RECORDS=br;
   const branchRows=br.map(r=>'<tr>'+bh.map((head,i)=>'<td>'+E(r.values[i]||'')+'</td>').join('')+'<td><button class="btn light ops-small-btn" onclick="opsOpenForm('+r.rowNumber+')">수정</button><button class="btn danger ops-small-btn" onclick="opsDeleteRecord('+r.rowNumber+')">삭제</button></td></tr>').join('');
   content.innerHTML='<div class="org-page-head"><div><h3>지역선교부 조직도</h3><p>직책을 먼저 표시하고 담당자 이름을 직책별로 정리했습니다.</p></div><button class="btn light" onclick="opsRenderOrganization()">새로고침</button></div>'+
    '<div class="org-chart-root">'+leadersHtml+'</div>'+
-   '<div class="org-chart-branches">'+coordinatorHtml+deputyHtml+committeeHtml+'</div>'+
-   (research?'<section class="org-chart-group org-research-group"><h4>지역연구소</h4><div class="org-chart-items">'+line('지역연구소 소장',research.name||'')+(research.members.length?research.members.map(name=>line('위원',name)).join(''):'')+(research.work?'<p class="org-chart-work">'+E(research.work)+'</p>':'')+'</div></section>':'')+
+   '<div class="org-chart-branches">'+coordinatorHtml+deputyHtml+'</div>'+
+   (research?'<section class="org-chart-group org-research-group"><h4>지역연구소</h4><div class="org-chart-items">'+line('지역연구소 소장',research.name||'')+(researchMembers.length?researchMembers.map(name=>line('위원',name)).join(''):'')+(research.work?'<p class="org-chart-work">'+E(research.work)+'</p>':'')+'</div></section>':'')+
    '<div class="org-page-head org-branch-head"><div><h3>지부 임원 리스트</h3><p>지부별 임원 현황</p></div><button class="btn" onclick="OPS_CURRENT_TAB=\'지부현황\';OPS_HEADERS='+JSON.stringify(bh).replace(/</g,'\\u003c')+';OPS_RECORDS='+JSON.stringify(br).replace(/</g,'\\u003c')+';opsOpenForm()">＋ 임원 추가</button></div>'+
    (br.length?'<div class="ops-table-wrap"><table class="ops-table"><thead><tr>'+bh.map(x=>'<th>'+E(x)+'</th>').join('')+'<th>관리</th></tr></thead><tbody>'+branchRows+'</tbody></table></div>':'<div class="ops-empty-inline">등록된 지부 임원 정보가 없습니다.</div>')+
    '<div class="org-data-actions"><button class="btn light" onclick="opsOpenTab(\'운영위원회\')">운영위원회 자료 관리</button><button class="btn light" onclick="opsOpenTab(\'지부현황\')">지부 자료 관리</button></div>';
