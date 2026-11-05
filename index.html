@@ -1763,7 +1763,7 @@ async function opsDashboard(selected){
     const r=await A('opsListTabs',[T]);
     OPS_TAB_INFO=Array.isArray(r.tabs)?r.tabs:[];
     const menuGroups=[
-      {title:'조직 · 인사',items:['인사관리','MK 명단','조직관리']},
+      {title:'조직 · 인사',items:['인사관리','조직관리','MK 명단']},
       {title:'사역 · 행정',items:['행사관리','업무관리']},
       {title:'시설 · 자산',items:['사무실 예약','사무실 비품대장']}
     ];
