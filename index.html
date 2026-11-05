@@ -1418,16 +1418,16 @@ html body #app > .container.ops-page .ops-table-wrap{
 .org-branch-card-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .org-branch-card{min-width:0;border:1px solid #dfe7ed;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 2px 7px rgba(20,45,65,.04)}
 .org-branch-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:13px 15px;background:#f3f6f8;border-bottom:1px solid #e5ebef}
-.org-branch-card-head h4{margin:0;color:#1d3d55;font-size:15px;font-weight:800}
-.org-branch-card-head span{flex:none;padding:3px 8px;border-radius:20px;background:#e5edf2;color:#536d80;font-size:11px;font-weight:700}
+.org-branch-card-head h4{margin:0;color:#1d3d55;font-size:17px;font-weight:800}
+.org-branch-card-head span{flex:none;padding:4px 9px;border-radius:20px;background:#e5edf2;color:#536d80;font-size:12px;font-weight:700}
 .org-branch-officers{padding:8px 13px}
 .org-branch-officer{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 12px;padding:10px 2px;border-bottom:1px solid #edf1f4}
 .org-branch-officer:last-child{border-bottom:0}
 .org-branch-officer-field{min-width:0}
-.org-branch-officer-field small{display:block;margin-bottom:3px;color:#82919d;font-size:10px;font-weight:700}
-.org-branch-officer-field b{display:block;color:#304b60;font-size:12px;line-height:1.45;overflow-wrap:anywhere}
+.org-branch-officer-field small{display:block;margin-bottom:4px;color:#718596;font-size:12px;font-weight:700}
+.org-branch-officer-field b{display:block;color:#304b60;font-size:14px;line-height:1.5;overflow-wrap:anywhere}
 .org-branch-officer-actions{grid-column:1/-1;display:flex;justify-content:flex-end}
-@media(max-width:700px){.org-branch-card-list{grid-template-columns:1fr;gap:10px}.org-branch-card-head{padding:12px 14px}.org-branch-officers{padding:6px 12px}.org-branch-officer{gap:7px 10px;padding:9px 1px}.org-branch-officer-field b{font-size:12px}}
+@media(max-width:700px){.org-branch-card-list{grid-template-columns:1fr;gap:10px}.org-branch-card-head{padding:12px 14px}.org-branch-officers{padding:6px 12px}.org-branch-officer{gap:7px 10px;padding:9px 1px}.org-branch-officer-field b{font-size:14px}}
 /* Branch officer list: compact, readable mobile table */
 @media(max-width:700px){
  .org-branch-table-wrap{overflow-x:auto!important;overflow-y:visible!important;border:1px solid #e1e7ec!important;border-radius:10px!important;background:#fff!important;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
@@ -2313,8 +2313,8 @@ function opsRenderEventCalendar(){
  if(OPS_EVENT_VIEW==='year'){
   body='<div class="ops-year-grid">'+months.map((m,mi)=>{const monthEvents=filtered.filter(e=>e.range.start.getFullYear()===OPS_EVENT_YEAR&&e.range.start.getMonth()===mi);return '<button class="ops-year-month" onclick="OPS_EVENT_MONTH='+mi+';opsEventSetView(\'month\')"><strong>'+m+'</strong><span>'+monthEvents.length+'개 행사</span><div>'+monthEvents.slice(0,3).map(e=>'<small>'+E(e.range.start.getDate())+'일 · '+E(e.name)+'</small>').join('')+(monthEvents.length>3?'<small>외 '+(monthEvents.length-3)+'건</small>':'')+'</div></button>';}).join('')+'</div>';
  }else{
-  const first=new Date(OPS_EVENT_YEAR,OPS_EVENT_MONTH,1),offset=(first.getDay()+6)%7,start=new Date(OPS_EVENT_YEAR,OPS_EVENT_MONTH,1-offset),days= new Date(OPS_EVENT_YEAR,OPS_EVENT_MONTH+1,0).getDate(),total=Math.ceil((offset+days)/7)*7;
-  const weekday=['월','화','수','목','금','토','일'];
+  const first=new Date(OPS_EVENT_YEAR,OPS_EVENT_MONTH,1),offset=first.getDay(),start=new Date(OPS_EVENT_YEAR,OPS_EVENT_MONTH,1-offset),days= new Date(OPS_EVENT_YEAR,OPS_EVENT_MONTH+1,0).getDate(),total=Math.ceil((offset+days)/7)*7;
+  const weekday=['일','월','화','수','목','금','토'];
   body='<div class="ops-month-calendar"><div class="ops-weekdays">'+weekday.map(x=>'<span>'+x+'</span>').join('')+'</div><div class="ops-calendar-days">'+Array.from({length:total},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);const key=d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(),dayEvents=filtered.filter(e=>{const a=new Date(e.range.start.getFullYear(),e.range.start.getMonth(),e.range.start.getDate()),b=new Date(e.range.end.getFullYear(),e.range.end.getMonth(),e.range.end.getDate());return d>=a&&d<=b;});return '<div class="ops-calendar-day '+(d.getMonth()!==OPS_EVENT_MONTH?'outside':'')+(d.toDateString()===new Date().toDateString()?' today':'')+'"><span class="ops-day-number">'+d.getDate()+'</span><div class="ops-day-events">'+dayEvents.map(eventChip).join('')+'</div></div>';}).join('')+'</div></div>';
  }
  content.innerHTML='<div class="ops-section-head"><div><h3>행사관리</h3><p>연도와 월별 일정을 캘린더로 확인하고 관리합니다.</p></div><div class="ops-head-actions"></div></div>'+nav+search+body+'<div class="ops-event-legend"><span class="planned">예정</span><span class="progress">진행</span><span class="done">완료</span><span class="cancel">취소</span><small>일정을 선택하면 상세 내용을 수정할 수 있습니다.</small></div>';
@@ -2355,7 +2355,7 @@ function opsRenderReservationCalendar(){
  if(OPS_RES_VIEW==='year'){
   body='<div class="ops-year-grid">'+months.map((m,mi)=>{const monthStart=new Date(OPS_RES_YEAR,mi,1),monthEnd=new Date(OPS_RES_YEAR,mi+1,0,23,59,59);const list=filtered.filter(x=>x.date<=monthEnd&&x.endDate>=monthStart);return '<button class="ops-year-month" onclick="OPS_RES_MONTH='+mi+';opsReservationSetView(\'month\')"><strong>'+m+'</strong><span>'+list.length+'건 예약</span><div>'+list.slice(0,3).map(x=>'<small>'+x.date.getDate()+'일 · '+E(x.name||x.room||x.purpose||'예약')+'</small>').join('')+(list.length>3?'<small>외 '+(list.length-3)+'건</small>':'')+'</div></button>';}).join('')+'</div>';
  }else{
-  const first=new Date(OPS_RES_YEAR,OPS_RES_MONTH,1),offset=(first.getDay()+6)%7,start=new Date(OPS_RES_YEAR,OPS_RES_MONTH,1-offset),total=Math.ceil((offset+new Date(OPS_RES_YEAR,OPS_RES_MONTH+1,0).getDate())/7)*7,week=['월','화','수','목','금','토','일'];
+  const first=new Date(OPS_RES_YEAR,OPS_RES_MONTH,1),offset=first.getDay(),start=new Date(OPS_RES_YEAR,OPS_RES_MONTH,1-offset),total=Math.ceil((offset+new Date(OPS_RES_YEAR,OPS_RES_MONTH+1,0).getDate())/7)*7,week=['일','월','화','수','목','금','토'];
   body='<div class="ops-month-calendar"><div class="ops-weekdays">'+week.map(x=>'<span>'+x+'</span>').join('')+'</div><div class="ops-calendar-days">'+Array.from({length:total},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);const list=filtered.filter(x=>x.date<=d&&x.endDate>=d);return '<div class="ops-calendar-day '+(d.getMonth()!==OPS_RES_MONTH?'outside':'')+(d.toDateString()===new Date().toDateString()?' today':'')+'"><span class="ops-day-number">'+d.getDate()+'</span><div class="ops-day-events">'+list.map(chip).join('')+'</div></div>';}).join('')+'</div></div>';
  }
  content.innerHTML='<div class="ops-section-head"><div><h3>사무실 예약</h3><p>연간·월간 예약 일정을 확인하고 관리합니다.</p></div><div class="ops-head-actions"></div></div>'+nav+search+body+'<div class="ops-event-legend"><span class="planned">예약 일정</span><small>예약을 선택하면 상세 내용을 수정할 수 있습니다.</small></div>';
