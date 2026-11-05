@@ -639,6 +639,13 @@ async function api(action,args,ctx=null){
         await googleJson(opsUrl("'지역선교부 코디'!A1:F1")+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({values:[['지역선교부','코디 이름','소속 지부','연락처','이메일','비고']]})});
         byName.set('지역선교부 코디',{title:'지역선교부 코디',hidden:false});
       }
+      // Add a position field without changing or shifting any existing coordinator data.
+      const coordinatorRows=await opsGet('지역선교부 코디');
+      const coordinatorHeaders=coordinatorRows[0]||[];
+      if(!coordinatorHeaders.some(h=>/직책|구분|역할|직위/.test(String(h||'')))){
+        const nextCol=opsLastColumn(coordinatorHeaders.length+1);
+        await sheetUpdate(opsQuoteSheet('지역선교부 코디')+'!'+nextCol+'1', [['직책']]);
+      }
       const tabs=OPS_TAB_NAMES.map(name=>{
         const properties=byName.get(name);
         return {name,exists:!!properties,hidden:!!properties?.hidden};
