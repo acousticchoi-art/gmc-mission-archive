@@ -2292,8 +2292,8 @@ function opsEventDateRange(value){
 }
 function opsEventData(){
  const ix=re=>OPS_HEADERS.findIndex(h=>re.test(String(h)));
- const di=ix(/날짜|일정일/),ni=ix(/행사명|행사|일정명/),li=ix(/장소/),oi=ix(/담당|주관/),si=ix(/상태/);
- return OPS_RECORDS.map(row=>{const range=opsEventDateRange(row.values[di]);return range?{row,range,name:String(row.values[ni]||'행사'),place:String(row.values[li]||''),owner:String(row.values[oi]||''),status:String(row.values[si]||'')}:null;}).filter(Boolean);
+ const di=ix(/날짜|일정일/),ni=ix(/모임\\s*제목|모임명|행사명|행사|일정명|제목/),ti=ix(/시간|시각/),li=ix(/장소/),oi=ix(/담당|주관/),si=ix(/상태/);
+ return OPS_RECORDS.map(row=>{const range=opsEventDateRange(row.values[di]);return range?{row,range,name:String(row.values[ni]||''),time:String(row.values[ti]||''),place:String(row.values[li]||''),owner:String(row.values[oi]||''),status:String(row.values[si]||'')}:null;}).filter(Boolean);
 }
 function opsEventSetView(v){OPS_EVENT_VIEW=v;opsRenderEventCalendar();}
 function opsEventShift(n){if(OPS_EVENT_VIEW==='month'){const d=new Date(OPS_EVENT_YEAR,OPS_EVENT_MONTH+n,1);OPS_EVENT_YEAR=d.getFullYear();OPS_EVENT_MONTH=d.getMonth();}else OPS_EVENT_YEAR+=n;opsRenderEventCalendar();}
@@ -2307,8 +2307,8 @@ function opsRenderEventCalendar(){
  const title=OPS_EVENT_VIEW==='year'?OPS_EVENT_YEAR+'년':OPS_EVENT_YEAR+'년 '+(OPS_EVENT_MONTH+1)+'월';
  const nav='<div class="ops-event-toolbar"><div class="ops-event-nav"><button class="btn light" onclick="opsEventShift(-1)">‹</button><strong>'+title+'</strong><button class="btn light" onclick="opsEventShift(1)">›</button><button class="btn light" onclick="opsEventGoToday()">오늘</button></div><div class="ops-event-actions"><div class="ops-event-views"><button class="btn '+(OPS_EVENT_VIEW==='year'?'':'light')+'" onclick="opsEventSetView(\'year\')">연간</button><button class="btn '+(OPS_EVENT_VIEW==='month'?'':'light')+'" onclick="opsEventSetView(\'month\')">월간</button></div><button class="btn" onclick="opsOpenForm()">＋ 행사 등록</button></div></div>';
  const search='<div class="ops-table-tools"><input id="opsEventSearch" type="search" value="'+E(currentSearch)+'" placeholder="행사명·장소·담당 검색" oninput="opsRenderEventCalendar()"><span>'+events.length+'개 일정</span></div>';
- const filtered=events.filter(e=>{const q=(document.getElementById('opsEventSearch')?.value||'').trim().toLowerCase();return !q||[e.name,e.place,e.owner,e.status].join(' ').toLowerCase().includes(q);});
- const eventChip=e=>'<button class="ops-event-chip '+opsEventStatusClass(e.status)+'" onclick="opsEventOpen('+e.row.rowNumber+')" title="'+E([e.name,e.place,e.owner,e.status].filter(Boolean).join(' · '))+'"><span>'+E(e.name)+'</span></button>';
+ const filtered=events.filter(e=>{const q=(document.getElementById('opsEventSearch')?.value||'').trim().toLowerCase();return !q||[e.time,e.name,e.place,e.owner,e.status].join(' ').toLowerCase().includes(q);});
+ const eventChip=e=>{const label=[e.time,e.name].filter(Boolean).join(' · ')||e.place||'행사';return '<button class="ops-event-chip '+opsEventStatusClass(e.status)+'" onclick="opsEventOpen('+e.row.rowNumber+')" title="'+E([e.time,e.name,e.place,e.owner,e.status].filter(Boolean).join(' · '))+'"><span>'+E(label)+'</span></button>';};
  let body='';
  if(OPS_EVENT_VIEW==='year'){
   body='<div class="ops-year-grid">'+months.map((m,mi)=>{const monthEvents=filtered.filter(e=>e.range.start.getFullYear()===OPS_EVENT_YEAR&&e.range.start.getMonth()===mi);return '<button class="ops-year-month" onclick="OPS_EVENT_MONTH='+mi+';opsEventSetView(\'month\')"><strong>'+m+'</strong><span>'+monthEvents.length+'개 행사</span><div>'+monthEvents.slice(0,3).map(e=>'<small>'+E(e.range.start.getDate())+'일 · '+E(e.name)+'</small>').join('')+(monthEvents.length>3?'<small>외 '+(monthEvents.length-3)+'건</small>':'')+'</div></button>';}).join('')+'</div>';
