@@ -1237,6 +1237,37 @@ html body #app > .container.ops-page .ops-table-wrap{
 @media(max-width:850px){.hr-list-toolbar{align-items:stretch;flex-direction:column}.hr-filter-row{max-width:none;grid-template-columns:minmax(160px,1fr) 150px 150px}}
 @media(max-width:600px){.hr-filter-row{grid-template-columns:1fr 1fr}.hr-filter-row input{grid-column:1/-1}.hr-member-table th,.hr-member-table td{padding:10px 11px}.hr-member-table th:nth-child(4),.hr-member-table td:nth-child(4){display:none}.hr-member-table th:nth-child(5),.hr-member-table td:nth-child(5){display:table-cell}.hr-result-toolbar{margin-top:8px}}
 
+
+@media(max-width:600px){
+ .hr-list-toolbar{gap:10px;margin:10px 0}
+ .hr-mode-switch{align-self:flex-start;max-width:100%;overflow-x:auto}
+ .hr-filter-row{grid-template-columns:1fr 1fr;gap:7px}
+ .hr-filter-row input{grid-column:1/-1}
+ .hr-filter-row input,.hr-filter-row select{height:40px;font-size:12px;padding:0 10px}
+ .hr-result-toolbar{align-items:center;flex-wrap:wrap;gap:8px;margin:10px 0}
+ .hr-result-actions{width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px}
+ .hr-result-actions select{width:100%;min-width:0;height:40px}
+ .hr-result-actions .btn{height:40px;padding:0 12px;font-size:12px}
+ .hr-result-actions .btn.light{grid-column:1/-1}
+ .hr-table-wrap{overflow:visible;border:0;background:transparent}
+ .hr-member-table,.hr-member-table tbody{display:block;width:100%}
+ .hr-member-table thead{display:none}
+ .hr-member-table tbody{display:grid;gap:9px}
+ .hr-member-table tbody tr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:9px 12px;padding:13px 14px;border:1px solid #dfe7ed;border-radius:10px;background:#fff;box-shadow:0 1px 2px rgba(20,45,65,.04)}
+ .hr-member-table tbody tr:hover{background:#fff}
+ .hr-member-table td{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0;padding:0;border:0;white-space:normal;text-align:left!important;font-size:12px;overflow-wrap:anywhere}
+ .hr-member-table td:before{content:attr(data-label);display:block;color:#687d8e;font-size:10px;font-weight:700;letter-spacing:.01em}
+ .hr-member-table td:first-child{grid-column:1/-1;padding-bottom:8px;border-bottom:1px solid #edf1f4}
+ .hr-member-table td:first-child strong{font-size:15px}
+ .hr-member-table td:nth-child(4),.hr-member-table td:nth-child(5){display:flex}
+ .hr-member-table td:nth-child(5){grid-column:1/-1}
+ .hr-member-table td:nth-child(6){grid-column:1/-1;align-items:flex-end;padding-top:7px;border-top:1px solid #edf1f4;color:#244c6a;font-size:12px}
+ .hr-member-table td:nth-child(6):before{display:none}
+ .hr-member-table .hr-major-cell{max-width:none}
+ .hr-role-pill{font-size:11px}
+ .hr-branch-table-group{margin-bottom:14px}
+}
+
 /* Operations overview dashboard */
 .ops-overview-head{display:flex;justify-content:space-between;align-items:center;margin:8px 0 18px}
 .ops-overview-eyebrow{font-size:10px;letter-spacing:.16em;font-weight:800;color:#a78352;margin-bottom:5px}
@@ -1976,7 +2007,7 @@ function hrRenderList(){
  people.sort(sorters[HR_STATE.sort]||sorters['name-asc']);
  const modes=['전체','지부별','가정별'],modeBtns=modes.map(x=>'<button class="hr-mode '+(HR_STATE.mode===x?'active':'')+'" onclick="hrSetMode(\''+x+'\')">'+x+'</button>').join('');
  const open=p=>'hrOpenPerson(\''+E(p.name).replace(/\\'/g,'&#039;')+'\')';
- const table=rows=>'<div class="hr-table-wrap"><table class="hr-member-table"><thead><tr><th>회원 이름</th><th>소속 지부</th><th>직책</th><th>사역시작일</th><th>주요사역</th><th></th></tr></thead><tbody>'+rows.map(p=>'<tr onclick="'+open(p)+'"><td><strong>'+E(p.name)+'</strong></td><td>'+E(p.branch)+'</td><td><span class="hr-role-pill">'+E(p.role||'직책 미입력')+'</span></td><td class="hr-muted">'+E(p.start||'—')+'</td><td class="hr-muted hr-major-cell">'+E(p.major||'—')+'</td><td class="hr-detail-link">상세 보기　›</td></tr>').join('')+'</tbody></table></div>';
+ const table=rows=>'<div class="hr-table-wrap"><table class="hr-member-table"><thead><tr><th>회원 이름</th><th>소속 지부</th><th>직책</th><th>사역시작일</th><th>주요사역</th><th></th></tr></thead><tbody>'+rows.map(p=>'<tr onclick="'+open(p)+'"><td data-label="회원 이름"><strong>'+E(p.name)+'</strong></td><td data-label="소속 지부">'+E(p.branch)+'</td><td data-label="직책"><span class="hr-role-pill">'+E(p.role||'직책 미입력')+'</span></td><td data-label="사역시작일" class="hr-muted">'+E(p.start||'—')+'</td><td data-label="주요사역" class="hr-muted hr-major-cell">'+E(p.major||'—')+'</td><td class="hr-detail-link">상세 정보 보기　›</td></tr>').join('')+'</tbody></table></div>';
  let html='';
  if(HR_STATE.mode==='가정별'){
   const groups=hrFamilyGroups().filter(g=>g.members.some(m=>people.some(p=>p.name===m.name)));
