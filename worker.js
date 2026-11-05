@@ -733,8 +733,26 @@ async function api(action,args,ctx=null){
       let n=0;
       for(const group of buckets.values()){
         const id=group[0].familyId||'F'+String(++n).padStart(3,'0');
-        let head=group.find(x=>x.isHead)||group.find(x=>x.relationship==='본인')||group[0];
-        group.forEach(x=>{x.familyId=id;x.isHead=x.name===head.name;x.relationship=x.name===head.name?'본인':(x.relationship==='자녀'?'자녀':'배우자');output.push(x);});
+        // A member may have appeared in more than one former family group.
+        // Collapse duplicate names after merging, preferring the representative
+        // record and preserving child status when any duplicate marks the member as a child.
+        const unique=new Map();
+        group.forEach(x=>{
+          const prev=unique.get(x.name);
+          if(!prev)unique.set(x.name,{...x});
+          else{
+            prev.isHead=prev.isHead||x.isHead;
+            if(x.relationship==='자녀')prev.relationship='자녀';
+          }
+        });
+        const members=[...unique.values()];
+        let head=members.find(x=>x.isHead)||members.find(x=>x.relationship==='본인')||members[0];
+        members.forEach(x=>{
+          x.familyId=id;
+          x.isHead=x.name===head.name;
+          x.relationship=x.name===head.name?'본인':(x.relationship==='자녀'?'자녀':'배우자');
+          output.push(x);
+        });
       }
       if(output.length>500)throw new Error('가족 구성원이 500명을 초과했습니다.');
       const rows=[['가족ID','회원명','가족관계','대표자'],...output.map(x=>[x.familyId,x.name,x.relationship,x.isHead?'TRUE':'FALSE'])];
