@@ -1172,7 +1172,11 @@ html body #app > .container.ops-page .ops-table-wrap{
 
 
 
-.hr-detail-actions{display:flex;justify-content:flex-end;margin:0 0 14px}
+.hr-detail-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 14px}
+.hr-detail-section-head h4{margin:0}
+.hr-edit-link{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid #d8e2e9;border-radius:7px;background:#fff;color:#294b66;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s}
+.hr-edit-link:hover{background:#f3f7fa;border-color:#b9cbd8}
+.hr-edit-link span{font-size:15px;line-height:1}
 .hr-member-detail-modal{max-width:860px;max-height:90vh;overflow:auto}
 .hr-member-detail-modal [hidden]{display:none!important}
 .hr-member-detail-modal h4{margin:14px 0 10px;color:#203e57;font-size:14px}
@@ -1888,14 +1892,14 @@ function hrOpenPerson(name){
  const family=hrFamilyFor(name),adultNames=family?family.members.map(x=>x.name):[name];
  const familyAdults=adultNames.map(n=>HR_STATE.people.find(x=>x.name===n)).filter(Boolean);
  const kids=HR_STATE.mk.filter(k=>adultNames.some(n=>hrNorm(k.parent).includes(hrNorm(n))||hrNorm(n).includes(hrNorm(k.parent))));
- const fields=p.headers.map((h,i)=>({h,v:p.v[i]||'',i})).filter(x=>String(x.v||'').trim()&&!/No\.?|유닛/i.test(x.h));
+ const fields=p.headers.map((h,i)=>({h,v:(/직책/.test(String(h))&&!String(p.v[i]||'').trim()?p.role:(p.v[i]||'')),i})).filter(x=>!/No\.?|유닛/i.test(x.h));
  const fieldsHtml=fields.map(x=>'<div class="hr-detail-field"><small>'+E(x.h)+'</small><b>'+E(x.v)+'</b></div>').join('');
  const adultHtml=familyAdults.map(x=>{const rel=x.name===p.name?'본인':(x.name===family?.head?.name?'배우자 · 가정 대표':(family.members.find(m=>m.name===x.name)?.relationship||'가족'));return '<div class="hr-child"><b>'+E(x.name)+'</b><span>'+E(rel)+'</span><small>'+E(x.role||'')+'</small></div>';}).join('');
  const familyHtml=(adultHtml||'')+(kids.length?kids.map(k=>'<div class="hr-child"><b>'+E(k.name)+'</b><span>'+E(k.birth||'출생연도 미입력')+'</span><small>'+E((String(k.resident||'').trim().toUpperCase()==='O'?'미얀마 거주':String(k.resident||'').trim().toUpperCase()==='X'?'해외 거주':k.resident||''))+'</small></div>').join(''):'');
  let modal=document.getElementById('hrPersonModal');
  if(!modal){modal=document.createElement('div');modal.id='hrPersonModal';modal.className='hr-modal';modal.onclick=e=>{if(e.target===modal)hrClosePerson();};document.body.appendChild(modal);}
  const editFields=p.headers.map((h,i)=>{if(/No\.?|유닛/i.test(h))return '';const value=E(p.v[i]||''),multi=/내용|비고|메모|설명|주소|업무|사역/i.test(h);return '<label class="hr-edit-field"><span>'+E(h)+'</span>'+(multi?'<textarea id="hrEditField'+i+'" rows="2">'+value+'</textarea>':'<input id="hrEditField'+i+'" type="text" value="'+value+'">')+'</label>';}).join('');
- modal.innerHTML='<div class="hr-modal-card hr-member-detail-modal" role="dialog" aria-modal="true" aria-label="회원 상세 정보"><div class="hr-detail-head"><div><small>MEMBER PROFILE</small><h3>'+E(p.name)+'</h3><p>'+E(p.branch)+'</p></div><button class="btn light ops-small-btn" onclick="hrClosePerson()">닫기 ✕</button></div><div class="hr-detail-actions"><button class="btn" id="hrEditToggle" onclick="hrToggleEdit()">정보 수정</button></div><section id="hrReadPanel"><h4>회원 정보</h4><div class="hr-detail-grid">'+fieldsHtml+'</div><div class="hr-family"><h4>가족 구성원</h4>'+(familyHtml||'<p class="hr-empty">등록된 가족 구성원 정보가 없습니다.</p>')+'</div></section><section id="hrEditPanel" hidden><h4>회원 정보 수정</h4><form class="hr-edit-grid" onsubmit="event.preventDefault();hrSavePerson('+p.rowNumber+')">'+editFields+'<div class="hr-edit-actions"><button type="button" class="btn light" onclick="hrToggleEdit(false)">취소</button><button type="submit" class="btn">변경사항 저장</button></div></form></section></div>';
+ modal.innerHTML='<div class="hr-modal-card hr-member-detail-modal" role="dialog" aria-modal="true" aria-label="회원 상세 정보"><div class="hr-detail-head"><div><small>MEMBER PROFILE</small><h3>'+E(p.name)+'</h3><p>'+E(p.branch)+'</p></div><button class="btn light ops-small-btn" onclick="hrClosePerson()">닫기 ✕</button></div><section id="hrReadPanel"><div class="hr-detail-section-head"><h4>회원 정보</h4><button class="hr-edit-link" id="hrEditToggle" onclick="hrToggleEdit()"><span>✎</span> 정보 수정</button></div><div class="hr-detail-grid">'+fieldsHtml+'</div><div class="hr-family"><h4>가족 구성원</h4>'+(familyHtml||'<p class="hr-empty">등록된 가족 구성원 정보가 없습니다.</p>')+'</div></section><section id="hrEditPanel" hidden><h4>회원 정보 수정</h4><form class="hr-edit-grid" onsubmit="event.preventDefault();hrSavePerson('+p.rowNumber+')">'+editFields+'<div class="hr-edit-actions"><button type="button" class="btn light" onclick="hrToggleEdit(false)">취소</button><button type="submit" class="btn">변경사항 저장</button></div></form></section></div>';
  modal.classList.add('show');document.body.style.overflow='hidden';
 }
 function hrToggleEdit(show){
