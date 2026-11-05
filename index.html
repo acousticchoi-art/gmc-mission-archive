@@ -1925,7 +1925,7 @@ function hrRenderList(){
  const modeBtns=modes.map(x=>'<button class="hr-mode '+(HR_STATE.mode===x?'active':'')+'" onclick="hrSetMode(\''+x+'\')">'+x+'</button>').join('');
  const kidsFor=p=>{const f=hrFamilyFor(p.name),names=f?f.members.map(m=>m.name):[p.name];return HR_STATE.mk.filter(k=>names.some(n=>hrNorm(k.parent).includes(hrNorm(n))||hrNorm(n).includes(hrNorm(k.parent))));};
  const open=p=>'hrOpenPerson(\''+E(p.name).replace(/\\'/g,'&#039;')+'\')';
- const table=rows=>'<div class="hr-table-wrap"><table class="hr-member-table"><thead><tr><th>회원 이름</th><th>소속 지부</th><th>직책</th><th>유닛 · 사역지역</th><th>MK</th><th></th></tr></thead><tbody>'+rows.map(p=>'<tr onclick="'+open(p)+'"><td><strong>'+E(p.name)+'</strong></td><td>'+E(p.branch)+'</td><td><span class="hr-role-pill">'+E(p.role||'직책 미입력')+'</span></td><td class="hr-muted">'+E([p.place].filter(Boolean).join(' · ')||'—')+'</td><td class="hr-mk-count">'+kidsFor(p).length+'명</td><td class="hr-detail-link">상세 보기　›</td></tr>').join('')+'</tbody></table></div>';
+ const table=rows=>'<div class="hr-table-wrap"><table class="hr-member-table"><thead><tr><th>회원 이름</th><th>소속 지부</th><th>직책</th><th>사역지역</th><th>MK</th><th></th></tr></thead><tbody>'+rows.map(p=>'<tr onclick="'+open(p)+'"><td><strong>'+E(p.name)+'</strong></td><td>'+E(p.branch)+'</td><td><span class="hr-role-pill">'+E(p.role||'직책 미입력')+'</span></td><td class="hr-muted">'+E([p.place].filter(Boolean).join(' · ')||'—')+'</td><td class="hr-mk-count">'+kidsFor(p).length+'명</td><td class="hr-detail-link">상세 보기　›</td></tr>').join('')+'</tbody></table></div>';
  let html='';
  if(HR_STATE.mode==='가정별'){
   const groups=hrFamilyGroups().filter(g=>g.members.some(m=>people.some(p=>p.name===m.name)));
