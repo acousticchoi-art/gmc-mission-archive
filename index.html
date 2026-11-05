@@ -1649,6 +1649,44 @@ html body #app>.container.ops-page{font-family:inherit;color:#263b4d}
  #opsContent .org-branch-officer{grid-template-columns:1fr;gap:8px}
 }
 </style>
+<style id="gmc-calendar-mobile-refinement">
+/* Calendar controls and month cells optimized for mobile */
+@media(max-width:700px){
+ #opsContent .ops-event-toolbar{display:flex;flex-direction:column;align-items:stretch;gap:10px;margin:12px 0}
+ #opsContent .ops-event-nav{display:grid;grid-template-columns:42px minmax(0,1fr) 42px 58px;gap:6px;width:100%}
+ #opsContent .ops-event-nav .btn{min-width:0;width:100%;min-height:42px!important;padding:7px 4px!important}
+ #opsContent .ops-event-nav strong{min-width:0;font-size:17px;text-align:center}
+ #opsContent .ops-event-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;width:100%}
+ #opsContent .ops-event-views{display:grid;grid-template-columns:1fr 1fr;gap:3px;min-width:0}
+ #opsContent .ops-event-views .btn{min-width:0;min-height:42px!important;padding:7px 5px!important}
+ #opsContent .ops-event-actions>.btn{min-height:42px!important;padding:8px 7px!important;font-size:13px!important;white-space:nowrap}
+ #opsContent .ops-table-tools{display:flex;flex-direction:column;align-items:stretch;gap:7px;margin:10px 0}
+ #opsContent .ops-table-tools input{width:100%;min-height:44px;font-size:16px}
+ #opsContent .ops-table-tools span{align-self:flex-end;font-size:12px}
+ #opsContent .ops-month-calendar{border-radius:9px}
+ #opsContent .ops-weekdays span{padding:10px 0;font-size:12px}
+ #opsContent .ops-calendar-days{grid-auto-rows:minmax(92px,auto)}
+ #opsContent .ops-calendar-day{min-height:92px;padding:5px 3px}
+ #opsContent .ops-day-number{font-size:12px;text-align:center;margin-bottom:5px}
+ #opsContent .ops-day-events{gap:3px}
+ #opsContent .ops-event-chip{min-height:0;padding:4px 3px;font-size:10px;line-height:1.3;border-radius:4px;text-align:left}
+ #opsContent .ops-event-chip span{display:-webkit-box!important;-webkit-box-orient:vertical;-webkit-line-clamp:2;white-space:normal!important;overflow:hidden;text-overflow:clip;overflow-wrap:anywhere;font-size:10px;line-height:1.3}
+ #opsContent .ops-event-legend{gap:7px;flex-wrap:wrap;margin-top:10px}
+ #opsContent .ops-event-legend span{font-size:12px}
+ #opsContent .ops-year-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ #opsContent .ops-year-month{min-height:116px;padding:11px}
+ #opsContent .ops-year-month strong{font-size:15px}
+ #opsContent .ops-year-month small{font-size:11px;white-space:normal;line-height:1.35}
+}
+@media(max-width:380px){
+ #opsContent .ops-event-nav{grid-template-columns:38px minmax(0,1fr) 38px 52px;gap:4px}
+ #opsContent .ops-calendar-days{grid-auto-rows:minmax(82px,auto)}
+ #opsContent .ops-calendar-day{min-height:82px;padding:4px 2px}
+ #opsContent .ops-weekdays span{font-size:11px}
+ #opsContent .ops-event-chip span{font-size:9px}
+ #opsContent .ops-event-actions>.btn{font-size:12px!important}
+}
+</style>
 </head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav><button id="installAppBtn" class="install-cta" type="button" aria-label="GMC 아카이브를 바탕화면에 추가"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v5h14v-5"/></svg><span>바탕화면 추가</span></button></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><button id="backToTop" type="button" aria-label="페이지 맨 위로 이동" title="맨 위로" onclick="window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})">↑</button><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
