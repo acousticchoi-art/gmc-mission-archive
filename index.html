@@ -2219,7 +2219,46 @@ async function opsOpenTab(name){
   }
 }
 
+
+let OPS_EVENT_YEAR=new Date().getFullYear(),OPS_EVENT_MONTH=new Date().getMonth(),OPS_EVENT_VIEW='month';
+function opsEventDateRange(value){
+ const raw=String(value||'').trim();if(!raw)return null;
+ const norm=raw.replace(/[年月]/g,'-').replace(/일/g,'').replace(/[.]/g,'-').replace(/\s+/g,' ').trim();
+ const matches=[...norm.matchAll(/(20\d{2})\s*-\s*(\d{1,2})\s*-\s*(\d{1,2})/g)];
+ if(matches.length){const a=matches[0],start=new Date(+a[1],+a[2]-1,+a[3]);let end=new Date(start);if(matches[1]){const b=matches[1];end=new Date(+b[1],+b[2]-1,+b[3]);}else{const tail=norm.slice(a.index+a[0].length);const day=tail.match(/(?:~|-|부터)\s*(\d{1,2})/);if(day)end=new Date(start.getFullYear(),start.getMonth(),+day[1]);}return isNaN(start)?null:{start,end};}
+ const d=new Date(raw);return isNaN(d)?null:{start:d,end:d};
+}
+function opsEventData(){
+ const ix=re=>OPS_HEADERS.findIndex(h=>re.test(String(h)));
+ const di=ix(/날짜|일정일/),ni=ix(/행사명|행사|일정명/),li=ix(/장소/),oi=ix(/담당|주관/),si=ix(/상태/);
+ return OPS_RECORDS.map(row=>{const range=opsEventDateRange(row.values[di]);return range?{row,range,name:String(row.values[ni]||'행사'),place:String(row.values[li]||''),owner:String(row.values[oi]||''),status:String(row.values[si]||'')}:null;}).filter(Boolean);
+}
+function opsEventSetView(v){OPS_EVENT_VIEW=v;opsRenderEventCalendar();}
+function opsEventShift(n){if(OPS_EVENT_VIEW==='month'){const d=new Date(OPS_EVENT_YEAR,OPS_EVENT_MONTH+n,1);OPS_EVENT_YEAR=d.getFullYear();OPS_EVENT_MONTH=d.getMonth();}else OPS_EVENT_YEAR+=n;opsRenderEventCalendar();}
+function opsEventGoToday(){const d=new Date();OPS_EVENT_YEAR=d.getFullYear();OPS_EVENT_MONTH=d.getMonth();opsRenderEventCalendar();}
+function opsEventOpen(row){opsOpenForm(row);}
+function opsEventStatusClass(s){return /완료/.test(s)?'done':/취소/.test(s)?'cancel':/진행/.test(s)?'progress':'planned';}
+function opsRenderEventCalendar(){
+ const content=document.getElementById('opsContent');if(!content)return;
+ const events=opsEventData(),months=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+ const title=OPS_EVENT_VIEW==='year'?OPS_EVENT_YEAR+'년':OPS_EVENT_YEAR+'년 '+(OPS_EVENT_MONTH+1)+'월';
+ const nav='<div class="ops-event-toolbar"><div class="ops-event-nav"><button class="btn light" onclick="opsEventShift(-1)">‹</button><strong>'+title+'</strong><button class="btn light" onclick="opsEventShift(1)">›</button><button class="btn light" onclick="opsEventGoToday()">오늘</button></div><div class="ops-event-actions"><div class="ops-event-views"><button class="btn '+(OPS_EVENT_VIEW==='year'?'':'light')+'" onclick="opsEventSetView(\\'year\\')">연간</button><button class="btn '+(OPS_EVENT_VIEW==='month'?'':'light')+'" onclick="opsEventSetView(\\'month\\')">월간</button></div><button class="btn" onclick="opsOpenForm()">＋ 행사 등록</button></div></div>';
+ const search='<div class="ops-table-tools"><input id="opsEventSearch" type="search" placeholder="행사명·장소·담당 검색" oninput="opsRenderEventCalendar()"><span>'+events.length+'개 일정</span></div>';
+ const filtered=events.filter(e=>{const q=(document.getElementById('opsEventSearch')?.value||'').trim().toLowerCase();return !q||[e.name,e.place,e.owner,e.status].join(' ').toLowerCase().includes(q);});
+ const eventChip=e=>'<button class="ops-event-chip '+opsEventStatusClass(e.status)+'" onclick="opsEventOpen('+e.row.rowNumber+')" title="'+E([e.name,e.place,e.owner,e.status].filter(Boolean).join(' · '))+'"><span>'+E(e.name)+'</span></button>';
+ let body='';
+ if(OPS_EVENT_VIEW==='year'){
+  body='<div class="ops-year-grid">'+months.map((m,mi)=>{const monthEvents=filtered.filter(e=>e.range.start.getFullYear()===OPS_EVENT_YEAR&&e.range.start.getMonth()===mi);return '<button class="ops-year-month" onclick="OPS_EVENT_MONTH='+mi+';opsEventSetView(\\'month\\')"><strong>'+m+'</strong><span>'+monthEvents.length+'개 행사</span><div>'+monthEvents.slice(0,3).map(e=>'<small>'+E(e.range.start.getDate())+'일 · '+E(e.name)+'</small>').join('')+(monthEvents.length>3?'<small>외 '+(monthEvents.length-3)+'건</small>':'')+'</div></button>';}).join('')+'</div>';
+ }else{
+  const first=new Date(OPS_EVENT_YEAR,OPS_EVENT_MONTH,1),offset=(first.getDay()+6)%7,start=new Date(OPS_EVENT_YEAR,OPS_EVENT_MONTH,1-offset),days= new Date(OPS_EVENT_YEAR,OPS_EVENT_MONTH+1,0).getDate(),total=Math.ceil((offset+days)/7)*7;
+  const weekday=['월','화','수','목','금','토','일'];
+  body='<div class="ops-month-calendar"><div class="ops-weekdays">'+weekday.map(x=>'<span>'+x+'</span>').join('')+'</div><div class="ops-calendar-days">'+Array.from({length:total},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);const key=d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(),dayEvents=filtered.filter(e=>{const a=new Date(e.range.start.getFullYear(),e.range.start.getMonth(),e.range.start.getDate()),b=new Date(e.range.end.getFullYear(),e.range.end.getMonth(),e.range.end.getDate());return d>=a&&d<=b;});return '<div class="ops-calendar-day '+(d.getMonth()!==OPS_EVENT_MONTH?'outside':'')+(d.toDateString()===new Date().toDateString()?' today':'')+'"><span class="ops-day-number">'+d.getDate()+'</span><div class="ops-day-events">'+dayEvents.map(eventChip).join('')+'</div></div>';}).join('')+'</div></div>';
+ }
+ content.innerHTML='<div class="ops-section-head"><div><h3>행사관리</h3><p>연도와 월별 일정을 캘린더로 확인하고 관리합니다.</p></div><div class="ops-head-actions"><button class="btn light" onclick="opsOpenTab(\\'행사관리\\')">새로고침</button></div></div>'+nav+search+body+'<div class="ops-event-legend"><span class="planned">예정</span><span class="progress">진행</span><span class="done">완료</span><span class="cancel">취소</span><small>일정을 선택하면 상세 내용을 수정할 수 있습니다.</small></div>';
+}
+
 function opsRenderTable(){
+  if(OPS_CURRENT_TAB==='행사관리'){opsRenderEventCalendar();return;}
   const content=document.getElementById('opsContent');
   if(!content)return;
   const headers=OPS_HEADERS;
@@ -2829,5 +2868,56 @@ if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.se
  .ops-menu-group h3{margin-bottom:10px;padding-bottom:8px}
  .ops-menu-items .ops-tab{min-height:42px;padding:8px 7px}
 }
+</style>
+
+<style id="ops-event-calendar-style">
+.ops-event-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:14px 0}
+.ops-event-nav,.ops-event-actions,.ops-event-views{display:flex;align-items:center;gap:7px}
+.ops-event-nav strong{min-width:125px;text-align:center;font-size:18px;color:#183a55}
+.ops-event-views{padding:3px;background:#eef2f5;border-radius:9px}
+.ops-event-views .btn{padding:7px 12px}
+.ops-year-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.ops-year-month{min-height:130px;padding:13px;text-align:left;border:1px solid #dce5eb;border-radius:10px;background:#fff;color:#24445d;cursor:pointer}
+.ops-year-month strong{display:block;font-size:15px;margin-bottom:5px}
+.ops-year-month>span{font-size:11px;color:#718596}
+.ops-year-month>div{display:grid;gap:4px;margin-top:9px}
+.ops-year-month small{font-size:11px;color:#526a7d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ops-month-calendar{border:1px solid #dce5eb;border-radius:10px;overflow:hidden;background:#fff}
+.ops-weekdays,.ops-calendar-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.ops-weekdays{background:#f1f5f7;border-bottom:1px solid #dce5eb}
+.ops-weekdays span{text-align:center;padding:10px 2px;font-size:12px;font-weight:800;color:#4d6578}
+.ops-calendar-day{min-height:112px;padding:7px 5px;border-right:1px solid #edf1f4;border-bottom:1px solid #edf1f4;min-width:0}
+.ops-calendar-day:nth-child(7n){border-right:0}
+.ops-calendar-day.outside{background:#f8fafb}
+.ops-calendar-day.outside .ops-day-number{color:#aab5bd}
+.ops-calendar-day.today{background:#f0f6fa}
+.ops-day-number{display:block;margin-bottom:5px;font-size:12px;font-weight:800;color:#29465e}
+.ops-day-events{display:grid;gap:3px}
+.ops-event-chip{display:block;width:100%;padding:4px 5px;border:0;border-radius:4px;text-align:left;font-size:10px;line-height:1.35;cursor:pointer;overflow:hidden}
+.ops-event-chip span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ops-event-chip.planned{background:#eaf1f7;color:#315b7a}
+.ops-event-chip.progress{background:#fff3dc;color:#8a5a12}
+.ops-event-chip.done{background:#e8f3ed;color:#286345}
+.ops-event-chip.cancel{background:#fbeaea;color:#9b3c3c}
+.ops-event-legend{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin-top:12px}
+.ops-event-legend span{padding:4px 8px;border-radius:5px;font-size:11px}
+.ops-event-legend .planned{background:#eaf1f7;color:#315b7a}
+.ops-event-legend .progress{background:#fff3dc;color:#8a5a12}
+.ops-event-legend .done{background:#e8f3ed;color:#286345}
+.ops-event-legend .cancel{background:#fbeaea;color:#9b3c3c}
+.ops-event-legend small{color:#718596}
+@media(max-width:700px){
+ .ops-event-toolbar{align-items:stretch;flex-direction:column;gap:9px}
+ .ops-event-nav{justify-content:space-between}
+ .ops-event-nav strong{flex:1;font-size:16px}
+ .ops-event-actions{justify-content:space-between}
+ .ops-year-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .ops-year-month{min-height:112px;padding:10px}
+ .ops-calendar-day{min-height:88px;padding:5px 3px}
+ .ops-day-number{text-align:center;font-size:11px}
+ .ops-event-chip{padding:3px 2px;font-size:9px}
+ .ops-weekdays span{padding:8px 1px;font-size:11px}
+}
+@media(max-width:380px){.ops-calendar-day{min-height:72px}.ops-event-chip span{font-size:8px}}
 </style>
 </body></html>
