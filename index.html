@@ -1218,7 +1218,17 @@ html body #app > .container.ops-page .ops-table-wrap{
  .ops-overview-head h3{font-size:21px}
 }
 
-</style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav><button id="installAppBtn" class="install-cta" type="button" aria-label="GMC 아카이브를 바탕화면에 추가"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v5h14v-5"/></svg><span>바탕화면 추가</span></button></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><button id="backToTop" type="button" aria-label="페이지 맨 위로 이동" title="맨 위로" onclick="window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})">↑</button><script>
+</style><style id="ops-menu-group-style">
+.ops-menu-groups{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:0 0 20px;padding:0;border:0}
+.ops-menu-group{min-width:0;padding:17px 16px 16px;border:1px solid #e0e7ed;border-radius:12px;background:#fff}
+.ops-menu-group h3{margin:0 0 13px;padding:0 0 10px;border-bottom:1px solid #edf0f2;color:#17344f;font-size:14px;font-weight:800;letter-spacing:-.02em}
+.ops-menu-items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.ops-menu-items .ops-tab{width:100%;min-width:0;min-height:48px;padding:10px 8px;border-radius:8px;white-space:normal;line-height:1.35;font-size:13px}
+.ops-menu-items .ops-tab:disabled{opacity:.38}
+@media(max-width:900px){.ops-menu-groups{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.ops-menu-groups{grid-template-columns:1fr;gap:10px}.ops-menu-group{padding:15px}.ops-menu-items{grid-template-columns:repeat(2,minmax(0,1fr))}.ops-menu-items .ops-tab{min-height:46px}}
+</style>
+</head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav><button id="installAppBtn" class="install-cta" type="button" aria-label="GMC 아카이브를 바탕화면에 추가"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v5h14v-5"/></svg><span>바탕화면 추가</span></button></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><button id="backToTop" type="button" aria-label="페이지 맨 위로 이동" title="맨 위로" onclick="window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})">↑</button><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
 let T=localStorage.getItem('gmc_token')||'',ME=null,CATS=[],FAVS=new Set();
@@ -1704,7 +1714,7 @@ async function opsDashboard(selected){
     '<div class="container admin-page ops-page">'+
       '<div class="admin-head ops-page-head"><div><h2>운영 대시보드</h2></div>'+
       '<button class="btn light" onclick="admin()">← 관리자</button></div>'+
-      '<div id="opsTabs" class="ops-tabs" role="tablist" aria-label="운영 대시보드 메뉴"></div>'+
+      '<div id="opsTabs" class="ops-menu-groups" role="tablist" aria-label="운영 대시보드 메뉴"></div>'+
       '<div id="opsContent" class="ops-content"><div class="notice">불러오는 중</div></div>'+
     '</div>';
   const content=document.getElementById('opsContent');
@@ -1712,13 +1722,19 @@ async function opsDashboard(selected){
   try{
     const r=await A('opsListTabs',[T]);
     OPS_TAB_INFO=Array.isArray(r.tabs)?r.tabs:[];
-    const menu=['인사관리','회원명단','MK 명단','조직관리','행사관리','업무관리','사무실 예약','사무실 비품대장'];
-    document.getElementById('opsTabs').innerHTML=menu.map(name=>{
-      const exists=name==='인사관리'||!!OPS_TAB_INFO.find(x=>x.name===name&&x.exists);
-      if(name==='조직관리')return '<button type="button" class="ops-tab'+(name===selected?' active':'')+'" onclick="opsOpenTab(\'지부현황\')">조직관리</button>';
-      if(name==='인사관리')return '<button type="button" class="ops-tab'+(name===selected?' active':'')+'" onclick="opsRenderHR()">인사관리</button>';
-      return '<button type="button" class="ops-tab'+(name===selected?' active':'')+'" '+(!exists?'disabled':'')+' data-tab="'+E(name)+'" onclick="opsOpenTab(this.dataset.tab)">'+E(name)+'</button>';
-    }).join('');
+    const menuGroups=[
+      {title:'조직 · 인사',items:['인사관리','회원명단','MK 명단','조직관리']},
+      {title:'사역 · 행정',items:['행사관리','업무관리']},
+      {title:'시설 · 자산',items:['사무실 예약','사무실 비품대장']}
+    ];
+    document.getElementById('opsTabs').innerHTML=menuGroups.map(group=>
+      '<section class="ops-menu-group"><h3>'+group.title+'</h3><div class="ops-menu-items">'+group.items.map(name=>{
+        const exists=name==='인사관리'||!!OPS_TAB_INFO.find(x=>x.name===name&&x.exists);
+        if(name==='조직관리')return '<button type="button" class="ops-tab'+(name===selected?' active':'')+'" onclick="opsOpenTab(\\'지부현황\\')">조직관리</button>';
+        if(name==='인사관리')return '<button type="button" class="ops-tab'+(name===selected?' active':'')+'" onclick="opsRenderHR()">인사관리</button>';
+        return '<button type="button" class="ops-tab'+(name===selected?' active':'')+'" '+(!exists?'disabled':'')+' data-tab="'+E(name)+'" onclick="opsOpenTab(this.dataset.tab)">'+E(name)+'</button>';
+      }).join('')+'</div></section>'
+    ).join('');
     if(selected==='인사관리'){await opsRenderHR();return;}
     if(selected==='조직관리'){await opsOpenTab('지부현황');return;}
     if(!OPS_TAB_NAMES.includes(selected)||!OPS_TAB_INFO.some(x=>x.name===selected&&x.exists)){await opsRenderHR();return;}
