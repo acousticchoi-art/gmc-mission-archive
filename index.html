@@ -2258,8 +2258,49 @@ function opsRenderEventCalendar(){
  content.innerHTML='<div class="ops-section-head"><div><h3>행사관리</h3><p>연도와 월별 일정을 캘린더로 확인하고 관리합니다.</p></div><div class="ops-head-actions"><button class="btn light" onclick="opsOpenTab(\'행사관리\')">새로고침</button></div></div>'+nav+search+body+'<div class="ops-event-legend"><span class="planned">예정</span><span class="progress">진행</span><span class="done">완료</span><span class="cancel">취소</span><small>일정을 선택하면 상세 내용을 수정할 수 있습니다.</small></div>';
 }
 
+
+let OPS_RES_YEAR=new Date().getFullYear(),OPS_RES_MONTH=new Date().getMonth(),OPS_RES_VIEW='month';
+function opsReservationDate(value){
+ const raw=String(value||'').trim();if(!raw)return null;
+ const m=raw.match(/(20\d{2})[./년 -]\s*(\d{1,2})[./월 -]\s*(\d{1,2})/);
+ if(m){const d=new Date(+m[1],+m[2]-1,+m[3]);return isNaN(d)?null:d;}
+ const d=new Date(raw);return isNaN(d)?null:d;
+}
+function opsReservationData(){
+ const dateIx=OPS_HEADERS.findIndex(h=>/예약일|사용일|이용일|날짜|일자|시작일/.test(String(h)));
+ const ix=re=>OPS_HEADERS.findIndex(h=>re.test(String(h)));
+ const timeIx=ix(/시간|이용시간|사용시간/),nameIx=ix(/예약자|신청자|성명|이름/),roomIx=ix(/장소|공간|회의실|사무실/),purposeIx=ix(/목적|용도|내용|비고/),endIx=ix(/종료일|반납일/);
+ return OPS_RECORDS.map(row=>{
+  let date=dateIx>=0?opsReservationDate(row.values[dateIx]):null;
+  if(!date){for(const v of row.values){date=opsReservationDate(v);if(date)break;}}
+  return date?{row,date,time:String(row.values[timeIx]||''),name:String(row.values[nameIx]||''),room:String(row.values[roomIx]||''),purpose:String(row.values[purposeIx]||'')}:null;
+ }).filter(Boolean);
+}
+function opsReservationSetView(v){OPS_RES_VIEW=v;opsRenderReservationCalendar();}
+function opsReservationShift(n){if(OPS_RES_VIEW==='month'){const d=new Date(OPS_RES_YEAR,OPS_RES_MONTH+n,1);OPS_RES_YEAR=d.getFullYear();OPS_RES_MONTH=d.getMonth();}else OPS_RES_YEAR+=n;opsRenderReservationCalendar();}
+function opsReservationToday(){const d=new Date();OPS_RES_YEAR=d.getFullYear();OPS_RES_MONTH=d.getMonth();opsRenderReservationCalendar();}
+function opsRenderReservationCalendar(){
+ const content=document.getElementById('opsContent');if(!content)return;
+ const currentSearch=document.getElementById('opsReservationSearch')?.value||'';
+ const reservations=opsReservationData(),months=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+ const title=OPS_RES_VIEW==='year'?OPS_RES_YEAR+'년':OPS_RES_YEAR+'년 '+(OPS_RES_MONTH+1)+'월';
+ const nav='<div class="ops-event-toolbar"><div class="ops-event-nav"><button class="btn light" onclick="opsReservationShift(-1)">‹</button><strong>'+title+'</strong><button class="btn light" onclick="opsReservationShift(1)">›</button><button class="btn light" onclick="opsReservationToday()">오늘</button></div><div class="ops-event-actions"><div class="ops-event-views"><button class="btn '+(OPS_RES_VIEW==='year'?'':'light')+'" onclick="opsReservationSetView(\\'year\\')">연간</button><button class="btn '+(OPS_RES_VIEW==='month'?'':'light')+'" onclick="opsReservationSetView(\\'month\\')">월간</button></div><button class="btn" onclick="opsOpenForm()">＋ 예약 등록</button></div></div>';
+ const search='<div class="ops-table-tools"><input id="opsReservationSearch" type="search" value="'+E(currentSearch)+'" placeholder="예약자·장소·목적 검색" oninput="opsRenderReservationCalendar()"><span>'+reservations.length+'건 예약</span></div>';
+ const q=currentSearch.trim().toLowerCase(),filtered=reservations.filter(x=>!q||[x.name,x.room,x.purpose,x.time].join(' ').toLowerCase().includes(q));
+ const chip=x=>'<button class="ops-event-chip planned" onclick="opsOpenForm('+x.row.rowNumber+')" title="'+E([x.time,x.name,x.room,x.purpose].filter(Boolean).join(' · '))+'"><span>'+E([x.time,x.name,x.room].filter(Boolean).join(' · ')||x.purpose||'예약')+'</span></button>';
+ let body='';
+ if(OPS_RES_VIEW==='year'){
+  body='<div class="ops-year-grid">'+months.map((m,mi)=>{const list=filtered.filter(x=>x.date.getFullYear()===OPS_RES_YEAR&&x.date.getMonth()===mi);return '<button class="ops-year-month" onclick="OPS_RES_MONTH='+mi+';opsReservationSetView(\\'month\\')"><strong>'+m+'</strong><span>'+list.length+'건 예약</span><div>'+list.slice(0,3).map(x=>'<small>'+x.date.getDate()+'일 · '+E(x.name||x.room||x.purpose||'예약')+'</small>').join('')+(list.length>3?'<small>외 '+(list.length-3)+'건</small>':'')+'</div></button>';}).join('')+'</div>';
+ }else{
+  const first=new Date(OPS_RES_YEAR,OPS_RES_MONTH,1),offset=(first.getDay()+6)%7,start=new Date(OPS_RES_YEAR,OPS_RES_MONTH,1-offset),total=Math.ceil((offset+new Date(OPS_RES_YEAR,OPS_RES_MONTH+1,0).getDate())/7)*7,week=['월','화','수','목','금','토','일'];
+  body='<div class="ops-month-calendar"><div class="ops-weekdays">'+week.map(x=>'<span>'+x+'</span>').join('')+'</div><div class="ops-calendar-days">'+Array.from({length:total},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);const list=filtered.filter(x=>x.date.getFullYear()===d.getFullYear()&&x.date.getMonth()===d.getMonth()&&x.date.getDate()===d.getDate());return '<div class="ops-calendar-day '+(d.getMonth()!==OPS_RES_MONTH?'outside':'')+(d.toDateString()===new Date().toDateString()?' today':'')+'"><span class="ops-day-number">'+d.getDate()+'</span><div class="ops-day-events">'+list.map(chip).join('')+'</div></div>';}).join('')+'</div></div>';
+ }
+ content.innerHTML='<div class="ops-section-head"><div><h3>사무실 예약</h3><p>연간·월간 예약 일정을 확인하고 관리합니다.</p></div><div class="ops-head-actions"><button class="btn light" onclick="opsOpenTab(\\'사무실 예약\\')">새로고침</button></div></div>'+nav+search+body+'<div class="ops-event-legend"><span class="planned">예약 일정</span><small>예약을 선택하면 상세 내용을 수정할 수 있습니다.</small></div>';
+}
+
 function opsRenderTable(){
   if(OPS_CURRENT_TAB==='행사관리'){opsRenderEventCalendar();return;}
+  if(OPS_CURRENT_TAB==='사무실 예약'){opsRenderReservationCalendar();return;}
   const content=document.getElementById('opsContent');
   if(!content)return;
   const headers=OPS_HEADERS;
