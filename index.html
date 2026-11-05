@@ -1704,7 +1704,7 @@ function resetArchiveFilters(){
 
 
 
-const OPS_TAB_NAMES = ['회원명단','MK 명단','지부현황','행사관리','사무실 예약','업무관리','운영위원회','사무실 비품대장'];
+const OPS_TAB_NAMES = ['회원명단','MK 명단','지부현황','지역선교부 코디','행사관리','사무실 예약','업무관리','운영위원회','사무실 비품대장'];
 let OPS_TAB_INFO=[],OPS_CURRENT_TAB='대시보드',OPS_HEADERS=[],OPS_RECORDS=[],OPS_EDIT_ROW=null,OPS_READ_ONLY=false;
 
 async function opsDashboard(selected){
@@ -1723,7 +1723,7 @@ async function opsDashboard(selected){
     const r=await A('opsListTabs',[T]);
     OPS_TAB_INFO=Array.isArray(r.tabs)?r.tabs:[];
     const menuGroups=[
-      {title:'조직 · 인사',items:['인사관리','회원명단','MK 명단','조직관리']},
+      {title:'조직 · 인사',items:['인사관리','회원명단','MK 명단','지역선교부 코디','조직관리']},
       {title:'사역 · 행정',items:['행사관리','업무관리']},
       {title:'시설 · 자산',items:['사무실 예약','사무실 비품대장']}
     ];
