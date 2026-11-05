@@ -644,7 +644,12 @@ async function api(action,args,ctx=null){
       const coordinatorHeaders=coordinatorRows[0]||[];
       if(!coordinatorHeaders.some(h=>/직책|구분|역할|직위/.test(String(h||'')))){
         const nextCol=opsLastColumn(coordinatorHeaders.length+1);
-        await sheetUpdate(opsQuoteSheet('지역선교부 코디')+'!'+nextCol+'1', [['직책']]);
+        const sheetId=byName.get('지역선교부 코디')?.sheetId;
+        if(sheetId===undefined)throw new Error('지역선교부 코디 시트 ID를 확인하지 못했습니다.');
+        await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+':batchUpdate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requests:[{appendDimension:{sheetId,dimension:'COLUMNS',length:1}}]})});
+        const range=opsQuoteSheet('지역선교부 코디')+'!'+nextCol+'1:'+nextCol+'1';
+        await googleJson(opsUrl(range)+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({values:[['직책']]})});
+        invalidateSheetReadCache();
       }
       const tabs=OPS_TAB_NAMES.map(name=>{
         const properties=byName.get(name);
