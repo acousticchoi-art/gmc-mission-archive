@@ -2510,7 +2510,7 @@ async function opsRenderOrganization(){
   const memberBranchIndex=mh.findIndex(h=>/지부/.test(String(h||'')));
   const memberRoleIndex=mh.findIndex(h=>/GMC.*직책|직책/.test(String(h||'')));
   const branchMembers=new Map();
-  mr.forEach(r=>{const b=String(r.values[memberBranchIndex]||'').trim();const n=String(r.values[memberNameIndex]||'').trim();if(!b||!n)return;if(!branchMembers.has(b))branchMembers.set(b,[]);branchMembers.get(b).push({name:n,role:String(r.values[memberRoleIndex]||'').trim()});});
+  mr.forEach(r=>{const b=String(r.values[memberBranchIndex]||'').trim();const n=String(r.values[memberNameIndex]||'').trim();if(!b||!n)return;if(!branchMembers.has(b))branchMembers.set(b,[]);branchMembers.get(b).push({name:n,role:String(memberRoleIndex>=0?r.values[memberRoleIndex]||'사원':'사원').trim()||'사원'});});
   const idx=(re)=>ch.findIndex(x=>re.test(String(x||'')));
   const ci={role:idx(/직책|담당/),name:idx(/성명|이름/),members:idx(/부코디|위원|구성원/),work:idx(/주요 업무|업무|역할/)};
   const val=(row,i)=>i>=0?String(row.values[i]||'').trim():'';
