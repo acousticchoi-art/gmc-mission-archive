@@ -1805,15 +1805,15 @@ function hrFamilyFor(name){return hrFamilyGroups().find(g=>g.members.some(x=>x.n
 function hrOpenPerson(name){
  const p=HR_STATE.people.find(x=>x.name===name);if(!p)return;
  const family=hrFamilyFor(name), adultNames=family?family.members.map(x=>x.name):[name];
- const familyAdults=adultNames.filter(n=>n!==name&&n!==family?.head?.name).map(n=>HR_STATE.people.find(x=>x.name===n)).filter(Boolean);
+ const familyAdults=adultNames.map(n=>HR_STATE.people.find(x=>x.name===n)).filter(Boolean);
  const kids=HR_STATE.mk.filter(k=>adultNames.some(n=>hrNorm(k.parent).includes(hrNorm(n))||hrNorm(n).includes(hrNorm(k.parent))));
  const fields=p.headers.map((h,i)=>({h,v:(/직책/.test(String(h))&&!String(p.v[i]||'').trim()?'사원':p.v[i])})).filter(x=>String(x.v||'').trim()&&!/No\\.?|유닛/i.test(x.h));
  const fieldsHtml=fields.map(x=>'<div class="hr-detail-field"><small>'+E(x.h)+'</small><b>'+E(x.v)+'</b></div>').join('');
- const adultHtml=familyAdults.map(x=>{const rel=family.members.find(m=>m.name===x.name)?.relationship||'가족';return '<div class="hr-child"><b>'+E(x.name)+'</b><span>'+E(rel)+'</span><small>'+E(x.role||'')+'</small></div>';}).join('');
+ const adultHtml=familyAdults.map(x=>{const rel=x.name===p.name?'본인':(x.name===family?.head?.name?'배우자 · 가정 대표':(family.members.find(m=>m.name===x.name)?.relationship||'가족'));return '<div class="hr-child"><b>'+E(x.name)+'</b><span>'+E(rel)+'</span><small>'+E(x.role||'')+'</small></div>';}).join('');
  const familyHtml=(adultHtml||'')+(kids.length?kids.map(k=>'<div class="hr-child"><b>'+E(k.name)+'</b><span>'+E(k.birth||'출생연도 미입력')+'</span><small>'+E(k.resident||'')+'</small></div>').join(''):'');
  let modal=document.getElementById('hrPersonModal');
  if(!modal){modal=document.createElement('div');modal.id='hrPersonModal';modal.className='hr-modal';modal.onclick=e=>{if(e.target===modal)hrClosePerson();};document.body.appendChild(modal);}
- modal.innerHTML='<div class="hr-modal-card" role="dialog" aria-modal="true" aria-label="선교사 가정 상세 정보"><div class="hr-detail-head"><div><small>MISSIONARY FAMILY</small><h3>'+E(p.name)+'</h3><p>'+E(p.branch)+'</p></div><button class="btn light ops-small-btn" onclick="hrClosePerson()">닫기 ✕</button></div><div class="hr-detail-grid">'+fieldsHtml+'</div><div class="hr-family"><h4>가족 구성원</h4><div class="hr-family-parent"><b>'+E(family?.head?.name||p.name)+'</b><span>'+(family&&family.head.name!==p.name?'배우자 · 가정 대표':'가정 대표')+'</span></div>'+(familyHtml||'<p class="hr-empty">등록된 가족 구성원 정보가 없습니다.</p>')+'</div></div>';
+ modal.innerHTML='<div class="hr-modal-card" role="dialog" aria-modal="true" aria-label="선교사 가정 상세 정보"><div class="hr-detail-head"><div><small>MISSIONARY FAMILY</small><h3>'+E(p.name)+'</h3><p>'+E(p.branch)+'</p></div><button class="btn light ops-small-btn" onclick="hrClosePerson()">닫기 ✕</button></div><div class="hr-detail-grid">'+fieldsHtml+'</div><div class="hr-family"><h4>가족 구성원</h4>' + (familyHtml||'<p class="hr-empty">등록된 가족 구성원 정보가 없습니다.</p>')+'</div></div>';
  modal.classList.add('show');document.body.style.overflow='hidden';
 }
 function hrClosePerson(){const m=document.getElementById('hrPersonModal');if(m)m.classList.remove('show');document.body.style.overflow='';}
