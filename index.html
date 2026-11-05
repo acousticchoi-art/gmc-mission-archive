@@ -1400,6 +1400,20 @@ html body #app > .container.ops-page .ops-table-wrap{
 @media(max-width:900px){.org-chart-branches{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.org-chart-branches{grid-template-columns:1fr;gap:10px}.org-chart-group{padding:13px}.org-chart-line{grid-template-columns:minmax(112px,.85fr) minmax(0,1.15fr);padding:10px}.org-research-group .org-chart-items{grid-template-columns:1fr}}
 
+/* Mobile member profile: remove nested scrollbars and fit more content */
+@media(max-width:650px){
+ .hr-modal{padding:8px!important;align-items:center!important}
+ .hr-modal-card.hr-member-detail-modal{width:100%!important;max-height:calc(100dvh - 16px)!important;overflow-y:auto!important;overflow-x:hidden!important;border-radius:14px!important;padding:13px!important;scrollbar-width:none!important;-ms-overflow-style:none!important}
+ .hr-modal-card.hr-member-detail-modal::-webkit-scrollbar{display:none!important}
+ .hr-modal-card .hr-detail-grid{max-height:none!important;height:auto!important;overflow:visible!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}
+ .hr-member-detail-modal .hr-detail-field{padding:8px 9px!important;min-height:52px!important}
+ .hr-member-detail-modal .hr-detail-field small{font-size:10px!important;margin-bottom:3px!important}
+ .hr-member-detail-modal .hr-detail-field b{font-size:12px!important;line-height:1.3!important}
+ .hr-member-detail-modal .hr-detail-head{padding-bottom:8px!important;margin-bottom:8px!important}
+ .hr-member-detail-modal .hr-detail-head h3{font-size:21px!important;margin:3px 0!important}
+ .hr-member-detail-modal .hr-detail-section-head{margin:5px 0 9px!important}
+ .hr-member-detail-modal .hr-family{padding-top:9px!important}
+}
 /* Keep branch officers visually consistent with the desktop table on mobile */
 @media(max-width:700px){
  .org-branch-table-wrap{overflow-x:auto!important;overflow-y:hidden!important;border:1px solid #e1e7ec!important;border-radius:10px!important;background:#fff!important;-webkit-overflow-scrolling:touch}
