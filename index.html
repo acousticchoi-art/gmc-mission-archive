@@ -1967,7 +1967,7 @@ async function opsRenderOverview(){
       statusItems.map(x=>'<div class="ops-status-item"><span>'+x[0]+'</span><div class="ops-status-track"><i class="ops-status-'+x[2]+'" style="width:'+(statusTotal?x[1]/statusTotal*100:0)+'%"></i></div><b>'+x[1]+'</b></div>').join('');
     const quick=[{name:'사무실 예약',count:reservations.count},{name:'운영위원회',count:committee.count},{name:'사무실 비품대장',count:assets.count}];
     content.innerHTML=
-      '<div class="ops-overview-head"><div><div class="ops-overview-eyebrow">GMC · 29TH TERM</div><h3>운영 현황</h3></div><button class="btn light" onclick="opsRenderOverview()">새로고침</button></div>'+
+      '<div class="ops-overview-head"><div><div class="ops-overview-eyebrow">GMC · 29TH TERM</div><h3>운영 현황</h3></div></div>'+
       '<div class="ops-kpi-grid">'+kpis.map(x=>'<button class="ops-kpi-card" data-tab="'+x.tab+'" onclick="opsOpenTab(this.dataset.tab)"><span class="ops-kpi-icon">'+x.icon+'</span><span class="ops-kpi-label">'+x.label+'</span><strong>'+Number(x.value||0).toLocaleString()+'</strong><small>'+x.sub+'</small></button>').join('')+'</div>'+
       '<div class="ops-overview-grid">'+
         '<section class="ops-dash-panel ops-chart-panel"><div class="ops-dash-title"><div><h4>분야별 등록 현황</h4><p>각 관리 탭에 등록된 항목 수</p></div></div><div class="ops-chart-list">'+bars+'</div></section>'+
@@ -2255,7 +2255,7 @@ function opsRenderEventCalendar(){
   const weekday=['월','화','수','목','금','토','일'];
   body='<div class="ops-month-calendar"><div class="ops-weekdays">'+weekday.map(x=>'<span>'+x+'</span>').join('')+'</div><div class="ops-calendar-days">'+Array.from({length:total},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);const key=d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(),dayEvents=filtered.filter(e=>{const a=new Date(e.range.start.getFullYear(),e.range.start.getMonth(),e.range.start.getDate()),b=new Date(e.range.end.getFullYear(),e.range.end.getMonth(),e.range.end.getDate());return d>=a&&d<=b;});return '<div class="ops-calendar-day '+(d.getMonth()!==OPS_EVENT_MONTH?'outside':'')+(d.toDateString()===new Date().toDateString()?' today':'')+'"><span class="ops-day-number">'+d.getDate()+'</span><div class="ops-day-events">'+dayEvents.map(eventChip).join('')+'</div></div>';}).join('')+'</div></div>';
  }
- content.innerHTML='<div class="ops-section-head"><div><h3>행사관리</h3><p>연도와 월별 일정을 캘린더로 확인하고 관리합니다.</p></div><div class="ops-head-actions"><button class="btn light" onclick="opsOpenTab(\'행사관리\')">새로고침</button></div></div>'+nav+search+body+'<div class="ops-event-legend"><span class="planned">예정</span><span class="progress">진행</span><span class="done">완료</span><span class="cancel">취소</span><small>일정을 선택하면 상세 내용을 수정할 수 있습니다.</small></div>';
+ content.innerHTML='<div class="ops-section-head"><div><h3>행사관리</h3><p>연도와 월별 일정을 캘린더로 확인하고 관리합니다.</p></div><div class="ops-head-actions"></div></div>'+nav+search+body+'<div class="ops-event-legend"><span class="planned">예정</span><span class="progress">진행</span><span class="done">완료</span><span class="cancel">취소</span><small>일정을 선택하면 상세 내용을 수정할 수 있습니다.</small></div>';
 }
 
 
@@ -2296,7 +2296,7 @@ function opsRenderReservationCalendar(){
   const first=new Date(OPS_RES_YEAR,OPS_RES_MONTH,1),offset=(first.getDay()+6)%7,start=new Date(OPS_RES_YEAR,OPS_RES_MONTH,1-offset),total=Math.ceil((offset+new Date(OPS_RES_YEAR,OPS_RES_MONTH+1,0).getDate())/7)*7,week=['월','화','수','목','금','토','일'];
   body='<div class="ops-month-calendar"><div class="ops-weekdays">'+week.map(x=>'<span>'+x+'</span>').join('')+'</div><div class="ops-calendar-days">'+Array.from({length:total},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);const list=filtered.filter(x=>x.date<=d&&x.endDate>=d);return '<div class="ops-calendar-day '+(d.getMonth()!==OPS_RES_MONTH?'outside':'')+(d.toDateString()===new Date().toDateString()?' today':'')+'"><span class="ops-day-number">'+d.getDate()+'</span><div class="ops-day-events">'+list.map(chip).join('')+'</div></div>';}).join('')+'</div></div>';
  }
- content.innerHTML='<div class="ops-section-head"><div><h3>사무실 예약</h3><p>연간·월간 예약 일정을 확인하고 관리합니다.</p></div><div class="ops-head-actions"><button class="btn light" onclick="opsOpenTab(\'사무실 예약\')">새로고침</button></div></div>'+nav+search+body+'<div class="ops-event-legend"><span class="planned">예약 일정</span><small>예약을 선택하면 상세 내용을 수정할 수 있습니다.</small></div>';
+ content.innerHTML='<div class="ops-section-head"><div><h3>사무실 예약</h3><p>연간·월간 예약 일정을 확인하고 관리합니다.</p></div><div class="ops-head-actions"></div></div>'+nav+search+body+'<div class="ops-event-legend"><span class="planned">예약 일정</span><small>예약을 선택하면 상세 내용을 수정할 수 있습니다.</small></div>';
 }
 
 function opsRenderTable(){
@@ -2309,7 +2309,7 @@ function opsRenderTable(){
   const orgNav=(OPS_CURRENT_TAB==='지부현황'||OPS_CURRENT_TAB==='지역선교부 코디')?'<div class="ops-org-subnav"><button class="btn '+(OPS_CURRENT_TAB==='지부현황'?'':'light')+'" onclick="opsOpenTab(\'지부현황\')">지부 현황</button><button class="btn '+(OPS_CURRENT_TAB==='지역선교부 코디'?'':'light')+'" onclick="opsOpenTab(\'지역선교부 코디\')">지역선교부 코디</button></div>':'';
   content.innerHTML=
     orgNav+'<div class="ops-section-head"><div><h3>'+E(OPS_CURRENT_TAB==='지부현황'?'지부 현황':OPS_CURRENT_TAB)+'</h3></div>'+
-    '<div class="ops-head-actions">'+(OPS_CURRENT_TAB==='회원명단'?'<button class="btn light" onclick="opsRenderHR()">← 인사관리</button>':'')+'<button class="btn light" onclick="opsOpenTab(\''+E(OPS_CURRENT_TAB)+'\')">새로고침</button><button class="btn" onclick="opsOpenForm()">＋ 항목 추가</button></div></div>'+
+    '<div class="ops-head-actions">'+(OPS_CURRENT_TAB==='회원명단'?'<button class="btn light" onclick="opsRenderHR()">← 인사관리</button>':'')+'<button class="btn" onclick="opsOpenForm()">＋ 항목 추가</button></div></div>'+
     '<div class="ops-table-tools"><input id="opsSearch" type="search" placeholder="항목 내용 검색" oninput="opsFilterRows()"><span id="opsRowCount">'+rows.length+'개 항목</span></div>'+
     '<div class="ops-table-wrap"><table class="ops-table"><thead><tr>'+headers.map(h=>'<th>'+E(h)+'</th>').join('')+'<th class="ops-actions-head">관리</th></tr></thead><tbody id="opsRows">'+opsRowsHtml(rows)+'</tbody></table></div>'+
     (!rows.length?'<div class="ops-empty-inline">등록된 항목이 없습니다. <b>항목 추가</b>를 눌러 첫 자료를 입력하세요.</div>':'');
@@ -2580,7 +2580,7 @@ function userAdmin(initialTab='register'){
       <input id="memberSearch" type="search" placeholder="이름, 아이디, 이메일, 소속 검색" oninput="filterUsers()">
       <select id="memberStatusFilter" onchange="filterUsers()" aria-label="회원 상태"><option value="">전체 상태</option><option value="활성">활성</option><option value="비활성">비활성</option></select>
       <select id="memberRoleFilter" onchange="filterUsers()" aria-label="회원 권한"><option value="">전체 권한</option><option value="관리자">관리자</option><option value="일반회원">일반회원</option></select>
-      <button class="btn light" onclick="loadUsers()">새로고침</button>
+      
     </div>
     <div id="users"><div class="notice">회원 목록을 불러오는 중...</div></div>
   </section></div>`;
@@ -2660,7 +2660,7 @@ function renderUsers(users){
 }
 function loginHistory(){
   document.getElementById('app').innerHTML=`<div class="container admin-page"><div class="title"><h2>로그인 이력</h2><button class="btn light" onclick="admin()">← 관리자</button></div>
-  <div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px"><h3 style="margin:0">최근 로그인 기록</h3><button class="btn light" onclick="loadLoginHistory()">새로고침</button></div><div id="loginHistory"><div class="notice">불러오는 중...</div></div></div></div>`;
+  <div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px"><h3 style="margin:0">최근 로그인 기록</h3></div><div id="loginHistory"><div class="notice">불러오는 중...</div></div></div></div>`;
   loadLoginHistory();
 }
 async function loadLoginHistory(){
