@@ -1899,7 +1899,7 @@ function hrRenderList(){
  const modeBtns=modes.map(x=>'<button class="hr-mode '+(HR_STATE.mode===x?'active':'')+'" onclick="hrSetMode(\''+x+'\')">'+x+'</button>').join('');
  const kidsFor=p=>{const f=hrFamilyFor(p.name),names=f?f.members.map(m=>m.name):[p.name];return HR_STATE.mk.filter(k=>names.some(n=>hrNorm(k.parent).includes(hrNorm(n))||hrNorm(n).includes(hrNorm(k.parent))));};
  const open=p=>'hrOpenPerson(\''+E(p.name).replace(/\\'/g,'&#039;')+'\')';
- const table=rows=>'<div class="hr-table-wrap"><table class="hr-member-table"><thead><tr><th>회원 이름</th><th>소속 지부</th><th>직책</th><th>유닛 · 사역지역</th><th>MK</th><th></th></tr></thead><tbody>'+rows.map(p=>'<tr onclick="'+open(p)+'"><td><strong>'+E(p.name)+'</strong></td><td>'+E(p.branch)+'</td><td><span class="hr-role-pill">'+E(p.role||'직책 미입력')+'</span></td><td class="hr-muted">'+E([p.unit,p.place].filter(Boolean).join(' · ')||'—')+'</td><td class="hr-mk-count">'+kidsFor(p).length+'명</td><td class="hr-detail-link">상세 보기　›</td></tr>').join('')+'</tbody></table></div>';
+ const table=rows=>'<div class="hr-table-wrap"><table class="hr-member-table"><thead><tr><th>회원 이름</th><th>소속 지부</th><th>직책</th><th>유닛 · 사역지역</th><th>MK</th><th></th></tr></thead><tbody>'+rows.map(p=>'<tr onclick="'+open(p)+'"><td><strong>'+E(p.name)+'</strong></td><td>'+E(p.branch)+'</td><td><span class="hr-role-pill">'+E(p.role||'직책 미입력')+'</span></td><td class="hr-muted">'+E([p.place].filter(Boolean).join(' · ')||'—')+'</td><td class="hr-mk-count">'+kidsFor(p).length+'명</td><td class="hr-detail-link">상세 보기　›</td></tr>').join('')+'</tbody></table></div>';
  let html='';
  if(HR_STATE.mode==='가정별'){
   const groups=hrFamilyGroups().filter(g=>g.members.some(m=>people.some(p=>p.name===m.name)));
@@ -1970,10 +1970,15 @@ async function opsRenderHR(){
  const content=document.getElementById('opsContent');if(!content)return;
  content.innerHTML='<div class="notice">회원 및 가족 정보를 불러오는 중입니다.</div>';
  try{
-  const [r,f]=await Promise.all([A('opsDashboardData',[T]),A('hrGetFamilies',[T])]),ss=r.sections||[],get=n=>ss.find(x=>x.name===n)||{headers:[],records:[]};
+  const [r,f,committee]=await Promise.all([A('opsDashboardData',[T]),A('hrGetFamilies',[T]),A('opsListRows',[T,'운영위원회'])]),ss=r.sections||[],get=n=>ss.find(x=>x.name===n)||{headers:[],records:[]};
   const m=get('회원명단'),mk=get('MK 명단'),ix=(hs,re)=>hs.findIndex(h=>re.test(String(h)));
-  const ni=ix(m.headers,/성명|이름/),bi=ix(m.headers,/지부/),ui=ix(m.headers,/유닛/),ri=ix(m.headers,/GMC.*직책|직책/),li=ix(m.headers,/사역지역/);
-  HR_STATE.people=m.records.map(x=>({name:x.values[ni]||'',branch:x.values[bi]||'미분류',unit:x.values[ui]||'',role:String(x.values[ri]||'').trim()||'사원',place:x.values[li]||'',v:x.values,headers:m.headers})).filter(x=>x.name);
+  const ci=committee.headers||[],cr=committee.records||[],cix=re=>ci.findIndex(h=>re.test(String(h||'')));
+  const researchRow=cr.find(x=>/지역연구소/.test(String(x.values[cix(/직책|담당/)]||'')));
+  const researchNameIdx=cix(/성명|이름/),researchMembersIdx=cix(/부코디|위원|구성원/);
+  const researchNames=new Set();
+  if(researchRow){const lead=String(researchRow.values[researchNameIdx]||'').trim();(String(researchRow.values[researchMembersIdx]||'').split(/[·ㆍ,、/&\\n]+/).map(x=>x.trim()).filter(Boolean)).forEach(n=>researchNames.add(n));}
+  const ni=ix(m.headers,/성명|이름/),bi=ix(m.headers,/지부/),ri=ix(m.headers,/GMC.*직책|직책/),li=ix(m.headers,/사역지역/);
+  HR_STATE.people=m.records.map(x=>{const name=String(x.values[ni]||'').trim(),base=String(x.values[ri]||'').trim()||'사원',isResearch=researchNames.has(name);return {name,branch:x.values[bi]||'미분류',role:isResearch?(base==='사원'?'연구위원':base+' · 연구위원'):base,place:x.values[li]||'',v:x.values,headers:m.headers};}).filter(x=>x.name);
   const pi=ix(mk.headers,/부모|선교사/),mi=ix(mk.headers,/MK 이름|이름/),yi=ix(mk.headers,/출생연도/),ri2=ix(mk.headers,/거주 여부|거주/);
   HR_STATE.mk=mk.records.map(x=>({parent:x.values[pi]||'',name:x.values[mi]||'',birth:x.values[yi]||'',resident:x.values[ri2]||''})).filter(x=>x.name);
   HR_STATE.families=f.records||[];
