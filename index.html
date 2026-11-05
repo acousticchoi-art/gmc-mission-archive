@@ -1242,6 +1242,23 @@ html body #app > .container.ops-page .ops-table-wrap{
 .org-data-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
 @media(max-width:900px){.org-leadership-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.org-leadership-grid{grid-template-columns:1fr 1fr}.org-leader-group{padding:10px}.org-page-head{align-items:flex-start}}
+
+/* v30: organization chart readability */
+.org-chart-root{display:flex;justify-content:center;margin:8px 0 18px}
+.org-chart-group{min-width:0;padding:16px;background:#fff;border:1px solid #dce5ec;border-radius:12px;box-shadow:0 3px 12px rgba(23,52,79,.04)}
+.org-chart-root>.org-chart-group{width:min(440px,100%);border-top:4px solid #b18a55;text-align:center}
+.org-chart-branches{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;position:relative}
+.org-chart-group h4{margin:0 0 12px;padding-bottom:10px;border-bottom:1px solid #e8edf1;color:#17344f;font-size:15px;font-weight:800}
+.org-chart-items{display:grid;gap:7px}
+.org-chart-line{display:grid;grid-template-columns:minmax(105px,.9fr) minmax(0,1.2fr);align-items:center;gap:10px;padding:10px 11px;border-radius:8px;background:#f5f8fa;text-align:left}
+.org-chart-role{color:#627586;font-size:12px;font-weight:700;line-height:1.4}
+.org-chart-name{color:#1c354a;font-size:14px;font-weight:800;line-height:1.4;overflow-wrap:anywhere}
+.org-chart-line small{grid-column:1/-1;color:#82909d;font-size:11px;line-height:1.45}
+.org-chart-work{margin:10px 0 0;color:#748391;font-size:12px;line-height:1.6}
+.org-research-group{margin-top:14px}
+.org-research-group .org-chart-items{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:900px){.org-chart-branches{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.org-chart-branches{grid-template-columns:1fr;gap:10px}.org-chart-group{padding:13px}.org-chart-line{grid-template-columns:minmax(112px,.85fr) minmax(0,1.15fr);padding:10px}.org-research-group .org-chart-items{grid-template-columns:1fr}}
 </style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav><button id="installAppBtn" class="install-cta" type="button" aria-label="GMC 아카이브를 바탕화면에 추가"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v5h14v-5"/></svg><span>바탕화면 추가</span></button></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><button id="backToTop" type="button" aria-label="페이지 맨 위로 이동" title="맨 위로" onclick="window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})">↑</button><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
@@ -1940,18 +1957,20 @@ async function opsRenderOrganization(){
   const leader=rows.find(x=>/지역대표/.test(x.role));
   const coordinators=rows.filter(x=>x.name&&x!==leader&&!/지역연구소/.test(x.role));
   const research=rows.find(x=>/지역연구소/.test(x.role));
-  const allDeputies=coordinators.flatMap(x=>x.members);
+  const deputyItems=coordinators.flatMap(x=>x.members.map(name=>({role:x.role+' 부코디네이터',name})));
   const committeeNames=[...new Set([...(research?.members||[]),...rows.filter(x=>/위원/.test(x.role)).flatMap(x=>x.members)])];
-  const card=(title,items,empty)=>'<section class="org-leader-group"><h4>'+title+'</h4>'+(items.length?'<div class="org-leader-grid">'+items.map(x=>'<article class="org-leader-card"><b>'+E(x.name)+'</b><span>'+E(x.role||'')+'</span>'+(x.work?'<small>'+E(x.work)+'</small>':'')+(x.members?.length?'<small>부코디 · '+E(x.members.join(', '))+'</small>':'')+'</article>').join('')+'</div>':'<div class="org-leader-empty">'+empty+'</div>')+'</section>';
-  const leadersHtml=card('지역대표',leader?[leader]:[],'등록된 지역대표가 없습니다.');
-  const coordinatorHtml=card('코디',coordinators.map(x=>({...x,role:x.role+' 코디'})),'등록된 코디가 없습니다.');
-  const deputyHtml=card('부코디',allDeputies.map(name=>({name,role:'부코디'})),'등록된 부코디가 없습니다.');
-  const committeeHtml=card('위원',committeeNames.map(name=>({name,role:'위원'})),'등록된 위원이 없습니다.');
+  const line=(role,name,detail='')=>'<div class="org-chart-line"><span class="org-chart-role">'+E(role)+'</span><strong class="org-chart-name">'+E(name)+'</strong>'+(detail?'<small>'+E(detail)+'</small>':'')+'</div>';
+  const group=(title,items,empty)=>'<section class="org-chart-group"><h4>'+title+'</h4>'+(items.length?'<div class="org-chart-items">'+items.map(x=>line(x.role,x.name,x.work||'')).join('')+'</div>':'<div class="org-leader-empty">'+empty+'</div>')+'</section>';
+  const leadersHtml=group('지역대표',leader?[{role:'지역대표',name:leader.name,work:leader.work}]:[],'등록된 지역대표가 없습니다.');
+  const coordinatorHtml=group('코디네이터',coordinators.map(x=>({role:x.role+' 코디네이터',name:x.name,work:x.work})),'등록된 코디네이터가 없습니다.');
+  const deputyHtml=group('부코디네이터',deputyItems,'등록된 부코디네이터가 없습니다.');
+  const committeeHtml=group('위원',committeeNames.map(name=>({role:'위원',name})),'등록된 위원이 없습니다.');
   OPS_CURRENT_TAB='지부현황';OPS_HEADERS=bh;OPS_RECORDS=br;
   const branchRows=br.map(r=>'<tr>'+bh.map((head,i)=>'<td>'+E(r.values[i]||'')+'</td>').join('')+'<td><button class="btn light ops-small-btn" onclick="opsOpenForm('+r.rowNumber+')">수정</button><button class="btn danger ops-small-btn" onclick="opsDeleteRecord('+r.rowNumber+')">삭제</button></td></tr>').join('');
-  content.innerHTML='<div class="org-page-head"><div><h3>지역선교부 운영위원회</h3><p>운영위원회 시트의 직책·성명·부코디/위원·주요 업무를 기준으로 표시합니다.</p></div><button class="btn light" onclick="opsRenderOrganization()">새로고침</button></div>'+
-   '<div class="org-leadership-grid">'+leadersHtml+coordinatorHtml+deputyHtml+committeeHtml+'</div>'+
-   (research?'<section class="org-leader-group"><h4>지역연구소</h4><div class="org-leader-grid"><article class="org-leader-card"><b>'+E(research.name||'')+'</b><span>지역연구소 소장</span>'+(research.members.length?'<small>위원 · '+E(research.members.join(', '))+'</small>':'')+(research.work?'<small>'+E(research.work)+'</small>':'')+'</article></div></section>':'')+
+  content.innerHTML='<div class="org-page-head"><div><h3>지역선교부 조직도</h3><p>직책을 먼저 표시하고 담당자 이름을 직책별로 정리했습니다.</p></div><button class="btn light" onclick="opsRenderOrganization()">새로고침</button></div>'+
+   '<div class="org-chart-root">'+leadersHtml+'</div>'+
+   '<div class="org-chart-branches">'+coordinatorHtml+deputyHtml+committeeHtml+'</div>'+
+   (research?'<section class="org-chart-group org-research-group"><h4>지역연구소</h4><div class="org-chart-items">'+line('지역연구소 소장',research.name||'')+(research.members.length?research.members.map(name=>line('위원',name)).join(''):'')+(research.work?'<p class="org-chart-work">'+E(research.work)+'</p>':'')+'</div></section>':'')+
    '<div class="org-page-head org-branch-head"><div><h3>지부 임원 리스트</h3><p>지부별 임원 현황</p></div><button class="btn" onclick="OPS_CURRENT_TAB=\'지부현황\';OPS_HEADERS='+JSON.stringify(bh).replace(/</g,'\\u003c')+';OPS_RECORDS='+JSON.stringify(br).replace(/</g,'\\u003c')+';opsOpenForm()">＋ 임원 추가</button></div>'+
    (br.length?'<div class="ops-table-wrap"><table class="ops-table"><thead><tr>'+bh.map(x=>'<th>'+E(x)+'</th>').join('')+'<th>관리</th></tr></thead><tbody>'+branchRows+'</tbody></table></div>':'<div class="ops-empty-inline">등록된 지부 임원 정보가 없습니다.</div>')+
    '<div class="org-data-actions"><button class="btn light" onclick="opsOpenTab(\'운영위원회\')">운영위원회 자료 관리</button><button class="btn light" onclick="opsOpenTab(\'지부현황\')">지부 자료 관리</button></div>';
