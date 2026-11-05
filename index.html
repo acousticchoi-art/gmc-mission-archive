@@ -1978,8 +1978,44 @@ async function opsRenderOrganization(){
    '<div class="org-chart-branches">'+coordinatorHtml+'</div>'+
    (research?'<section class="org-chart-group org-research-group"><h4>지역연구소 <span style="margin-left:8px;color:#74808b;font-size:12px;font-weight:500">전략 연구·자료화·네트워크</span></h4><div class="org-chart-items">'+line('지역연구소 소장',research.name||'')+(researchMembers.length?researchMembers.map(name=>line('위원',name)).join(''):'')+'</div></section>':'')+
    '<div class="org-page-head org-branch-head"><div><h3>지부 임원 리스트</h3></div><button class="btn" onclick="OPS_CURRENT_TAB=\'지부현황\';OPS_HEADERS='+JSON.stringify(bh).replace(/</g,'\\u003c')+';OPS_RECORDS='+JSON.stringify(br).replace(/</g,'\\u003c')+';opsOpenForm()">＋ 임원 추가</button></div>'+
-   (br.length?'<div class="ops-table-wrap"><table class="ops-table"><thead><tr>'+bh.map(x=>'<th>'+E(x)+'</th>').join('')+'<th>관리</th></tr></thead><tbody>'+branchRows+'</tbody></table></div>':'<div class="ops-empty-inline">등록된 지부 임원 정보가 없습니다.</div>')+
-   '<div class="ops-head-actions"><button class="btn light" onclick="opsOpenTab(\''+E(OPS_CURRENT_TAB)+'\')">새로고침</button><button class="btn" onclick="opsOpenForm()">＋ 항목 추가</button></div></div>'+
+   (br.length?'<div class="ops-table-wrap"><table class="ops-table"><thead><tr>'+bh.map(x=>'<th>'+E(x)+'</th>').join('')+'<th>관리</th></tr></thead><tbody>'+branchRows+'</tbody></table></div>':'<div class="ops-empty-inline">등록된 지부 임원 정보가 없습니다.</div>');
+  OPS_HEADERS=bh;OPS_RECORDS=br;
+ }catch(e){content.innerHTML='<div class="notice error">조직 정보를 불러오지 못했습니다: '+E(e.message)+'</div><button class="btn light" onclick="opsRenderOrganization()">다시 시도</button>';}
+}
+async function opsOpenTab(name){
+  if(!ME||ME.role!=='관리자')return;
+  if(!OPS_TAB_NAMES.includes(name))return;
+  OPS_CURRENT_TAB=name;
+  OPS_EDIT_ROW=null;
+  document.querySelectorAll('.ops-tab').forEach(b=>b.classList.toggle('active',b.textContent===name));
+  const content=document.getElementById('opsContent');
+  if(!content)return;
+  content.innerHTML='<div class="notice">'+E(name)+' 데이터를 불러오는 중입니다.</div>';
+  try{
+    const r=await A('opsListRows',[T,name]);
+    OPS_HEADERS=r.headers||[];
+    OPS_RECORDS=r.records||[];
+    OPS_READ_ONLY=!!r.readOnly;
+    if(r.needsHeaders){
+      content.innerHTML='<div class="panel ops-empty"><div class="ops-empty-mark">FIELD SETUP</div><h3>'+E(name)+' 항목 설정</h3><p>첫 행에 열 이름이 없습니다. 각 항목 이름을 한 줄에 하나씩 입력하면 입력·수정 화면이 자동으로 만들어집니다.</p>'+
+        '<button class="btn" onclick="opsConfigureHeaders()">열 이름 설정</button></div>';
+      return;
+    }
+    opsRenderTable();
+  }catch(e){
+    content.innerHTML='<div class="notice error">데이터를 불러오지 못했습니다: '+E(e.message)+'</div><button class="btn light" onclick="opsOpenTab(\''+E(name)+'\')">다시 시도</button>';
+  }
+}
+
+function opsRenderTable(){
+  const content=document.getElementById('opsContent');
+  if(!content)return;
+  const headers=OPS_HEADERS;
+  const rows=OPS_RECORDS;
+  const orgNav=(OPS_CURRENT_TAB==='지부현황'||OPS_CURRENT_TAB==='지역선교부 코디')?'<div class="ops-org-subnav"><button class="btn '+(OPS_CURRENT_TAB==='지부현황'?'':'light')+'" onclick="opsOpenTab(\'지부현황\')">지부 현황</button><button class="btn '+(OPS_CURRENT_TAB==='지역선교부 코디'?'':'light')+'" onclick="opsOpenTab(\'지역선교부 코디\')">지역선교부 코디</button></div>':'';
+  content.innerHTML=
+    orgNav+'<div class="ops-section-head"><div><h3>'+E(OPS_CURRENT_TAB==='지부현황'?'지부 현황':OPS_CURRENT_TAB)+'</h3></div>'+
+    '<div class="ops-head-actions"><button class="btn light" onclick="opsOpenTab(\''+E(OPS_CURRENT_TAB)+'\')">새로고침</button><button class="btn" onclick="opsOpenForm()">＋ 항목 추가</button></div></div>'+
     '<div class="ops-table-tools"><input id="opsSearch" type="search" placeholder="항목 내용 검색" oninput="opsFilterRows()"><span id="opsRowCount">'+rows.length+'개 항목</span></div>'+
     '<div class="ops-table-wrap"><table class="ops-table"><thead><tr>'+headers.map(h=>'<th>'+E(h)+'</th>').join('')+'<th class="ops-actions-head">관리</th></tr></thead><tbody id="opsRows">'+opsRowsHtml(rows)+'</tbody></table></div>'+
     (!rows.length?'<div class="ops-empty-inline">등록된 항목이 없습니다. <b>항목 추가</b>를 눌러 첫 자료를 입력하세요.</div>':'');
