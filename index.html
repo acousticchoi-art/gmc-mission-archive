@@ -1188,9 +1188,11 @@ html body #app > .container.ops-page .ops-table-wrap{
 @media(max-width:600px){.hr-edit-grid{grid-template-columns:1fr}.hr-edit-actions{grid-column:1}}
 
 
-.ops-menu-toggle{display:flex;align-items:center;gap:10px;width:100%;margin:0 0 14px;padding:10px 2px;border:0;border-bottom:1px solid #d9e2e9;background:transparent;color:#29465e;text-align:left;cursor:pointer;font-size:13px;font-weight:800}
-.ops-menu-toggle-current{margin-left:auto;color:#718596;font-size:11px;font-weight:600}
-.ops-menu-toggle-arrow{font-size:17px;color:#718596;transition:transform .15s}
+.ops-menu-toggle{display:flex;align-items:center;gap:10px;width:100%;min-height:46px;margin:0 0 14px;padding:0 14px;border:1px solid #c8d5df;border-left:4px solid #244d6b;border-radius:8px;background:#edf3f7;color:#173b58;text-align:left;cursor:pointer;font-size:14px;font-weight:800;box-shadow:0 1px 2px #17344f0b;transition:background .15s,border-color .15s}
+.ops-menu-toggle:hover{background:#e4edf3;border-color:#aebfcd}
+.ops-menu-toggle:before{content:'☰';font-size:15px;color:#315d7d}
+.ops-menu-toggle-current{margin-left:auto;color:#315d7d;font-size:12px;font-weight:700}
+.ops-menu-toggle-arrow{font-size:18px;color:#244d6b;transition:transform .15s}
 .ops-menu-toggle.expanded .ops-menu-toggle-arrow{transform:rotate(180deg)}
 .ops-menu-groups[hidden]{display:none!important}
 .ops-menu-groups{margin-top:0}
