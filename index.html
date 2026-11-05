@@ -2240,10 +2240,11 @@ function opsEventOpen(row){opsOpenForm(row);}
 function opsEventStatusClass(s){return /완료/.test(s)?'done':/취소/.test(s)?'cancel':/진행/.test(s)?'progress':'planned';}
 function opsRenderEventCalendar(){
  const content=document.getElementById('opsContent');if(!content)return;
+ const currentSearch=document.getElementById('opsEventSearch')?.value||'';
  const events=opsEventData(),months=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
  const title=OPS_EVENT_VIEW==='year'?OPS_EVENT_YEAR+'년':OPS_EVENT_YEAR+'년 '+(OPS_EVENT_MONTH+1)+'월';
  const nav='<div class="ops-event-toolbar"><div class="ops-event-nav"><button class="btn light" onclick="opsEventShift(-1)">‹</button><strong>'+title+'</strong><button class="btn light" onclick="opsEventShift(1)">›</button><button class="btn light" onclick="opsEventGoToday()">오늘</button></div><div class="ops-event-actions"><div class="ops-event-views"><button class="btn '+(OPS_EVENT_VIEW==='year'?'':'light')+'" onclick="opsEventSetView(\'year\')">연간</button><button class="btn '+(OPS_EVENT_VIEW==='month'?'':'light')+'" onclick="opsEventSetView(\'month\')">월간</button></div><button class="btn" onclick="opsOpenForm()">＋ 행사 등록</button></div></div>';
- const search='<div class="ops-table-tools"><input id="opsEventSearch" type="search" placeholder="행사명·장소·담당 검색" oninput="opsRenderEventCalendar()"><span>'+events.length+'개 일정</span></div>';
+ const search='<div class="ops-table-tools"><input id="opsEventSearch" type="search" value="'+E(currentSearch)+'" placeholder="행사명·장소·담당 검색" oninput="opsRenderEventCalendar()"><span>'+events.length+'개 일정</span></div>';
  const filtered=events.filter(e=>{const q=(document.getElementById('opsEventSearch')?.value||'').trim().toLowerCase();return !q||[e.name,e.place,e.owner,e.status].join(' ').toLowerCase().includes(q);});
  const eventChip=e=>'<button class="ops-event-chip '+opsEventStatusClass(e.status)+'" onclick="opsEventOpen('+e.row.rowNumber+')" title="'+E([e.name,e.place,e.owner,e.status].filter(Boolean).join(' · '))+'"><span>'+E(e.name)+'</span></button>';
  let body='';
