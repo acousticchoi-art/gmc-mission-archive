@@ -1935,13 +1935,14 @@ async function opsRenderOrganization(){
   const findIndex=(headers,re)=>headers.findIndex(x=>re.test(String(x||'')));
   const ci={region:findIndex(ch,/지역|권역/),role:findIndex(ch,/직책|구분|역할|직위/),name:findIndex(ch,/이름|성명|담당자|코디/),branch:findIndex(ch,/지부/),phone:findIndex(ch,/연락|전화|휴대폰/),email:findIndex(ch,/이메일|메일/),note:findIndex(ch,/비고|메모/)};
   const roleOf=row=>String(ci.role>=0?row.values[ci.role]:'코디').trim()||'코디';
-  const roleGroups=[['지역대표',/지역대표|대표/],['코디',/코디/],['부코디',/부코디|부 코디|부대표/],['위원',/위원/]];
+  const roleGroups=[['지역대표',/^지역\\s*대표$/],['코디',/^코디$|코디네이터/],['부코디',/^부\\s*코디$|부코디네이터|부대표/],['위원',/위원/]];
   const cards=roleGroups.map(([label,re])=>{
    const list=cr.filter(r=>re.test(roleOf(r)));
    return '<section class="org-leader-group"><h4>'+label+'</h4>'+(list.length?'<div class="org-leader-grid">'+list.map(r=>{
     const v=r.values;return '<article class="org-leader-card"><b>'+E(v[ci.name]||'이름 미등록')+'</b><span>'+E(v[ci.region]||'지역 미지정')+'</span><small>'+E(v[ci.branch]||'')+'</small>'+(ci.phone>=0&&v[ci.phone]?'<small>'+E(v[ci.phone])+'</small>':'')+(ci.email>=0&&v[ci.email]?'<small>'+E(v[ci.email])+'</small>':'')+'</article>';
    }).join('')+'</div>':'<div class="org-leader-empty">등록된 '+label+' 정보가 없습니다.</div>')+'</section>';
   }).join('');
+  OPS_CURRENT_TAB='지부현황';OPS_HEADERS=bh;OPS_RECORDS=br;
   const branchName=bh.findIndex(x=>/지부명|지부|지회/.test(x)),branchRole=bh.findIndex(x=>/직책|임원|구분|역할|직위/.test(x)),branchPerson=bh.findIndex(x=>/이름|성명|임원|담당자/.test(x));
   const branchRows=br.map(r=>'<tr>'+bh.map((head,i)=>'<td>'+E(r.values[i]||'')+'</td>').join('')+'<td><button class="btn light ops-small-btn" onclick="opsOpenForm('+r.rowNumber+')">수정</button><button class="btn danger ops-small-btn" onclick="opsDeleteRecord('+r.rowNumber+')">삭제</button></td></tr>').join('');
   content.innerHTML='<div class="org-page-head"><div><h3>지역선교부 임원</h3><p>지역대표 · 코디 · 부코디 · 위원</p></div><button class="btn light" onclick="opsRenderOrganization()">새로고침</button></div>'+
