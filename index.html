@@ -2653,9 +2653,13 @@ function opsRenderTable(){
 
 function opsRowsHtml(rows){
   if(!rows.length)return '<tr><td colspan="'+(OPS_HEADERS.length+1)+'" class="ops-no-rows">검색 결과가 없습니다.</td></tr>';
+  const branchList=['지부현황','지부 임원 리스트'].includes(OPS_CURRENT_TAB);
   return rows.map(row=>{
-    const cells=OPS_HEADERS.map((h,i)=>'<td data-label="'+E(h)+'" title="'+E(row.values[i]||'')+'">'+E(row.values[i]||'')+'</td>').join('');
-    return '<tr>'+cells+'<td data-label="관리" class="ops-actions-cell"><button class="btn light ops-small-btn" onclick="opsOpenForm('+row.rowNumber+')">수정</button><button class="btn danger ops-small-btn" onclick="opsDeleteRecord('+row.rowNumber+')">삭제</button></td></tr>';
+    const cells=OPS_HEADERS.map((h,i)=>'<td data-label="'+E(h)+'" title="'+E(row.values[i]||'')+'">'+(branchList?'<span class="ops-branch-mobile-label">'+E(h)+'</span><b class="ops-branch-mobile-value">'+E(row.values[i]||'—')+'</b>':E(row.values[i]||''))+'</td>').join('');
+    const actions=branchList
+      ?'<td data-label="관리" class="ops-actions-cell"><button class="btn light ops-small-btn ops-branch-edit-btn" onclick="opsOpenForm('+row.rowNumber+')">수정</button></td>'
+      :'<td data-label="관리" class="ops-actions-cell"><button class="btn light ops-small-btn" onclick="opsOpenForm('+row.rowNumber+')">수정</button><button class="btn danger ops-small-btn" onclick="opsDeleteRecord('+row.rowNumber+')">삭제</button></td>';
+    return '<tr>'+cells+actions+'</tr>';
   }).join('');
 }
 
@@ -3401,6 +3405,21 @@ if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.se
  #opsContent .ops-mk-table-wrap .ops-table td.ops-actions-cell:before{content:'관리'!important;margin-right:auto!important}
  #opsContent .ops-mk-table-wrap .ops-table .ops-small-btn{min-width:64px!important;min-height:38px!important}
  #opsContent .ops-table-tools input{width:100%!important;min-height:44px!important}
+}
+</style>
+<style id="gmc-branch-officer-mobile-fix">
+.ops-branch-mobile-label{display:none}
+@media(max-width:700px){
+ #opsContent .ops-table-wrap:has(.ops-branch-mobile-label){overflow:visible!important;border:0!important;background:transparent!important}
+ #opsContent .ops-table-wrap:has(.ops-branch-mobile-label) .ops-table{display:block!important;width:100%!important;min-width:0!important}
+ #opsContent .ops-table-wrap:has(.ops-branch-mobile-label) .ops-table thead{display:none!important}
+ #opsContent .ops-table-wrap:has(.ops-branch-mobile-label) .ops-table tbody{display:grid!important;gap:10px!important}
+ #opsContent .ops-table-wrap:has(.ops-branch-mobile-label) .ops-table tr{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important;padding:15px!important;border:1px solid #dfe7ed!important;border-radius:12px!important;background:#fff!important;box-shadow:0 2px 7px rgba(23,52,79,.045)!important}
+ #opsContent .ops-table-wrap:has(.ops-branch-mobile-label) .ops-table td{display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:4px!important;min-width:0!important;padding:2px!important;border:0!important;white-space:normal!important;text-align:left!important;font-size:14px!important;overflow-wrap:anywhere!important}
+ #opsContent .ops-table-wrap:has(.ops-branch-mobile-label) .ops-branch-mobile-label{display:block!important;color:#718596!important;font-size:11px!important;font-weight:700!important;line-height:1.35!important}
+ #opsContent .ops-table-wrap:has(.ops-branch-mobile-label) .ops-branch-mobile-value{display:block!important;color:#263b4d!important;font-size:15px!important;font-weight:600!important;line-height:1.45!important}
+ #opsContent .ops-table-wrap:has(.ops-branch-mobile-label) .ops-table td.ops-actions-cell{grid-column:1/-1!important;display:flex!important;justify-content:flex-end!important;padding-top:8px!important;border-top:1px solid #edf1f4!important}
+ #opsContent .ops-table-wrap:has(.ops-branch-mobile-label) .ops-branch-edit-btn{min-width:0!important;min-height:30px!important;padding:5px 13px!important;font-size:11px!important;border-radius:7px!important}
 }
 </style>
 </body></html>
