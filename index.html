@@ -3365,4 +3365,25 @@ if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.se
 }
 </style>
 
+<style id="gmc-member-toolbar-refinement">
+.hr-list-toolbar{display:block;margin:14px 0 10px}
+.hr-filter-row{display:grid;grid-template-columns:minmax(260px,1fr) 180px 180px;gap:9px;max-width:none;width:100%}
+.hr-filter-row input,.hr-filter-row select{height:46px;border-radius:9px;font-size:13px}
+.hr-result-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0 14px;padding:10px 0;border-top:1px solid #e7edf1}
+.hr-result-actions{display:flex;align-items:center;gap:8px}
+.hr-result-actions select{height:42px;min-width:150px;padding:0 12px;border:1px solid #d8e1e8;border-radius:9px;background:#fff;color:#344b5e;font-size:13px}
+.hr-result-actions .btn{height:42px;min-height:42px;padding:0 16px;border-radius:9px;font-size:13px;white-space:nowrap}
+.hr-result-actions .btn.light{background:#f3f6f8;border-color:#e3e9ee;color:#40586b}
+@media(max-width:850px){.hr-filter-row{grid-template-columns:minmax(0,1fr) 1fr 1fr}}
+@media(max-width:600px){
+.hr-filter-row{grid-template-columns:1fr 1fr;gap:8px}.hr-filter-row input{grid-column:1/-1}
+.hr-filter-row input,.hr-filter-row select{height:44px;font-size:13px}
+.hr-result-toolbar{align-items:flex-start;gap:7px;padding-top:10px}
+.hr-result-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;width:100%}
+.hr-result-actions select{grid-column:1/-1;width:100%;height:42px}
+.hr-result-actions .btn{width:100%;height:44px;padding:0 8px;font-size:12px}
+.hr-result-actions .btn.light{grid-column:auto}
+}
+@media(max-width:380px){.hr-result-actions{grid-template-columns:1fr}.hr-result-actions .btn,.hr-result-actions .btn.light{grid-column:1}}
+</style>
 </body></html>
