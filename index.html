@@ -1849,9 +1849,24 @@ async function hrAutoBuildFamilies(){
   host=document.getElementById('hrList');if(host)host.appendChild(msg);
  }catch(e){hrFamilyManager();const msg=document.createElement('div');msg.className='notice error';msg.style.marginTop='12px';msg.textContent=e.message;const target=document.getElementById('hrList');if(target)target.appendChild(msg);}
 }
+async function hrRepairFamilyGroups(){
+ if(!confirm('MK 명단의 부모 정보를 기준으로 서로 다른 가족 그룹에 등록된 부부를 하나로 합칠까요? 기존 대표자와 자녀 정보는 유지하며, 누락된 배우자 회원도 회원명단에 있을 경우 추가합니다.'))return;
+ const host=document.getElementById('hrList');if(host)host.innerHTML='<div class="notice">부부 관계를 확인하고 가족 정보를 보정하고 있습니다.</div>';
+ try{
+  const result=await A('hrRepairFamilyGroups',[T]);
+  const check=await A('hrGetFamilies',[T]);HR_STATE.families=check.records||[];
+  hrFamilyManager();
+  const msg=document.createElement('div');msg.className='notice ok';msg.style.marginTop='12px';
+  msg.textContent='가족 관계 보정 완료: 부부 그룹 '+result.merged+'건 통합 · 배우자 '+result.added+'명 추가 · 전체 '+result.families+'가정';
+  const target=document.getElementById('hrList');if(target)target.appendChild(msg);
+ }catch(e){
+  hrFamilyManager();const msg=document.createElement('div');msg.className='notice error';msg.style.marginTop='12px';msg.textContent=e.message;
+  const target=document.getElementById('hrList');if(target)target.appendChild(msg);
+ }
+}
 function hrFamilyManager(){
  const groups=hrFamilyGroups(),host=document.getElementById('hrList');if(!host)return;
- host.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0"><h3 style="margin:0">가족 관리</h3><button class="btn light" onclick="hrRenderList()">목록으로</button></div><div class="panel"><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="hrAutoBuildFamilies()">기존 명단으로 가족 자동 등록</button><button class="btn light" onclick="hrEditFamily()">＋ 가족 만들기</button></div><div style="margin-top:14px">'+(groups.map(g=>'<div class="hr-person-row"><span><b>'+E(g.head.name)+'</b><small>'+E(g.members.map(m=>m.name+' · '+m.relationship).join(', '))+'</small></span><span><button class="btn light" onclick="hrEditFamily(\''+E(g.id)+'\')">수정</button> <button class="btn danger" onclick="hrDeleteFamily(\''+E(g.id)+'\')">삭제</button></span></div>').join('')||'<div class="hr-empty">등록된 가족이 없습니다.</div>')+'</div></div>';
+ host.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0"><h3 style="margin:0">가족 관리</h3><button class="btn light" onclick="hrRenderList()">목록으로</button></div><div class="panel"><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="hrAutoBuildFamilies()">기존 명단으로 가족 자동 등록</button><button class="btn light" onclick="hrRepairFamilyGroups()">부부 관계 자동 보정</button><button class="btn light" onclick="hrEditFamily()">＋ 가족 만들기</button></div><div style="margin-top:14px">'+(groups.map(g=>'<div class="hr-person-row"><span><b>'+E(g.head.name)+'</b><small>'+E(g.members.map(m=>m.name+' · '+m.relationship).join(', '))+'</small></span><span><button class="btn light" onclick="hrEditFamily(\''+E(g.id)+'\')">수정</button> <button class="btn danger" onclick="hrDeleteFamily(\''+E(g.id)+'\')">삭제</button></span></div>').join('')||'<div class="hr-empty">등록된 가족이 없습니다.</div>')+'</div></div>';
 }
 function hrEditFamily(id){
  const existing=hrFamilyGroups().find(g=>g.id===id),current=existing?.members||[];
