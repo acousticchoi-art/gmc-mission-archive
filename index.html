@@ -2486,6 +2486,15 @@ async function opsRenderHR(){
  }catch(e){content.innerHTML='<div class="panel ops-error"><h3>인사정보를 불러오지 못했습니다.</h3><p>'+E(e.message)+'</p><button class="btn light" onclick="opsRenderHR()">다시 시도</button></div>';}
 }
 
+function opsToggleBranchMembers(index){
+ const panel=document.getElementById('orgBranchMembers'+index);
+ const button=panel?.previousElementSibling;
+ if(!panel||!button)return;
+ const open=panel.hidden;
+ panel.hidden=!open;
+ button.setAttribute('aria-expanded',String(open));
+ const icon=button.querySelector('i');if(icon)icon.textContent=open?'－':'＋';
+}
 async function opsRenderOrganization(){
  if(!ME||ME.role!=='관리자')return;
  OPS_CURRENT_TAB='지부현황';OPS_EDIT_ROW=null;
@@ -2493,8 +2502,15 @@ async function opsRenderOrganization(){
  document.querySelectorAll('.ops-tab').forEach(b=>b.classList.toggle('active',b.textContent==='조직관리'));
  content.innerHTML='<div class="notice">조직 정보를 불러오는 중입니다.</div>';
  try{
-  const [committee,branch]=await Promise.all([A('opsListRows',[T,'운영위원회']),A('opsListRows',[T,'지부현황'])]);
+  const [committee,branch,dashboard]=await Promise.all([A('opsListRows',[T,'운영위원회']),A('opsListRows',[T,'지부현황']),A('opsDashboardData',[T])]);
   const ch=committee.headers||[],cr=committee.records||[],bh=branch.headers||[],br=branch.records||[];
+  const sections=dashboard.sections||[],memberSheet=sections.find(x=>x.name==='회원명단')||{headers:[],records:[]};
+  const mh=memberSheet.headers||[],mr=memberSheet.records||[];
+  const memberNameIndex=mh.findIndex(h=>/성명|이름/.test(String(h||'')));
+  const memberBranchIndex=mh.findIndex(h=>/지부/.test(String(h||'')));
+  const memberRoleIndex=mh.findIndex(h=>/GMC.*직책|직책/.test(String(h||'')));
+  const branchMembers=new Map();
+  mr.forEach(r=>{const b=String(r.values[memberBranchIndex]||'').trim();const n=String(r.values[memberNameIndex]||'').trim();if(!b||!n)return;if(!branchMembers.has(b))branchMembers.set(b,[]);branchMembers.get(b).push({name:n,role:String(r.values[memberRoleIndex]||'').trim()});});
   const idx=(re)=>ch.findIndex(x=>re.test(String(x||'')));
   const ci={role:idx(/직책|담당/),name:idx(/성명|이름/),members:idx(/부코디|위원|구성원/),work:idx(/주요 업무|업무|역할/)};
   const val=(row,i)=>i>=0?String(row.values[i]||'').trim():'';
@@ -2512,7 +2528,11 @@ async function opsRenderOrganization(){
   const branchIndex=bh.findIndex(h=>/지부|소속/.test(String(h||'')));
   const branchGroups=new Map();
   br.forEach(r=>{const key=String(branchIndex>=0?r.values[branchIndex]||'미분류':'전체 지부').trim()||'미분류';if(!branchGroups.has(key))branchGroups.set(key,[]);branchGroups.get(key).push(r);});
-  const branchCards=Array.from(branchGroups.entries()).sort((a,b)=>a[0].localeCompare(b[0],'ko')).map(([branchName,items])=>'<section class="org-branch-card"><div class="org-branch-card-head"><h4>'+E(branchName)+'</h4><span>'+items.length+'명</span></div><div class="org-branch-officers">'+items.map(r=>'<article class="org-branch-officer">'+bh.map((head,i)=>i===branchIndex?'':('<div class="org-branch-officer-field"><small>'+E(head)+'</small><b>'+E(r.values[i]||'—')+'</b></div>')).join('')+'<div class="org-branch-officer-actions"><button class="btn light ops-small-btn" onclick="opsOpenForm('+r.rowNumber+')">수정</button></div></article>').join('')+'</div></section>').join('');
+  const branchCards=Array.from(branchGroups.entries()).sort((a,b)=>a[0].localeCompare(b[0],'ko')).map(([branchName,items],branchNo)=>{
+   const members=branchMembers.get(branchName)||[];
+   const memberRows=members.length?members.map(m=>'<div class="org-branch-member-row"><b>'+E(m.name)+'</b><span>'+E(m.role||'직책 미입력')+'</span></div>').join(''):'<div class="org-branch-members-empty">회원명단에 등록된 소속 인원이 없습니다.</div>';
+   return '<section class="org-branch-card"><button type="button" class="org-branch-card-head org-branch-toggle" aria-expanded="false" onclick="opsToggleBranchMembers('+branchNo+')"><h4>'+E(branchName)+'</h4><span>'+members.length+'명 <i aria-hidden="true">＋</i></span></button><div class="org-branch-members" id="orgBranchMembers'+branchNo+'" hidden>'+memberRows+'</div><div class="org-branch-officers">'+items.map(r=>'<article class="org-branch-officer">'+bh.map((head,i)=>i===branchIndex?'':('<div class="org-branch-officer-field"><small>'+E(head)+'</small><b>'+E(r.values[i]||'—')+'</b></div>')).join('')+'<div class="org-branch-officer-actions"><button class="btn light ops-small-btn" onclick="opsOpenForm('+r.rowNumber+')">수정</button></div></article>').join('')+'</div></section>';
+  }).join('');
   content.innerHTML='<div class="org-page-head"><h3>지역선교부 조직도</h3></div>'+
    '<div class="org-chart-root">'+leadersHtml+'</div>'+
    '<div class="org-chart-branches">'+coordinatorHtml+'</div>'+
@@ -3421,5 +3441,19 @@ if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.se
  #opsContent .ops-table-wrap:has(.ops-branch-mobile-label) .ops-table td.ops-actions-cell{grid-column:1/-1!important;display:flex!important;justify-content:flex-end!important;padding-top:8px!important;border-top:1px solid #edf1f4!important}
  #opsContent .ops-table-wrap:has(.ops-branch-mobile-label) .ops-branch-edit-btn{min-width:0!important;min-height:30px!important;padding:5px 13px!important;font-size:11px!important;border-radius:7px!important}
 }
+</style>
+<style id="gmc-branch-member-expand">
+.org-branch-toggle{width:100%;border:0;text-align:left;cursor:pointer;font:inherit}
+.org-branch-toggle h4{flex:1}
+.org-branch-toggle span{display:flex;align-items:center;gap:8px}
+.org-branch-toggle i{font-style:normal;font-size:16px}
+.org-branch-members{padding:8px 14px;background:#f8fafb;border-bottom:1px solid #e7edf1}
+.org-branch-members[hidden]{display:none!important}
+.org-branch-member-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 2px;border-bottom:1px solid #e9eef2}
+.org-branch-member-row:last-child{border-bottom:0}
+.org-branch-member-row b{color:#263b4d;font-size:14px}
+.org-branch-member-row span{color:#718596;font-size:12px;text-align:right}
+.org-branch-members-empty{padding:12px 2px;color:#7b8995;font-size:13px}
+@media(max-width:700px){.org-branch-member-row{padding:10px 2px}.org-branch-member-row b{font-size:14px}.org-branch-member-row span{font-size:12px}}
 </style>
 </body></html>
