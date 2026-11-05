@@ -2273,7 +2273,8 @@ function opsReservationData(){
  return OPS_RECORDS.map(row=>{
   let date=dateIx>=0?opsReservationDate(row.values[dateIx]):null;
   if(!date){for(const v of row.values){date=opsReservationDate(v);if(date)break;}}
-  return date?{row,date,time:String(row.values[timeIx]||''),name:String(row.values[nameIx]||''),room:String(row.values[roomIx]||''),purpose:String(row.values[purposeIx]||'')}:null;
+  const endDate=endIx>=0?(opsReservationDate(row.values[endIx])||date):date;
+  return date?{row,date,endDate:endDate<date?date:endDate,time:String(row.values[timeIx]||''),name:String(row.values[nameIx]||''),room:String(row.values[roomIx]||''),purpose:String(row.values[purposeIx]||'')}:null;
  }).filter(Boolean);
 }
 function opsReservationSetView(v){OPS_RES_VIEW=v;opsRenderReservationCalendar();}
@@ -2290,10 +2291,10 @@ function opsRenderReservationCalendar(){
  const chip=x=>'<button class="ops-event-chip planned" onclick="opsOpenForm('+x.row.rowNumber+')" title="'+E([x.time,x.name,x.room,x.purpose].filter(Boolean).join(' · '))+'"><span>'+E([x.time,x.name,x.room].filter(Boolean).join(' · ')||x.purpose||'예약')+'</span></button>';
  let body='';
  if(OPS_RES_VIEW==='year'){
-  body='<div class="ops-year-grid">'+months.map((m,mi)=>{const list=filtered.filter(x=>x.date.getFullYear()===OPS_RES_YEAR&&x.date.getMonth()===mi);return '<button class="ops-year-month" onclick="OPS_RES_MONTH='+mi+';opsReservationSetView(\'month\')"><strong>'+m+'</strong><span>'+list.length+'건 예약</span><div>'+list.slice(0,3).map(x=>'<small>'+x.date.getDate()+'일 · '+E(x.name||x.room||x.purpose||'예약')+'</small>').join('')+(list.length>3?'<small>외 '+(list.length-3)+'건</small>':'')+'</div></button>';}).join('')+'</div>';
+  body='<div class="ops-year-grid">'+months.map((m,mi)=>{const monthStart=new Date(OPS_RES_YEAR,mi,1),monthEnd=new Date(OPS_RES_YEAR,mi+1,0,23,59,59);const list=filtered.filter(x=>x.date<=monthEnd&&x.endDate>=monthStart);return '<button class="ops-year-month" onclick="OPS_RES_MONTH='+mi+';opsReservationSetView(\'month\')"><strong>'+m+'</strong><span>'+list.length+'건 예약</span><div>'+list.slice(0,3).map(x=>'<small>'+x.date.getDate()+'일 · '+E(x.name||x.room||x.purpose||'예약')+'</small>').join('')+(list.length>3?'<small>외 '+(list.length-3)+'건</small>':'')+'</div></button>';}).join('')+'</div>';
  }else{
   const first=new Date(OPS_RES_YEAR,OPS_RES_MONTH,1),offset=(first.getDay()+6)%7,start=new Date(OPS_RES_YEAR,OPS_RES_MONTH,1-offset),total=Math.ceil((offset+new Date(OPS_RES_YEAR,OPS_RES_MONTH+1,0).getDate())/7)*7,week=['월','화','수','목','금','토','일'];
-  body='<div class="ops-month-calendar"><div class="ops-weekdays">'+week.map(x=>'<span>'+x+'</span>').join('')+'</div><div class="ops-calendar-days">'+Array.from({length:total},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);const list=filtered.filter(x=>x.date.getFullYear()===d.getFullYear()&&x.date.getMonth()===d.getMonth()&&x.date.getDate()===d.getDate());return '<div class="ops-calendar-day '+(d.getMonth()!==OPS_RES_MONTH?'outside':'')+(d.toDateString()===new Date().toDateString()?' today':'')+'"><span class="ops-day-number">'+d.getDate()+'</span><div class="ops-day-events">'+list.map(chip).join('')+'</div></div>';}).join('')+'</div></div>';
+  body='<div class="ops-month-calendar"><div class="ops-weekdays">'+week.map(x=>'<span>'+x+'</span>').join('')+'</div><div class="ops-calendar-days">'+Array.from({length:total},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);const list=filtered.filter(x=>x.date<=d&&x.endDate>=d);return '<div class="ops-calendar-day '+(d.getMonth()!==OPS_RES_MONTH?'outside':'')+(d.toDateString()===new Date().toDateString()?' today':'')+'"><span class="ops-day-number">'+d.getDate()+'</span><div class="ops-day-events">'+list.map(chip).join('')+'</div></div>';}).join('')+'</div></div>';
  }
  content.innerHTML='<div class="ops-section-head"><div><h3>사무실 예약</h3><p>연간·월간 예약 일정을 확인하고 관리합니다.</p></div><div class="ops-head-actions"><button class="btn light" onclick="opsOpenTab(\'사무실 예약\')">새로고침</button></div></div>'+nav+search+body+'<div class="ops-event-legend"><span class="planned">예약 일정</span><small>예약을 선택하면 상세 내용을 수정할 수 있습니다.</small></div>';
 }
@@ -2331,16 +2332,29 @@ function opsFilterRows(){
   if(count)count.textContent=filtered.length+'개 항목 표시 / 전체 '+OPS_RECORDS.length+'개';
 }
 
+function opsDateIso(value){
+  const raw=String(value||'').trim();if(!raw)return '';
+  const m=raw.match(/(20\d{2})[./년 -]\s*(\d{1,2})[./월 -]\s*(\d{1,2})/);
+  if(m)return m[1]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[3]).padStart(2,'0');
+  const d=new Date(raw);if(isNaN(d))return '';
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
 function opsOpenForm(rowNumber){
   if(!ME||ME.role!=='관리자'||OPS_CURRENT_TAB==='대시보드')return;
   const record=rowNumber?OPS_RECORDS.find(x=>x.rowNumber===rowNumber):null;
   OPS_EDIT_ROW=record?record.rowNumber:null;
   const values=record?record.values:[];
   const fields=OPS_HEADERS.map((h,i)=>{
-    const label=E(h),value=E(values[i]||'');
+    const label=E(h),raw=String(values[i]||''),value=E(raw);
     const multiline=/내용|비고|메모|설명|주소|안건|결과|과정|목표|역할|담당업무|기록/i.test(h);
+    const isDate=/(날짜|일자|일정일|예약일|사용일|이용일|시작일|종료일|반납일|생년월일|출생일)/i.test(h);
+    const isEventRange=OPS_CURRENT_TAB==='행사관리'&&/(날짜|일정일)/i.test(h);
+    if(isEventRange){
+      const range=opsEventDateRange(raw),start=opsDateIso(range?.start||raw),end=opsDateIso(range?.end||range?.start||raw);
+      return '<div class="ops-field full"><label for="opsField'+i+'_start">'+label+'</label><div class="ops-date-range"><input id="opsField'+i+'_start" type="date" value="'+E(start)+'" aria-label="시작 날짜"><span>부터</span><input id="opsField'+i+'_end" type="date" value="'+E(end)+'" aria-label="종료 날짜"></div><input id="opsField'+i+'" type="hidden" value="'+value+'"></div>';
+    }
     return '<div class="ops-field'+(multiline?' full':'')+'"><label for="opsField'+i+'">'+label+'</label>'+
-      (multiline?'<textarea id="opsField'+i+'" rows="3">'+value+'</textarea>':'<input id="opsField'+i+'" type="text" value="'+value+'">')+'</div>';
+      (multiline?'<textarea id="opsField'+i+'" rows="3">'+value+'</textarea>':'<input id="opsField'+i+'" type="'+(isDate?'date':'text')+'" value="'+(isDate?E(opsDateIso(raw)):value)+'">')+'</div>';
   }).join('');
   document.getElementById('opsContent').innerHTML=
     '<div class="ops-form-panel"><div class="ops-section-head"><div><div class="admin-kicker">DATA ENTRY</div><h3>'+(record?'항목 수정':'새 항목 등록')+'</h3><p>'+E(OPS_CURRENT_TAB)+'</p></div><div class="ops-head-actions">'+(OPS_CURRENT_TAB==='회원명단'?'<button class="btn light" onclick="opsRenderHR()">← 인사관리</button>':'')+'<button class="btn light" onclick="opsRenderTable()">목록으로</button></div></div>'+
@@ -2349,7 +2363,11 @@ function opsOpenForm(rowNumber){
 }
 
 async function opsSaveRecord(){
-  const values=OPS_HEADERS.map((h,i)=>document.getElementById('opsField'+i)?.value||'');
+  const values=OPS_HEADERS.map((h,i)=>{
+    const start=document.getElementById('opsField'+i+'_start'),end=document.getElementById('opsField'+i+'_end');
+    if(start){const a=start.value,b=end?.value||'';return a&&b&&a!==b?a+' ~ '+b:(a||b||'');}
+    return document.getElementById('opsField'+i)?.value||'';
+  });
   try{
     if(OPS_EDIT_ROW)await A('opsUpdateRow',[T,OPS_CURRENT_TAB,OPS_EDIT_ROW,values]);
     else await A('opsCreateRow',[T,OPS_CURRENT_TAB,values]);
@@ -2961,5 +2979,14 @@ if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.se
  .ops-weekdays span{padding:8px 1px;font-size:11px}
 }
 @media(max-width:380px){.ops-calendar-day{min-height:72px}.ops-event-chip span{font-size:8px}}
+</style>
+
+<style id="ops-date-picker-style">
+.ops-field input[type="date"]{min-height:46px;padding:9px 11px;background:#fff;color:#243746;cursor:pointer;accent-color:#17344f}
+.ops-field input[type="date"]:focus{outline:0;border-color:#7890a5;box-shadow:0 0 0 3px rgba(23,52,79,.08)}
+.ops-date-range{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:10px}
+.ops-date-range input[type="date"]{width:100%;min-width:0;min-height:46px;border:1px solid #d6dfe6;border-radius:8px;padding:9px 10px;background:#fff;color:#243746;font:inherit;cursor:pointer}
+.ops-date-range span{color:#758493;font-size:12px;font-weight:700;white-space:nowrap}
+@media(max-width:700px){.ops-date-range{grid-template-columns:1fr;gap:7px}.ops-date-range span{padding-left:2px}.ops-form-actions{position:sticky;bottom:0;background:#fff;padding:12px 0 calc(8px + env(safe-area-inset-bottom));z-index:2}.ops-form-actions .btn{min-height:44px}}
 </style>
 </body></html>
