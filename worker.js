@@ -305,6 +305,24 @@ async function opsGetMany(names){
   }
   return out;
 }
+async function hrFamiliesRows(){
+  const key='가족관리',now=Date.now(),cached=OPS_READ_CACHE.get(key);
+  if(cached&&cached.expiresAt>now)return cloneSheetRows(cached.values);
+  if(OPS_READ_PENDING.has(key))return cloneSheetRows(await OPS_READ_PENDING.get(key));
+  const task=(async()=>{
+    try{
+      const data=await googleJson(opsUrl("'가족관리'!A:D")+'?valueRenderOption=FORMATTED_VALUE');
+      const values=data.values||[];
+      OPS_READ_CACHE.set(key,{values,expiresAt:Date.now()+OPS_READ_TTL_MS});
+      return values;
+    }catch(e){
+      if(cached&&Date.now()-cached.expiresAt<120000)return cached.values;
+      throw e;
+    }finally{OPS_READ_PENDING.delete(key);}
+  })();
+  OPS_READ_PENDING.set(key,task);
+  return cloneSheetRows(await task);
+}
 async function opsMeta(){
   if(!CFG.OPS_SHEET_ID)throw new Error('운영 스프레드시트 ID가 설정되지 않았습니다.');
   if(OPS_META_CACHE.value&&OPS_META_CACHE.expiresAt>Date.now())return OPS_META_CACHE.value;
@@ -843,12 +861,12 @@ async function api(action,args,ctx=null){
     }
     case 'hrGetFamilies':{
       await requireRole(args[0],['관리자']);
-      const meta=await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+'?fields=sheets.properties.title');
+      const meta=await opsMeta();
       if(!(meta.sheets||[]).some(x=>x.properties?.title==='가족관리')){
         await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+':batchUpdate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requests:[{addSheet:{properties:{title:'가족관리'}}}]})});
         await googleJson(opsUrl("'가족관리'!A1:D1")+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({values:[['가족ID','회원명','가족관계','대표자']]})});
       }
-      const values=(await googleJson(opsUrl("'가족관리'!A:D")+'?valueRenderOption=FORMATTED_VALUE')).values||[];
+      const values=await hrFamiliesRows();
       return {ok:true,records:values.slice(1).filter(r=>r.some(v=>String(v||'').trim())).map(r=>({familyId:String(r[0]||''),name:String(r[1]||''),relationship:String(r[2]||''),isHead:String(r[3]||'')==='TRUE'||String(r[3]||'')==='예'}))};
     }
     case 'hrAutoBuildFamilies':{
@@ -969,7 +987,7 @@ async function api(action,args,ctx=null){
       const records=Array.isArray(args[1])?args[1]:[];
       if(records.length>500)throw new Error('가족 구성원이 너무 많습니다.');
       await assertFamilyHistorySafe(records);
-      const meta=await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+'?fields=sheets.properties.title');
+      const meta=await opsMeta();
       if(!(meta.sheets||[]).some(x=>x.properties?.title==='가족관리')){
         await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+':batchUpdate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requests:[{addSheet:{properties:{title:'가족관리'}}}]})});
       }
