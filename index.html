@@ -1835,6 +1835,46 @@ html body #app>.container.ops-page{font-family:inherit;color:#263b4d}
   header .install-cta span{font-size:10px!important}
 }
 </style>
+<style id="hr-branch-accordion-refresh">
+.hr-branch-table-group{
+  margin:14px 0;
+  border:1px solid #dfe6ec;
+  border-radius:14px;
+  background:#fff;
+  overflow:hidden;
+  box-shadow:0 3px 12px rgba(23,52,79,.035);
+}
+.hr-branch-table-title{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  min-height:76px;
+  padding:17px 20px;
+  list-style:none;
+  cursor:pointer;
+  background:#fff;
+  color:#17344f;
+}
+.hr-branch-table-title::-webkit-details-marker{display:none}
+.hr-branch-title-main{display:flex;flex-direction:column;gap:4px;min-width:0}
+.hr-branch-title-main b{font-size:18px;line-height:1.3;font-weight:800;letter-spacing:-.025em}
+.hr-branch-title-main small{font-size:11px;color:#87939d;font-weight:500}
+.hr-branch-title-meta{display:flex;align-items:center;gap:3px;flex:0 0 auto;color:#6f7f8b}
+.hr-branch-title-meta strong{font-size:18px;color:#17344f;font-weight:800;font-variant-numeric:tabular-nums}
+.hr-branch-title-meta small{font-size:11px}
+.hr-branch-title-meta i{display:grid;place-items:center;width:25px;height:25px;margin-left:9px;border-radius:50%;background:#f1f5f7;color:#617686;font-size:17px;font-style:normal;transition:transform .18s ease}
+.hr-branch-table-group[open] .hr-branch-title-meta i{transform:rotate(180deg)}
+.hr-branch-table-title:hover{background:#f9fbfc}
+.hr-branch-members{padding:0 16px 10px;border-top:1px solid #edf1f4}
+@media(max-width:700px){
+ .hr-branch-table-group{margin:11px 0;border-radius:12px}
+ .hr-branch-table-title{min-height:72px;padding:15px 16px}
+ .hr-branch-title-main b{font-size:17px}
+ .hr-branch-title-meta strong{font-size:17px}
+ .hr-branch-members{padding:0 11px 8px}
+}
+</style>
 </head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav><button id="installAppBtn" class="install-cta" type="button" aria-label="GMC 아카이브를 바탕화면에 추가"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v5h14v-5"/></svg><span>바탕화면 추가</span></button></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><button id="backToTop" type="button" aria-label="페이지 맨 위로 이동" title="맨 위로" onclick="window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})">↑</button><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
@@ -2545,7 +2585,7 @@ function hrRenderList(){
   html=groups.map(g=>{const head=all.find(p=>p.name===g.head.name);if(!head)return '';const mkCount=HR_STATE.mk.filter(k=>{const parents=String(k.parent||'').split(/[,，、/&+·\n]+/).map(hrNorm).filter(Boolean);return parents.length>0&&g.members.some(m=>parents.includes(hrNorm(m.name)));}).length;return '<button class="hr-person-row hr-family-row" onclick="'+open(head)+'"><span><b>'+E(head.name)+'</b><small>'+E(head.branch)+' · '+g.members.length+'명 회원 · '+mkCount+'명 MK</small></span><span class="hr-detail-link">상세 보기　›</span></button>';}).join('');
  }else if(HR_STATE.mode==='지부별'){
   const grouped=new Map();people.forEach(p=>{if(!grouped.has(p.branch))grouped.set(p.branch,[]);grouped.get(p.branch).push(p);});
-  html=Array.from(grouped.entries()).sort((x,y)=>x[0].localeCompare(y[0],'ko')).map(([br,members])=>'<section class="hr-branch-table-group"><div class="hr-branch-table-title"><b>'+E(br)+'</b><span>'+members.length+'명</span></div>'+table(members)+'</section>').join('');
+  html=Array.from(grouped.entries()).sort((x,y)=>x[0].localeCompare(y[0],'ko')).map(([br,members])=>'<details class="hr-branch-table-group"><summary class="hr-branch-table-title"><span class="hr-branch-title-main"><b>'+E(br)+'</b><small>지부원 명단</small></span><span class="hr-branch-title-meta"><strong>'+members.length+'</strong><small>명</small><i aria-hidden="true">⌄</i></span></summary><div class="hr-branch-members">'+table(members)+'</div></details>').join('');
  }else html=table(people);
  const roles=['전체',...new Set(all.map(p=>p.role).filter(Boolean))];
  host.innerHTML='<div class="hr-list-toolbar"><div class="hr-mode-switch">'+modeBtns+'</div><div class="hr-filter-row"><input type="search" value="'+E(HR_STATE.query)+'" placeholder="이름·지부·직책·사역지역 검색" oninput="hrSetQuery(this.value,event.isComposing)" oncompositionend="hrSetQuery(this.value,false)"><select aria-label="지부 필터" onchange="hrSetBranch(this.value)"><option value="전체" '+(branch==='전체'?'selected':'')+'>전체 지부</option>'+[...new Set(all.map(p=>p.branch).filter(Boolean))].map(x=>'<option value="'+E(x)+'" '+(x===branch?'selected':'')+'>'+E(x)+'</option>').join('')+'</select><select aria-label="직책 필터" onchange="hrSetRole(this.value)"><option value="전체" '+(role==='전체'?'selected':'')+'>전체 직책</option>'+roles.filter(x=>x!=='전체').map(x=>'<option value="'+E(x)+'" '+(x===role?'selected':'')+'>'+E(x)+'</option>').join('')+'</select></div></div><div class="hr-result-toolbar"><div class="hr-list-count">'+people.length+' <span>검색 결과</span></div><div class="hr-result-actions"><select aria-label="회원 정렬" onchange="hrSetSort(this.value)"><option value="name-asc" '+(HR_STATE.sort==='name-asc'?'selected':'')+'>이름순</option><option value="name-desc" '+(HR_STATE.sort==='name-desc'?'selected':'')+'>이름 역순</option><option value="start-asc" '+(HR_STATE.sort==='start-asc'?'selected':'')+'>사역시작일 빠른순</option><option value="start-desc" '+(HR_STATE.sort==='start-desc'?'selected':'')+'>사역시작일 최근순</option><option value="branch" '+(HR_STATE.sort==='branch'?'selected':'')+'>지부순</option></select><button class="btn light" onclick="hrFamilyManager()">가족관계 관리</button><button class="btn" onclick="hrOpenNewPerson()">＋ 회원 추가</button>'+'</div></div>'+(html||'<div class="hr-empty">검색 조건에 맞는 회원이 없습니다.</div>');
