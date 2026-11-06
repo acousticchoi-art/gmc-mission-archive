@@ -2829,12 +2829,69 @@ function opsOpenForm(rowNumber){
     '<div class="ops-form-actions"><button type="button" class="btn light" onclick="opsRenderTable()">취소</button><button type="submit" class="btn">저장</button></div></form></div>';
 }
 
+function opsReservationTimeRange(value){
+ const raw=String(value||'').trim(),matches=[...raw.matchAll(/(오전|오후)?\s*(\d{1,2}):(\d{2})\s*(오전|오후)?/g)];
+ if(matches.length!==2)return null;
+ const toMinutes=m=>{
+  let h=Number(m[2]),minute=Number(m[3]),period=m[1]||m[4]||'';
+  if(h>23||minute>59)return null;
+  if(period){if(h<1||h>12)return null;h=h%12+(period==='오후'?12:0);}
+  return h*60+minute;
+ };
+ const start=toMinutes(matches[0]),end=toMinutes(matches[1]);
+ return start===null||end===null||end<=start?null:{start,end};
+}
+function opsValidateReservation(values){
+ if(OPS_CURRENT_TAB!=='사무실 예약')return '';
+ const dateIx=OPS_HEADERS.findIndex(h=>/예약일|사용일|이용일|날짜|일자|시작일/.test(String(h)));
+ const endIx=OPS_HEADERS.findIndex(h=>/종료일|반납일/.test(String(h)));
+ const roomIx=OPS_HEADERS.findIndex(h=>/장소|공간|회의실|사무실/.test(String(h)));
+ const timeIx=OPS_HEADERS.findIndex(h=>/시간|이용시간|사용시간/.test(String(h)));
+ if(dateIx<0||roomIx<0)return '';
+ const date=opsReservationDate(values[dateIx]);
+ if(!date)return '예약 날짜를 확인해 주세요. 날짜 열에 유효한 날짜를 입력해야 합니다.';
+ const endDate=endIx>=0?(opsReservationDate(values[endIx])||date):date;
+ if(endDate<date)return '종료일은 시작일보다 빠를 수 없습니다.';
+ const room=String(values[roomIx]||'').normalize('NFKC').replace(/\s+/g,'').toLowerCase();
+ if(!room)return '예약 공간을 입력해 주세요.';
+ const time=String(timeIx>=0?values[timeIx]||'':'').normalize('NFKC').replace(/\s+/g,'').toLowerCase();
+ const candidateRange=opsReservationTimeRange(values[timeIx]||'');
+ const dayStart=new Date(date.getFullYear(),date.getMonth(),date.getDate());
+ const dayEnd=new Date(endDate.getFullYear(),endDate.getMonth(),endDate.getDate());
+ for(const existing of opsReservationData()){
+  if(OPS_EDIT_ROW&&existing.row.rowNumber===OPS_EDIT_ROW)continue;
+  const existingRoom=String(existing.room||'').normalize('NFKC').replace(/\s+/g,'').toLowerCase();
+  if(!existingRoom||existingRoom!==room)continue;
+  const existingStart=new Date(existing.date.getFullYear(),existing.date.getMonth(),existing.date.getDate());
+  const existingEnd=new Date(existing.endDate.getFullYear(),existing.endDate.getMonth(),existing.endDate.getDate());
+  if(dayStart>existingEnd||existingStart>dayEnd)continue;
+  const existingTime=String(existing.time||'').normalize('NFKC').replace(/\s+/g,'').toLowerCase();
+  const existingRange=opsReservationTimeRange(existing.time);
+  let overlaps=false;
+  if(!time||!existingTime)overlaps=true;
+  else if(candidateRange&&existingRange)overlaps=candidateRange.start<existingRange.end&&existingRange.start<candidateRange.end;
+  else overlaps=time===existingTime;
+  if(overlaps){
+   const when=opsDateIso(existing.date);
+   return '예약이 겹칩니다. '+(existing.name||'기존 예약')+' / '+existing.room+' / '+when+(existing.time?' '+existing.time:'')+' 일정과 충돌합니다.';
+  }
+ }
+ return '';
+}
+
 async function opsSaveRecord(){
   const values=OPS_HEADERS.map((h,i)=>{
     const start=document.getElementById('opsField'+i+'_start'),end=document.getElementById('opsField'+i+'_end');
     if(start){const a=start.value,b=end?.value||'';return a&&b&&a!==b?a+' ~ '+b:(a||b||'');}
     return document.getElementById('opsField'+i)?.value||'';
   });
+  const reservationError=opsValidateReservation(values);
+  if(reservationError){
+    const old=document.querySelector('.ops-form-panel');
+    if(old){const msg=document.createElement('div');msg.className='notice error';msg.textContent=reservationError;old.prepend(msg);}
+    else alert(reservationError);
+    return;
+  }
   try{
     if(OPS_EDIT_ROW)await A('opsUpdateRow',[T,OPS_CURRENT_TAB,OPS_EDIT_ROW,values]);
     else await A('opsCreateRow',[T,OPS_CURRENT_TAB,values]);
