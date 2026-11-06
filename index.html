@@ -2328,7 +2328,7 @@ function hrOpenPerson(name){
  const p=HR_STATE.people.find(x=>x.name===name);if(!p)return;
  const family=hrFamilyFor(name),adultNames=family?family.members.map(x=>x.name):[name];
  const familyAdults=adultNames.map(n=>HR_STATE.people.find(x=>x.name===n)||{name:n,role:'가족 구성원'});
- const kids=HR_STATE.mk.filter(k=>adultNames.some(n=>hrNorm(k.parent).includes(hrNorm(n))||hrNorm(n).includes(hrNorm(k.parent))));
+ const kids=HR_STATE.mk.filter(k=>{const parents=String(k.parent||'').split(/[,，、/&+·\n]+/).map(hrNorm).filter(Boolean);return parents.length>0&&adultNames.some(n=>parents.includes(hrNorm(n)));});
  const fields=p.headers.map((h,i)=>({h,v:(/직책/.test(String(h))&&!String(p.v[i]||'').trim()?p.role:(p.v[i]||'')),i})).filter(x=>!/No\.?|유닛/i.test(x.h));
  const fieldsHtml=fields.map(x=>'<div class="hr-detail-field"><small>'+E(x.h)+'</small><b>'+E(x.v)+'</b></div>').join('');
  const adultHtml=familyAdults.map(x=>{const rel=x.name===p.name?'본인':(x.name===family?.head?.name?'배우자 · 가정 대표':(family.members.find(m=>m.name===x.name)?.relationship||'가족'));return '<div class="hr-child"><b>'+E(x.name)+'</b><span>'+E(rel)+'</span><small>'+E(x.role||'')+'</small></div>';}).join('');
@@ -2422,7 +2422,7 @@ async function hrCreatePerson(){
 }
 async function hrDeletePerson(rowNumber){
  const p=HR_STATE.people.find(x=>x.rowNumber===rowNumber);if(!p)return;
- if(!confirm(p.name+' 회원을 회원명단에서 삭제할까요? 삭제 후에는 회원 정보가 복구되지 않습니다. 가족관계 기록은 별도로 유지됩니다.'))return;
+ if(!confirm(p.name+' 회원을 회원명단에서 삭제할까요? 회원 정보와 해당 회원의 가족관계 기록은 함께 삭제됩니다. 안식년·임시귀국 이력은 별도 기록으로 남을 수 있으니 삭제 후 확인해 주세요.'))return;
  try{await A('opsDeleteRow',[T,'회원명단',rowNumber]);const fam=HR_STATE.families.filter(x=>x.name!==p.name);await A('hrSaveFamilies',[T,fam]);await opsRenderHR();hrClosePerson();}
  catch(e){alert('회원 삭제 중 문제가 발생했습니다: '+e.message);}
 }
@@ -2440,7 +2440,7 @@ function hrRenderList(){
   const familySorter=sorters[HR_STATE.sort]||sorters['name-asc'];
   const groups=hrFamilyGroups().filter(g=>g.members.some(m=>people.some(p=>p.name===m.name)));
   groups.sort((a,b)=>{const ah=all.find(p=>p.name===a.head.name),bh=all.find(p=>p.name===b.head.name);if(!ah)return 1;if(!bh)return -1;return familySorter(ah,bh);});
-  html=groups.map(g=>{const head=all.find(p=>p.name===g.head.name);if(!head)return '';const mkCount=HR_STATE.mk.filter(k=>g.members.some(m=>hrNorm(k.parent).includes(hrNorm(m.name))||hrNorm(m.name).includes(hrNorm(k.parent)))).length;return '<button class="hr-person-row hr-family-row" onclick="'+open(head)+'"><span><b>'+E(head.name)+'</b><small>'+E(head.branch)+' · '+g.members.length+'명 회원 · '+mkCount+'명 MK</small></span><span class="hr-detail-link">상세 보기　›</span></button>';}).join('');
+  html=groups.map(g=>{const head=all.find(p=>p.name===g.head.name);if(!head)return '';const mkCount=HR_STATE.mk.filter(k=>{const parents=String(k.parent||'').split(/[,，、/&+·\n]+/).map(hrNorm).filter(Boolean);return parents.length>0&&g.members.some(m=>parents.includes(hrNorm(m.name)));}).length;return '<button class="hr-person-row hr-family-row" onclick="'+open(head)+'"><span><b>'+E(head.name)+'</b><small>'+E(head.branch)+' · '+g.members.length+'명 회원 · '+mkCount+'명 MK</small></span><span class="hr-detail-link">상세 보기　›</span></button>';}).join('');
  }else if(HR_STATE.mode==='지부별'){
   const grouped=new Map();people.forEach(p=>{if(!grouped.has(p.branch))grouped.set(p.branch,[]);grouped.get(p.branch).push(p);});
   html=Array.from(grouped.entries()).sort((x,y)=>x[0].localeCompare(y[0],'ko')).map(([br,members])=>'<section class="hr-branch-table-group"><div class="hr-branch-table-title"><b>'+E(br)+'</b><span>'+members.length+'명</span></div>'+table(members)+'</section>').join('');
@@ -2492,14 +2492,28 @@ async function hrSaveFamilyEdit(id){
  const head=document.querySelector('input[name="hrFamilyHead"]:checked')?.value;
  if(!head||!selected.some(x=>x.dataset.familyName===head)){alert('선택한 가족 중 대표자를 지정하세요.');return;}
  const familyId=id||('F'+Date.now());
- const next=HR_STATE.families.filter(x=>x.familyId!==familyId);
- selected.forEach(el=>{const name=el.dataset.familyName;next.push({familyId,name,relationship:document.querySelector('[data-family-rel="'+CSS.escape(name)+'"]').value,isHead:name===head});});
- try{await A('hrSaveFamilies',[T,next]);const check=await A('hrGetFamilies',[T]);HR_STATE.families=check.records||[];hrFamilyManager();}catch(e){const m=document.getElementById('hrFamilyMsg');if(m)m.innerHTML='<div class="notice error">'+E(e.message)+'</div>';}
+ const selectedNames=selected.map(el=>el.dataset.familyName);
+ // 가족 ID에 연결된 이력이 있는 구성원을 이동·제외하면 이력이 고아 데이터가 되므로 먼저 차단합니다.
+ const affectedIds=new Set(HR_STATE.families.filter(x=>x.familyId&&((x.familyId===familyId&&!selectedNames.includes(x.name))||(x.familyId!==familyId&&selectedNames.includes(x.name)))).map(x=>x.familyId));
+ try{
+  for(const affectedId of affectedIds){
+   const history=await hrGetMovementItems(affectedId,true);
+   if(history.length){alert('선택한 구성원 중 안식년·임시귀국 이력이 연결된 가족이 있습니다. 이력 보존을 위해 가족 구성원 이동 또는 제외를 중단했습니다. 먼저 이력 이전 방식을 정해야 합니다.');return;}
+  }
+  // 한 회원은 한 가족 그룹에만 속하도록 기존 소속을 먼저 정리합니다.
+  const next=HR_STATE.families.filter(x=>x.familyId!==familyId&&!selectedNames.includes(x.name));
+  selected.forEach(el=>{const name=el.dataset.familyName;next.push({familyId,name,relationship:document.querySelector('[data-family-rel="'+CSS.escape(name)+'"]').value,isHead:name===head});});
+  await A('hrSaveFamilies',[T,next]);const check=await A('hrGetFamilies',[T]);HR_STATE.families=check.records||[];hrFamilyManager();
+ }catch(e){const m=document.getElementById('hrFamilyMsg');if(m)m.innerHTML='<div class="notice error">'+E(e.message)+'</div>';}
 }
 async function hrDeleteFamily(id){
- if(!confirm('이 가족 그룹을 삭제할까요? 회원명부의 원본 정보는 변경되지 않습니다.'))return;
- const next=HR_STATE.families.filter(x=>x.familyId!==id);
- try{await A('hrSaveFamilies',[T,next]);const check=await A('hrGetFamilies',[T]);HR_STATE.families=check.records||[];hrFamilyManager();}catch(e){alert(e.message);}
+ if(!confirm('이 가족 그룹을 삭제할까요? 회원명부의 원본 정보는 변경되지 않습니다. 연결된 안식년·임시귀국 이력이 있으면 삭제를 막습니다.'))return;
+ try{
+  const history=await hrGetMovementItems(id,true);
+  if(history.length){alert('이 가족에는 안식년·임시귀국 이력이 '+history.length+'건 연결되어 있습니다. 이력을 보존하기 위해 가족 삭제를 중단했습니다. 먼저 이력 이전 방식을 정해야 합니다.');return;}
+  const next=HR_STATE.families.filter(x=>x.familyId!==id);
+  await A('hrSaveFamilies',[T,next]);const check=await A('hrGetFamilies',[T]);HR_STATE.families=check.records||[];hrFamilyManager();
+ }catch(e){alert('이력 확인 또는 가족 삭제에 실패했습니다. 데이터 보호를 위해 삭제하지 않았습니다: '+e.message);}
 }
 async function opsRenderHR(){
  if(!ME||ME.role!=='관리자')return;
@@ -2699,16 +2713,16 @@ let OPS_RES_YEAR=new Date().getFullYear(),OPS_RES_MONTH=new Date().getMonth(),OP
 function opsReservationDate(value){
  const raw=String(value||'').trim();if(!raw)return null;
  const m=raw.match(/(20\d{2})[./년 -]\s*(\d{1,2})[./월 -]\s*(\d{1,2})/);
- if(m){const d=new Date(+m[1],+m[2]-1,+m[3]);return isNaN(d)?null:d;}
- const d=new Date(raw);return isNaN(d)?null:d;
+ if(!m)return null;
+ const y=+m[1],mo=+m[2],day=+m[3],d=new Date(y,mo-1,day);
+ return mo>=1&&mo<=12&&day>=1&&d.getFullYear()===y&&d.getMonth()===mo-1&&d.getDate()===day?d:null;
 }
 function opsReservationData(){
  const dateIx=OPS_HEADERS.findIndex(h=>/예약일|사용일|이용일|날짜|일자|시작일/.test(String(h)));
  const ix=re=>OPS_HEADERS.findIndex(h=>re.test(String(h)));
  const timeIx=ix(/시간|이용시간|사용시간/),nameIx=ix(/예약자|신청자|성명|이름/),roomIx=ix(/장소|공간|회의실|사무실/),purposeIx=ix(/목적|용도|내용|비고/),endIx=ix(/종료일|반납일/);
  return OPS_RECORDS.map(row=>{
-  let date=dateIx>=0?opsReservationDate(row.values[dateIx]):null;
-  if(!date){for(const v of row.values){date=opsReservationDate(v);if(date)break;}}
+  const date=dateIx>=0?opsReservationDate(row.values[dateIx]):null;
   const endDate=endIx>=0?(opsReservationDate(row.values[endIx])||date):date;
   return date?{row,date,endDate:endDate<date?date:endDate,time:String(row.values[timeIx]||''),name:String(row.values[nameIx]||''),room:String(row.values[roomIx]||''),purpose:String(row.values[purposeIx]||'')}:null;
  }).filter(Boolean);
@@ -2815,12 +2829,69 @@ function opsOpenForm(rowNumber){
     '<div class="ops-form-actions"><button type="button" class="btn light" onclick="opsRenderTable()">취소</button><button type="submit" class="btn">저장</button></div></form></div>';
 }
 
+function opsReservationTimeRange(value){
+ const raw=String(value||'').trim(),matches=[...raw.matchAll(/(오전|오후)?\s*(\d{1,2}):(\d{2})\s*(오전|오후)?/g)];
+ if(matches.length!==2)return null;
+ const toMinutes=m=>{
+  let h=Number(m[2]),minute=Number(m[3]),period=m[1]||m[4]||'';
+  if(h>23||minute>59)return null;
+  if(period){if(h<1||h>12)return null;h=h%12+(period==='오후'?12:0);}
+  return h*60+minute;
+ };
+ const start=toMinutes(matches[0]),end=toMinutes(matches[1]);
+ return start===null||end===null||end<=start?null:{start,end};
+}
+function opsValidateReservation(values){
+ if(OPS_CURRENT_TAB!=='사무실 예약')return '';
+ const dateIx=OPS_HEADERS.findIndex(h=>/예약일|사용일|이용일|날짜|일자|시작일/.test(String(h)));
+ const endIx=OPS_HEADERS.findIndex(h=>/종료일|반납일/.test(String(h)));
+ const roomIx=OPS_HEADERS.findIndex(h=>/장소|공간|회의실|사무실/.test(String(h)));
+ const timeIx=OPS_HEADERS.findIndex(h=>/시간|이용시간|사용시간/.test(String(h)));
+ if(dateIx<0||roomIx<0)return '';
+ const date=opsReservationDate(values[dateIx]);
+ if(!date)return '예약 날짜를 확인해 주세요. 날짜 열에 유효한 날짜를 입력해야 합니다.';
+ const endDate=endIx>=0?(opsReservationDate(values[endIx])||date):date;
+ if(endDate<date)return '종료일은 시작일보다 빠를 수 없습니다.';
+ const room=String(values[roomIx]||'').normalize('NFKC').replace(/\s+/g,'').toLowerCase();
+ if(!room)return '예약 공간을 입력해 주세요.';
+ const time=String(timeIx>=0?values[timeIx]||'':'').normalize('NFKC').replace(/\s+/g,'').toLowerCase();
+ const candidateRange=opsReservationTimeRange(values[timeIx]||'');
+ const dayStart=new Date(date.getFullYear(),date.getMonth(),date.getDate());
+ const dayEnd=new Date(endDate.getFullYear(),endDate.getMonth(),endDate.getDate());
+ for(const existing of opsReservationData()){
+  if(OPS_EDIT_ROW&&existing.row.rowNumber===OPS_EDIT_ROW)continue;
+  const existingRoom=String(existing.room||'').normalize('NFKC').replace(/\s+/g,'').toLowerCase();
+  if(!existingRoom||existingRoom!==room)continue;
+  const existingStart=new Date(existing.date.getFullYear(),existing.date.getMonth(),existing.date.getDate());
+  const existingEnd=new Date(existing.endDate.getFullYear(),existing.endDate.getMonth(),existing.endDate.getDate());
+  if(dayStart>existingEnd||existingStart>dayEnd)continue;
+  const existingTime=String(existing.time||'').normalize('NFKC').replace(/\s+/g,'').toLowerCase();
+  const existingRange=opsReservationTimeRange(existing.time);
+  let overlaps=false;
+  if(!time||!existingTime)overlaps=true;
+  else if(candidateRange&&existingRange)overlaps=candidateRange.start<existingRange.end&&existingRange.start<candidateRange.end;
+  else overlaps=time===existingTime;
+  if(overlaps){
+   const when=opsDateIso(existing.date);
+   return '예약이 겹칩니다. '+(existing.name||'기존 예약')+' / '+existing.room+' / '+when+(existing.time?' '+existing.time:'')+' 일정과 충돌합니다.';
+  }
+ }
+ return '';
+}
+
 async function opsSaveRecord(){
   const values=OPS_HEADERS.map((h,i)=>{
     const start=document.getElementById('opsField'+i+'_start'),end=document.getElementById('opsField'+i+'_end');
     if(start){const a=start.value,b=end?.value||'';return a&&b&&a!==b?a+' ~ '+b:(a||b||'');}
     return document.getElementById('opsField'+i)?.value||'';
   });
+  const reservationError=opsValidateReservation(values);
+  if(reservationError){
+    const old=document.querySelector('.ops-form-panel');
+    if(old){const msg=document.createElement('div');msg.className='notice error';msg.textContent=reservationError;old.prepend(msg);}
+    else alert(reservationError);
+    return;
+  }
   try{
     if(OPS_EDIT_ROW)await A('opsUpdateRow',[T,OPS_CURRENT_TAB,OPS_EDIT_ROW,values]);
     else await A('opsCreateRow',[T,OPS_CURRENT_TAB,values]);
@@ -3023,7 +3094,7 @@ function userAdmin(initialTab='register'){
       <div class="member-register-field"><label for="ue">이메일</label><input id="ue" type="email" autocomplete="email" placeholder="이메일 입력"></div>
       <div class="member-register-field"><label for="ub">소속 지부</label><select id="ub"><option value="">지부 선택</option><option>1지부</option><option>2지부</option><option>3지부</option><option>4지부</option><option>5지부</option><option>수습회원</option><option>기타회원</option></select></div>
       <div class="member-register-field"><label for="ur">권한</label><select id="ur"><option>일반회원</option></select></div>
-      <div class="member-register-field"><label for="up">초기 비밀번호</label><input id="up" type="password" minlength="6" autocomplete="new-password" value="gmcgmc"></div>
+      <div class="member-register-field"><label for="up">초기 비밀번호</label><input id="up" type="password" minlength="6" autocomplete="new-password" required placeholder="6자 이상 입력"></div>
     </div>
     <div class="member-register-footer"><span class="member-form-note">등록 후 회원 목록에서 계정을 관리할 수 있습니다.</span><button class="btn" onclick="createUser()">회원 등록</button></div>
     <div id="umsg"></div>
