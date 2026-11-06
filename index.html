@@ -2452,7 +2452,7 @@ function hrDateSort(v){const t=Date.parse(String(v||'').replace(/[.년]/g,'-').r
 
 async function hrAutoBuildFamilies(){
  if(!confirm('회원명단과 MK 명단을 기준으로 가족을 자동 구성해 가족관리 시트에 등록할까요? 기존 가족 데이터가 있으면 덮어쓰지 않습니다.'))return;
- const host=document.getElementById('hrList');if(host)host.innerHTML='<div class="notice">기존 명단을 분석하고 가족 데이터를 등록하고 있습니다.</div>';
+ let host=document.getElementById('hrList');if(host)host.innerHTML='<div class="notice">기존 명단을 분석하고 가족 데이터를 등록하고 있습니다.</div>';
  try{
   const result=await A('hrAutoBuildFamilies',[T]);
   const check=await A('hrGetFamilies',[T]);HR_STATE.families=check.records||[];
