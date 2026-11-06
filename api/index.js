@@ -1,4 +1,4 @@
-const WORKER_API = 'https://gmc-mission-archive.tyzm.workers.dev/api';
+const WORKER_API = process.env.GMC_WORKER_API_URL || 'https://gmc-mission-archive.tyzm.workers.dev/api';
 
 function allowedGoogleUrl(value) {
   let url;

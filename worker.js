@@ -365,6 +365,7 @@ async function usersRows(){return await sheetGet('회원!A:M');}
 async function materialsRows(){return await sheetGet('자료!A:O');}
 async function findUserByUsername(x){const rows=await usersRows(),q=String(x||'').trim().toLowerCase();for(let i=1;i<rows.length;i++)if(String(rows[i][2]||'').toLowerCase()===q)return rowObj(rows[i],i+1);return null;}
 async function findUserById(id){const rows=await usersRows();for(let i=1;i<rows.length;i++)if(String(rows[i][0]||'')===String(id))return rowObj(rows[i],i+1);return null;}
+async function findUserByIdFresh(id){const rows=(await googleJson(sheetUrl('회원!A:M')+'?valueRenderOption=FORMATTED_VALUE')).values||[];for(let i=1;i<rows.length;i++)if(String(rows[i][0]||'')===String(id))return rowObj(rows[i],i+1);return null;}
 function publicUser(u){return {id:u.id,name:u.name,username:u.username,email:u.email,branch:u.branch,role:u.role,firstLogin:u.firstLogin};}
 function maxNextId(rows,prefix){let n=0;for(let i=1;i<rows.length;i++){const m=String(rows[i][0]||'').match(new RegExp('^'+prefix+'(\\d+)$'));if(m)n=Math.max(n,Number(m[1]));}return prefix+String(n+1).padStart(4,'0');}
 async function hashPassword(p,salt){const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(String(salt)+String(p)));return Array.from(new Uint8Array(d)).map(b=>b.toString(16).padStart(2,'0')).join('');}
@@ -375,8 +376,8 @@ function constEq(a,b){if(a.length!==b.length)return false;let x=0;for(let i=0;i<
 function randomBytes(n){const x=new Uint8Array(n);crypto.getRandomValues(x);return x;}
 function randomHex(n){return Array.from(randomBytes(n)).map(b=>b.toString(16).padStart(2,'0')).join('');}
 async function hmac(data){const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(CFG.SESSION_SECRET),{name:'HMAC',hash:'SHA-256'},false,['sign']);return new Uint8Array(await crypto.subtle.sign('HMAC',key,new TextEncoder().encode(data)));}
-async function makeSession(u){const payload={uid:u.id,role:u.role,username:u.username,exp:Math.floor(Date.now()/1000)+SESSION_TTL};const p=b64uText(JSON.stringify(payload));return p+'.'+b64u(await hmac(p));}
-async function session(token){if(!token)throw new Error('로그인이 필요합니다.');const parts=String(token).split('.');if(parts.length!==2)throw new Error('세션이 올바르지 않습니다.');const expected=b64u(await hmac(parts[0]));if(!constEq(expected,parts[1]))throw new Error('세션이 올바르지 않습니다.');let p;try{p=JSON.parse(new TextDecoder().decode(fromB64u(parts[0])))}catch(_){throw new Error('세션이 올바르지 않습니다.')}if(Number(p.exp)<Math.floor(Date.now()/1000))throw new Error('세션이 만료되었습니다. 다시 로그인해주세요.');return p;}
+async function makeSession(u){const payload={uid:u.id,role:u.role,username:u.username,pv:b64u(await hmac('session-password:'+u.hash)),exp:Math.floor(Date.now()/1000)+SESSION_TTL};const p=b64uText(JSON.stringify(payload));return p+'.'+b64u(await hmac(p));}
+async function session(token){if(!token)throw new Error('로그인이 필요합니다.');const parts=String(token).split('.');if(parts.length!==2)throw new Error('세션이 올바르지 않습니다.');const expected=b64u(await hmac(parts[0]));if(!constEq(expected,parts[1]))throw new Error('세션이 올바르지 않습니다.');let p;try{p=JSON.parse(new TextDecoder().decode(fromB64u(parts[0])))}catch(_){throw new Error('세션이 올바르지 않습니다.')}if(Number(p.exp)<Math.floor(Date.now()/1000))throw new Error('세션이 만료되었습니다. 다시 로그인해주세요.');const u=await findUserByIdFresh(p.uid);if(!u||u.status!=='활성')throw new Error('계정이 비활성화되었거나 존재하지 않습니다. 다시 로그인할 수 없습니다.');if(u.role!==p.role||u.username!==p.username)throw new Error('회원 권한 또는 계정 정보가 변경되었습니다. 다시 로그인해주세요.');const pv=b64u(await hmac('session-password:'+u.hash));if(!p.pv||!constEq(pv,String(p.pv)))throw new Error('비밀번호가 변경되었습니다. 다시 로그인해주세요.');return p;}
 async function requireRole(token,roles){const s=await session(token);if(!roles.includes(s.role))throw new Error('권한이 없습니다.');return s;}
 async function ensurePublic(fileId){
   if(!fileId||!CFG.DRIVE_REFRESH_TOKEN)return;
@@ -417,6 +418,116 @@ async function saveScheduledBackup(){
   const body='--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+metadata+'\r\n--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+data+'\r\n--'+boundary+'--\r\n';
   const file=await driveJson('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,createdTime,webViewLink',{method:'POST',headers:{'content-type':'multipart/related; boundary='+boundary},body});
   return {id:file.id,name:file.name,createdTime:file.createdTime,rows:Object.fromEntries(Object.entries(backup.sheets).map(([k,v])=>[k,Math.max(0,v.length-1)]))};
+}
+
+
+// 가족 이력 보호: 이력이 연결된 가족ID는 구성원과 가족ID를 바꾸지 못하게 합니다.
+async function assertFamilyHistorySafe(proposedRecords){
+  const meta=await opsMeta();
+  const titles=new Set((meta.sheets||[]).map(x=>x.properties?.title));
+  if(!titles.has('유닛이동이력'))return;
+  const history=(await googleJson(opsUrl("'유닛이동이력'!A:J")+'?valueRenderOption=FORMATTED_VALUE')).values||[];
+  const protectedIds=new Set(history.slice(1).filter(opsHasValues).map(r=>String(r[1]||'').trim()).filter(Boolean));
+  if(!protectedIds.size)return;
+  const current=titles.has('가족관리')?((await googleJson(opsUrl("'가족관리'!A:D")+'?valueRenderOption=FORMATTED_VALUE')).values||[]):[];
+  const toGroups=rows=>{
+    const map=new Map();
+    rows.slice(1).filter(opsHasValues).forEach(r=>{
+      const id=String(r[0]||'').trim(),name=String(r[1]||'').trim();
+      if(!id||!name)return;
+      if(!map.has(id))map.set(id,new Set());
+      map.get(id).add(name);
+    });
+    return map;
+  };
+  const before=toGroups(current);
+  const after=toGroups([['가족ID','회원명','가족관계','대표자'],...(proposedRecords||[]).map(x=>[x.familyId,x.name,x.relationship,x.isHead?'TRUE':'FALSE'])]);
+  const same=(a,b)=>{const x=[...(a||[])].sort(),y=[...(b||[])].sort();return x.length===y.length&&x.every((v,i)=>v===y[i]);};
+  for(const id of protectedIds){
+    const oldNames=before.get(id),newNames=after.get(id);
+    if(!oldNames||!oldNames.size)throw new Error('이력 '+id+'번 가족의 기존 구성원을 확인할 수 없습니다. 가족 데이터를 임의로 덮어쓰지 않도록 저장을 중단했습니다.');
+    if(!newNames||!same(oldNames,newNames))throw new Error('안식년·임시귀국 이력이 연결된 가족('+id+')의 구성원 또는 가족ID는 변경할 수 없습니다. 이력을 보존할 수 있도록 먼저 별도 이전 절차가 필요합니다.');
+    for(const name of oldNames){
+      if((proposedRecords||[]).some(x=>String(x.name||'').trim()===name&&String(x.familyId||'').trim()!==id))throw new Error('이력이 연결된 가족('+id+')의 구성원 '+name+'은 다른 가족 그룹에 중복 등록할 수 없습니다.');
+    }
+  }
+}
+
+// 사무실 예약은 Worker에서 최신 시트를 다시 읽어 중복을 검증합니다.
+let RESERVATION_MUTATION_QUEUE=Promise.resolve();
+async function withReservationMutationLock(task){
+  const run=RESERVATION_MUTATION_QUEUE.then(task,task);
+  RESERVATION_MUTATION_QUEUE=run.then(()=>undefined,()=>undefined);
+  return run;
+}
+function parseWorkerReservationDate(value){
+  const raw=String(value||'').trim();
+  const m=raw.match(/(20\d{2})[./년 -]\s*(\d{1,2})[./월 -]\s*(\d{1,2})/);
+  if(!m)return null;
+  const y=Number(m[1]),mo=Number(m[2]),day=Number(m[3]);
+  const d=new Date(Date.UTC(y,mo-1,day));
+  return mo>=1&&mo<=12&&day>=1&&d.getUTCFullYear()===y&&d.getUTCMonth()===mo-1&&d.getUTCDate()===day?d:null;
+}
+function parseWorkerReservationTime(value){
+  const raw=String(value||'').trim();
+  const matches=[...raw.matchAll(/(오전|오후)?\s*(\d{1,2}):(\d{2})\s*(오전|오후)?/g)];
+  if(matches.length!==2)return null;
+  const toMinutes=m=>{
+    let h=Number(m[2]),minute=Number(m[3]),period=m[1]||m[4]||'';
+    if(h>23||minute>59)return null;
+    if(period){if(h<1||h>12)return null;h=h%12+(period==='오후'?12:0);}
+    return h*60+minute;
+  };
+  const start=toMinutes(matches[0]),end=toMinutes(matches[1]);
+  return start===null||end===null||end<=start?null:{start,end};
+}
+function workerReservationNorm(value){
+  return String(value||'').normalize('NFKC').replace(/\s+/g,'').toLowerCase();
+}
+async function validateOfficeReservation(values,skipRowNumber){
+  const range=opsRange('사무실 예약','A1','AZ');
+  const data=await googleJson(opsUrl(range)+'?valueRenderOption=FORMATTED_VALUE');
+  const rows=data.values||[],headers=rows[0]||[];
+  const ix=re=>headers.findIndex(h=>re.test(String(h||'')));
+  const dateIx=ix(/예약일|사용일|이용일|날짜|일자|시작일/);
+  const endIx=ix(/종료일|반납일/),roomIx=ix(/장소|공간|회의실|사무실/),timeIx=ix(/시간|이용시간|사용시간/);
+  if(dateIx<0||roomIx<0)throw new Error('사무실 예약 시트의 날짜·공간 열을 확인할 수 없어 저장을 중단했습니다.');
+  const date=parseWorkerReservationDate(values[dateIx]);
+  if(!date)throw new Error('예약 날짜를 확인해 주세요. 날짜 열에 유효한 날짜를 입력해야 합니다.');
+  const endDate=endIx>=0?(parseWorkerReservationDate(values[endIx])||date):date;
+  if(endDate<date)throw new Error('종료일은 시작일보다 빠를 수 없습니다.');
+  const room=workerReservationNorm(values[roomIx]);
+  if(!room)throw new Error('예약 공간을 입력해 주세요.');
+  const time=workerReservationNorm(timeIx>=0?values[timeIx]:'');
+  const candidateRange=parseWorkerReservationTime(timeIx>=0?values[timeIx]:'');
+  const startDay=Date.UTC(date.getUTCFullYear(),date.getUTCMonth(),date.getUTCDate());
+  const finishDay=Date.UTC(endDate.getUTCFullYear(),endDate.getUTCMonth(),endDate.getUTCDate());
+  for(let i=1;i<rows.length;i++){
+    if(skipRowNumber&&i+1===skipRowNumber)continue;
+    const row=rows[i]||[];
+    if(!opsHasValues(row))continue;
+    const existingDate=parseWorkerReservationDate(row[dateIx]);
+    if(!existingDate)continue;
+    const existingEnd=endIx>=0?(parseWorkerReservationDate(row[endIx])||existingDate):existingDate;
+    const existingStartDay=Date.UTC(existingDate.getUTCFullYear(),existingDate.getUTCMonth(),existingDate.getUTCDate());
+    const existingEndDay=Date.UTC(existingEnd.getUTCFullYear(),existingEnd.getUTCMonth(),existingEnd.getUTCDate());
+    if(startDay>existingEndDay||existingStartDay>finishDay)continue;
+    if(workerReservationNorm(row[roomIx])!==room)continue;
+    const existingTime=workerReservationNorm(timeIx>=0?row[timeIx]:'');
+    const existingRange=parseWorkerReservationTime(timeIx>=0?row[timeIx]:'');
+    let overlaps=false;
+    if(!time||!existingTime)overlaps=true;
+    else if(candidateRange&&existingRange)overlaps=candidateRange.start<existingRange.end&&existingRange.start<candidateRange.end;
+    else overlaps=time===existingTime;
+    if(overlaps){
+      const dateText=String(row[dateIx]||'');
+      throw new Error('예약이 겹칩니다. 기존 예약('+dateText+(timeIx>=0&&row[timeIx]?' '+row[timeIx]:'')+')과 공간·날짜·시간이 충돌합니다.');
+    }
+  }
+}
+
+function escapeDriveQueryValue(value){
+  return String(value??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
 }
 
 async function api(action,args,ctx=null){
@@ -559,13 +670,13 @@ async function api(action,args,ctx=null){
       if(!data.fileName && !data.uploadId)throw new Error('파일 정보가 없습니다.');
       let target=null;
       if(data.uploadId){
-        const esc=String(data.uploadId).replace(/'/g,"\'");
+        const esc=escapeDriveQueryValue(data.uploadId);
         const q=encodeURIComponent("appProperties has { key='gmcUploadId' and value='"+esc+"' } and trashed=false");
         const d=await driveJson('https://www.googleapis.com/drive/v3/files?q='+q+'&orderBy=modifiedTime desc&fields=files(id,name,mimeType,size,webViewLink,modifiedTime,parents,appProperties)&pageSize=10');
         target=(d.files||[])[0]||null;
       }
       if(!target && data.fileName){
-        const name=String(data.fileName).replace(/'/g,"\'");
+        const name=escapeDriveQueryValue(data.fileName);
         const q=encodeURIComponent("name='"+name+"' and trashed=false");
         const d=await driveJson('https://www.googleapis.com/drive/v3/files?q='+q+'&orderBy=modifiedTime desc&fields=files(id,name,mimeType,size,webViewLink,modifiedTime,parents,appProperties)&pageSize=50');
         let files=d.files||[];
@@ -695,7 +806,7 @@ async function api(action,args,ctx=null){
     case 'unitMovementSave':{
       await requireRole(args[0],['관리자']);const id=String(args[1]||''),records=Array.isArray(args[2])?args[2]:[];if(!id||records.length>100)throw new Error('이력 정보가 올바르지 않습니다.');
       let meta=await opsMeta();if(!(meta.sheets||[]).some(x=>x.properties?.title==='유닛이동이력')){await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+':batchUpdate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requests:[{addSheet:{properties:{title:'유닛이동이력'}}}]})});}
-      const range="'유닛이동이력'!A:J",v=(await googleJson(opsUrl(range)+'?valueRenderOption=FORMATTED_VALUE')).values||[],keep=v.slice(1).filter(r=>String(r[1]||'')!==id),rows=[['이력ID','가족ID','유형','시작일','종료일','귀국일','복귀일','목적','비고','수정일'],...keep,...records.map(x=>[x.id,id,x.type,x.startDate,x.endDate,x.returnDate,x.backDate,x.purpose,x.note,new Date().toISOString()])];
+      const range="'유닛이동이력'!A:J",v=(await googleJson(opsUrl(range)+'?valueRenderOption=FORMATTED_VALUE')).values||[],existingForFamily=v.slice(1).filter(r=>String(r[1]||'')===id&&r.some(x=>String(x||'').trim()));if(existingForFamily.length&&!records.length)throw new Error('기존 이력이 있는 가족의 이력 전체를 빈 목록으로 삭제할 수 없습니다. 이력 보존을 위해 저장을 중단했습니다.');const keep=v.slice(1).filter(r=>String(r[1]||'')!==id),rows=[['이력ID','가족ID','유형','시작일','종료일','귀국일','복귀일','목적','비고','수정일'],...keep,...records.map(x=>[x.id,id,x.type,x.startDate,x.endDate,x.returnDate,x.backDate,x.purpose,x.note,new Date().toISOString()])];
       await googleJson(opsUrl(range)+':clear',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});await googleJson(opsUrl(range)+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({majorDimension:'ROWS',values:rows})});invalidateSheetReadCache();invalidateOpsReadCache();return {ok:true};
     }
     case 'hrGetFamilies':{
@@ -746,6 +857,7 @@ async function api(action,args,ctx=null){
         g.names.forEach(n=>records.push({familyId,name:n,relationship:g.children.has(n)?'자녀':(n===head?'본인':'배우자'),isHead:n===head}));
       });
       if(records.length>500)throw new Error('가족 구성원이 500명을 초과했습니다.');
+      await assertFamilyHistorySafe(records);
       const range="'가족관리'!A:D";
       await googleJson(opsUrl(range)+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({majorDimension:'ROWS',values:[['가족ID','회원명','가족관계','대표자'],...records.map(x=>[x.familyId,x.name,x.relationship,x.isHead?'TRUE':'FALSE'])]})});
       invalidateSheetReadCache();invalidateOpsReadCache();
@@ -813,6 +925,7 @@ async function api(action,args,ctx=null){
         });
       }
       if(output.length>500)throw new Error('가족 구성원이 500명을 초과했습니다.');
+      await assertFamilyHistorySafe(output);
       const rows=[['가족ID','회원명','가족관계','대표자'],...output.map(x=>[x.familyId,x.name,x.relationship,x.isHead?'TRUE':'FALSE'])];
       await googleJson(opsUrl("'가족관리'!A:D")+':clear',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({})});
       await googleJson(opsUrl("'가족관리'!A:D")+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({majorDimension:'ROWS',values:rows})});
@@ -823,6 +936,7 @@ async function api(action,args,ctx=null){
       await requireRole(args[0],['관리자']);
       const records=Array.isArray(args[1])?args[1]:[];
       if(records.length>500)throw new Error('가족 구성원이 너무 많습니다.');
+      await assertFamilyHistorySafe(records);
       const meta=await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+'?fields=sheets.properties.title');
       if(!(meta.sheets||[]).some(x=>x.properties?.title==='가족관리')){
         await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+':batchUpdate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requests:[{addSheet:{properties:{title:'가족관리'}}}]})});
@@ -879,7 +993,8 @@ async function api(action,args,ctx=null){
       const rows=await opsGet(name),headers=rows[0]||[];
       if(!headers.length||!headers.some(v=>String(v??'').trim()))throw new Error('먼저 열 이름을 설정해 주세요.');
       const values=Array.isArray(args[2])?args[2]:[];
-      await opsAppend(name,headers.map((_,i)=>values[i]??''));
+      if(name==='사무실 예약')await withReservationMutationLock(async()=>{await validateOfficeReservation(values);await opsAppend(name,headers.map((_,i)=>values[i]??''));});
+      else await opsAppend(name,headers.map((_,i)=>values[i]??''));
       return {ok:true};
     }
     case 'opsUpdateRow':{
@@ -890,7 +1005,8 @@ async function api(action,args,ctx=null){
       if(!Number.isInteger(rowNumber)||rowNumber<2)throw new Error('수정할 행 번호가 올바르지 않습니다.');
       const rows=await opsGet(name),headers=rows[0]||[];
       if(!headers.length||rowNumber>rows.length||!opsHasValues(rows[rowNumber-1]))throw new Error('수정할 행을 찾지 못했습니다. 새로고침 후 다시 시도해 주세요.');
-      await opsUpdateRow(name,rowNumber,values,headers.length);
+      if(name==='사무실 예약')await withReservationMutationLock(async()=>{await validateOfficeReservation(values,rowNumber);await opsUpdateRow(name,rowNumber,values,headers.length);});
+      else await opsUpdateRow(name,rowNumber,values,headers.length);
       return {ok:true};
     }
     case 'opsDeleteRow':{
@@ -901,6 +1017,23 @@ async function api(action,args,ctx=null){
       if(!Number.isInteger(rowNumber)||rowNumber<2)throw new Error('삭제할 행 번호가 올바르지 않습니다.');
       const rows=await opsGet(name);
       if(rowNumber>rows.length||!opsHasValues(rows[rowNumber-1]))throw new Error('삭제할 행을 찾지 못했습니다. 새로고침 후 다시 시도해 주세요.');
+      if(name==='회원명단'){
+        const headers=rows[0]||[],nameIndex=headers.findIndex(h=>/성명|이름/.test(String(h||'')));
+        if(nameIndex<0)throw new Error('회원명단에서 이름 열을 확인하지 못해 안전한 삭제를 진행할 수 없습니다.');
+        const memberName=String(rows[rowNumber-1][nameIndex]||'').trim();
+        const familyMeta=await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+'?fields=sheets.properties.title');
+        const familySheetExists=(familyMeta.sheets||[]).some(x=>x.properties?.title==='가족관리');
+        const movementSheetExists=(familyMeta.sheets||[]).some(x=>x.properties?.title==='유닛이동이력');
+        if(familySheetExists&&movementSheetExists){
+          const [familyData,movementData]=await Promise.all([
+            googleJson(opsUrl("'가족관리'!A:D")+'?valueRenderOption=FORMATTED_VALUE'),
+            googleJson(opsUrl("'유닛이동이력'!A:J")+'?valueRenderOption=FORMATTED_VALUE')
+          ]);
+          const familyIds=new Set((familyData.values||[]).slice(1).filter(r=>String(r[1]||'').trim()===memberName).map(r=>String(r[0]||'').trim()).filter(Boolean));
+          const hasHistory=(movementData.values||[]).slice(1).some(r=>familyIds.has(String(r[1]||'').trim())&&r.some(v=>String(v||'').trim()));
+          if(hasHistory)throw new Error('이 회원이 속한 가족에는 안식년·임시귀국 이력이 연결되어 있습니다. 이력과 가족관계를 보존하기 위해 회원 삭제를 차단했습니다.');
+        }
+      }
       await opsClearRow(name,rowNumber);
       return {ok:true};
     }
@@ -909,12 +1042,35 @@ async function api(action,args,ctx=null){
   }
 }
 
+async function readJsonLimited(request,maxBytes=2*1024*1024){
+  const declared=Number(request.headers.get('content-length')||0);
+  if(declared>maxBytes){const error=new Error('요청 본문이 허용 크기(2 MiB)를 초과했습니다.');error.status=413;throw error;}
+  if(!request.body)return {};
+  const reader=request.body.getReader(),chunks=[];
+  let total=0;
+  try{
+    while(true){
+      const {done,value}=await reader.read();
+      if(done)break;
+      total+=value.byteLength;
+      if(total>maxBytes){
+        try{await reader.cancel();}catch(_){}
+        const error=new Error('요청 본문이 허용 크기(2 MiB)를 초과했습니다.');error.status=413;throw error;
+      }
+      chunks.push(value);
+    }
+  }finally{try{reader.releaseLock();}catch(_){}}
+  const bytes=new Uint8Array(total);let offset=0;
+  for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength;}
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
 async function handleApi(request,env,ctx){
   try{
     config(env);
     if(!CFG.SHEET_ID||!CFG.ROOT_FOLDER_ID||!CFG.SA_EMAIL||!CFG.SA_PRIVATE_KEY||!CFG.SESSION_SECRET)return jsonResponse({ok:false,message:'Cloudflare Worker Secret/Variable 설정이 아직 완료되지 않았습니다.'},500);
-    const body=await request.json();const result=await api(String(body.action||''),Array.isArray(body.args)?body.args:[],ctx);return jsonResponse(result);
-  }catch(e){return jsonResponse({ok:false,message:String(e?.message||e)},400);}
+    const body=await readJsonLimited(request);const result=await api(String(body.action||''),Array.isArray(body.args)?body.args:[],ctx);return jsonResponse(result);
+  }catch(e){return jsonResponse({ok:false,message:String(e?.message||e)},Number(e?.status)||400);}
 }
 
 export default {
