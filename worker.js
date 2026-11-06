@@ -191,11 +191,25 @@ async function oauthCallback(request){
   if(!d.refresh_token)return htmlResponse('<h2 class="err">Refresh Token을 받지 못했습니다.</h2><p>Google 인증 화면에서 동의를 다시 진행해 주세요.</p>',400);
   return htmlResponse('<h2 class="ok">Google Drive 연결 성공</h2><p>아래 Refresh Token을 복사해서 Cloudflare Worker의 <code>GMC_DRIVE_REFRESH_TOKEN</code> Secret에 저장하세요.</p><p><code>'+escHtml(d.refresh_token)+'</code></p><p>이 토큰은 공개해서는 안 됩니다. 이 화면을 다른 사람에게 공유하지 마세요.</p>');
 }
+// Reuse short-lived Drive OAuth tokens per Worker isolate; refresh only near expiry.
+const DRIVE_ACCESS_TOKEN_CACHE={token:'',expiresAt:0,pending:null};
 async function getDriveAccessToken(){
   if(!CFG.GOOGLE_CLIENT_ID||!CFG.GOOGLE_CLIENT_SECRET||!CFG.DRIVE_REFRESH_TOKEN)throw new Error('Google Drive OAuth 설정이 필요합니다.');
-  const body=new URLSearchParams({client_id:CFG.GOOGLE_CLIENT_ID,client_secret:CFG.GOOGLE_CLIENT_SECRET,refresh_token:CFG.DRIVE_REFRESH_TOKEN,grant_type:'refresh_token'});
-  const r=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body});
-  const d=await r.json();if(!r.ok)throw new Error('Google Drive OAuth 토큰 갱신 실패: '+(d.error_description||d.error||'unknown'));return d.access_token;
+  const now=Date.now();
+  if(DRIVE_ACCESS_TOKEN_CACHE.token&&DRIVE_ACCESS_TOKEN_CACHE.expiresAt>now+60000)return DRIVE_ACCESS_TOKEN_CACHE.token;
+  if(DRIVE_ACCESS_TOKEN_CACHE.pending)return DRIVE_ACCESS_TOKEN_CACHE.pending;
+  const task=(async()=>{
+    const body=new URLSearchParams({client_id:CFG.GOOGLE_CLIENT_ID,client_secret:CFG.GOOGLE_CLIENT_SECRET,refresh_token:CFG.DRIVE_REFRESH_TOKEN,grant_type:'refresh_token'});
+    const r=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body});
+    const d=await r.json();
+    if(!r.ok)throw new Error('Google Drive OAuth 토큰 갱신 실패: '+(d.error_description||d.error||'unknown'));
+    if(!d.access_token)throw new Error('Google Drive OAuth 토큰 응답이 올바르지 않습니다.');
+    DRIVE_ACCESS_TOKEN_CACHE.token=d.access_token;
+    DRIVE_ACCESS_TOKEN_CACHE.expiresAt=Date.now()+Number(d.expires_in||3600)*1000;
+    return d.access_token;
+  })();
+  DRIVE_ACCESS_TOKEN_CACHE.pending=task;
+  try{return await task;}finally{if(DRIVE_ACCESS_TOKEN_CACHE.pending===task)DRIVE_ACCESS_TOKEN_CACHE.pending=null;}
 }
 async function driveJson(url,opts={}){const token=await getDriveAccessToken();const headers=new Headers(opts.headers||{});headers.set('Authorization','Bearer '+token);const r=await fetch(url,{...opts,headers});const text=await r.text();let d=null;try{d=JSON.parse(text)}catch(_){}if(!r.ok)throw new Error((d&&d.error&&d.error.message)||('Google Drive API 오류 HTTP '+r.status));return d;}
 async function googleFetch(url,opts={}){
@@ -215,6 +229,28 @@ function sheetUrl(range){return 'https://sheets.googleapis.com/v4/spreadsheets/'
 const SHEET_READ_CACHE=new Map();
 const SHEET_READ_TTL_MS=15000;
 function invalidateSheetReadCache(){SHEET_READ_CACHE.clear();}
+let COMMENT_COUNTS_CACHE={counts:null,expiresAt:0},COMMENT_COUNTS_PENDING=null,COMMENT_COUNTS_VERSION=0;
+const COMMENT_COUNTS_TTL_MS=15000;
+function invalidateCommentCountsCache(){
+  COMMENT_COUNTS_VERSION++;
+  COMMENT_COUNTS_CACHE={counts:null,expiresAt:0};
+}
+async function commentCounts(){
+  if(COMMENT_COUNTS_CACHE.counts&&COMMENT_COUNTS_CACHE.expiresAt>Date.now())return COMMENT_COUNTS_CACHE.counts;
+  if(COMMENT_COUNTS_PENDING)return COMMENT_COUNTS_PENDING;
+  const version=COMMENT_COUNTS_VERSION;
+  const task=(async()=>{
+    const rows=await commentsRows(),counts=Object.create(null);
+    for(let i=1;i<rows.length;i++){
+      const mid=String(rows[i][1]||'');
+      if(mid)counts[mid]=(counts[mid]||0)+1;
+    }
+    if(version===COMMENT_COUNTS_VERSION)COMMENT_COUNTS_CACHE={counts,expiresAt:Date.now()+COMMENT_COUNTS_TTL_MS};
+    return counts;
+  })();
+  COMMENT_COUNTS_PENDING=task;
+  try{return await task;}finally{if(COMMENT_COUNTS_PENDING===task)COMMENT_COUNTS_PENDING=null;}
+}
 async function sheetGet(range){
   const now=Date.now(),cached=SHEET_READ_CACHE.get(range);
   if(cached&&cached.expiresAt>now)return cached.values.map(row=>row.slice());
@@ -230,9 +266,9 @@ async function sheetGet(range){
 }
 async function sheetAppend(sheet,values){
   const result=await googleJson(sheetUrl(sheet+'!A:Z')+':append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({values:[values]})});
-  invalidateSheetReadCache();invalidateOpsReadCache();return result;
+  invalidateSheetReadCache();invalidateOpsReadCache();if(sheet==='댓글')invalidateCommentCountsCache();return result;
 }
-async function sheetUpdate(range,values){const result=await googleJson(sheetUrl(range)+'?valueInputOption=USER_ENTERED',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({range,majorDimension:'ROWS',values})});invalidateSheetReadCache();invalidateOpsReadCache();return result;}
+async function sheetUpdate(range,values){const result=await googleJson(sheetUrl(range)+'?valueInputOption=USER_ENTERED',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({range,majorDimension:'ROWS',values})});invalidateSheetReadCache();invalidateOpsReadCache();if(String(range).startsWith('댓글!'))invalidateCommentCountsCache();return result;}
 
 const OPS_TAB_NAMES = ['회원명단','MK 명단','지부현황','지역선교부 코디','행사관리','사무실 예약','업무관리','운영위원회','사무실 비품대장'];
 function opsQuoteSheet(name){return "'"+String(name).replace(/'/g,"''")+"'";}
@@ -268,6 +304,24 @@ async function opsGetMany(names){
     fresh.forEach((n,i)=>{const values=(data.valueRanges||[])[i]?.values||[];OPS_READ_CACHE.set(n,{values,expiresAt:Date.now()+OPS_READ_TTL_MS});out[n]=cloneSheetRows(values);});
   }
   return out;
+}
+async function hrFamiliesRows(){
+  const key='가족관리',now=Date.now(),cached=OPS_READ_CACHE.get(key);
+  if(cached&&cached.expiresAt>now)return cloneSheetRows(cached.values);
+  if(OPS_READ_PENDING.has(key))return cloneSheetRows(await OPS_READ_PENDING.get(key));
+  const task=(async()=>{
+    try{
+      const data=await googleJson(opsUrl("'가족관리'!A:D")+'?valueRenderOption=FORMATTED_VALUE');
+      const values=data.values||[];
+      OPS_READ_CACHE.set(key,{values,expiresAt:Date.now()+OPS_READ_TTL_MS});
+      return values;
+    }catch(e){
+      if(cached&&Date.now()-cached.expiresAt<120000)return cached.values;
+      throw e;
+    }finally{OPS_READ_PENDING.delete(key);}
+  })();
+  OPS_READ_PENDING.set(key,task);
+  return cloneSheetRows(await task);
 }
 async function opsMeta(){
   if(!CFG.OPS_SHEET_ID)throw new Error('운영 스프레드시트 ID가 설정되지 않았습니다.');
@@ -319,47 +373,47 @@ async function opsClearRow(name,rowNumber){
 
 function normalizeRole(v){return String(v||'')==='관리자'?'관리자':'일반회원';}
 function rowObj(r,row){return {id:String(r[0]||''),name:String(r[1]||''),username:String(r[2]||''),email:String(r[3]||''),phone:String(r[4]||''),branch:String(r[5]||''),role:normalizeRole(r[6]),hash:String(r[7]||''),salt:String(r[8]||''),firstLogin:String(r[9]).toLowerCase()==='true',status:String(r[10]||''),created:String(r[11]||''),lastLogin:String(r[12]||''),row};}
-async function ensureFavoritesSheet(){
-  const d=await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.SHEET_ID)+'?fields=sheets.properties.title');
-  const exists=(d.sheets||[]).some(s=>s.properties?.title==='즐겨찾기');
-  if(exists)return;
-  await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.SHEET_ID)+':batchUpdate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requests:[{addSheet:{properties:{title:'즐겨찾기'}}}]})});
-  await sheetAppend('즐겨찾기',['ID','자료ID','사용자ID','등록일']);
+// Cache spreadsheet tab metadata and coalesce concurrent first-time sheet checks.
+const SHEET_META_CACHE={titles:null,expiresAt:0,pending:null};
+const SHEET_META_TTL_MS=60000;
+const SHEET_ENSURE_PENDING=new Map();
+async function getSheetTitles(){
+  const now=Date.now();
+  if(SHEET_META_CACHE.titles&&SHEET_META_CACHE.expiresAt>now)return SHEET_META_CACHE.titles;
+  if(SHEET_META_CACHE.pending)return SHEET_META_CACHE.pending;
+  const task=(async()=>{
+    const d=await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.SHEET_ID)+'?fields=sheets.properties.title');
+    const titles=new Set((d.sheets||[]).map(s=>String(s.properties?.title||'')));
+    SHEET_META_CACHE.titles=titles;
+    SHEET_META_CACHE.expiresAt=Date.now()+SHEET_META_TTL_MS;
+    return titles;
+  })();
+  SHEET_META_CACHE.pending=task;
+  try{return await task;}finally{if(SHEET_META_CACHE.pending===task)SHEET_META_CACHE.pending=null;}
 }
-async function favoritesRows(){await ensureFavoritesSheet();return await sheetGet('즐겨찾기!A:D');}
-
-async function ensureCommentsSheet(){
-  const d=await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.SHEET_ID)+'?fields=sheets.properties.title');
-  const exists=(d.sheets||[]).some(s=>s.properties?.title==='댓글');
-  if(exists)return;
-  await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.SHEET_ID)+':batchUpdate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requests:[{addSheet:{properties:{title:'댓글'}}}]})});
-  await sheetAppend('댓글',['ID','자료ID','작성자ID','작성자','댓글','작성일','수정일']);
-}
-async function commentsRows(){await ensureCommentsSheet();return await sheetGet('댓글!A:G');}
-let RECENT_VIEWS_READY=false;
-async function ensureRecentViewsSheet(){
-  if(RECENT_VIEWS_READY)return;
-  const d=await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.SHEET_ID)+'?fields=sheets.properties.title');
-  const exists=(d.sheets||[]).some(s=>s.properties?.title==='최근본자료');
-  if(!exists){
+async function ensureNamedSheet(name,headers){
+  if(SHEET_ENSURE_PENDING.has(name))return SHEET_ENSURE_PENDING.get(name);
+  const task=(async()=>{
+    const titles=await getSheetTitles();
+    if(titles.has(name))return;
     await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.SHEET_ID)+':batchUpdate',{
-      method:'POST',
-      headers:{'content-type':'application/json'},
-      body:JSON.stringify({requests:[{addSheet:{properties:{title:'최근본자료'}}}]})
+      method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({requests:[{addSheet:{properties:{title:name}}}]})
     });
-    await sheetAppend('최근본자료',['ID','사용자ID','자료ID','본시간']);
-  }
-  RECENT_VIEWS_READY=true;
+    SHEET_META_CACHE.titles=new Set([...titles,name]);
+    SHEET_META_CACHE.expiresAt=Date.now()+SHEET_META_TTL_MS;
+    await sheetAppend(name,headers);
+  })();
+  SHEET_ENSURE_PENDING.set(name,task);
+  try{return await task;}finally{if(SHEET_ENSURE_PENDING.get(name)===task)SHEET_ENSURE_PENDING.delete(name);}
 }
+async function ensureFavoritesSheet(){await ensureNamedSheet('즐겨찾기',['ID','자료ID','사용자ID','등록일']);}
+async function favoritesRows(){await ensureFavoritesSheet();return await sheetGet('즐겨찾기!A:D');}
+async function ensureCommentsSheet(){await ensureNamedSheet('댓글',['ID','자료ID','작성자ID','작성자','댓글','작성일','수정일']);}
+async function commentsRows(){await ensureCommentsSheet();return await sheetGet('댓글!A:G');}
+async function ensureRecentViewsSheet(){await ensureNamedSheet('최근본자료',['ID','사용자ID','자료ID','본시간']);}
 async function recentViewsRows(){await ensureRecentViewsSheet();return await sheetGet('최근본자료!A:D');}
-
-async function ensureLoginHistorySheet(){
-  const d=await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.SHEET_ID)+'?fields=sheets.properties.title');
-  const exists=(d.sheets||[]).some(s=>s.properties?.title==='로그인이력');
-  if(exists)return;
-  await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.SHEET_ID)+':batchUpdate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requests:[{addSheet:{properties:{title:'로그인이력'}}}]})});
-  await sheetAppend('로그인이력',['ID','사용자ID','이름','아이디','권한','지부','로그인시간']);
-}
+async function ensureLoginHistorySheet(){await ensureNamedSheet('로그인이력',['ID','사용자ID','이름','아이디','권한','지부','로그인시간']);}
 async function loginHistoryRows(){await ensureLoginHistorySheet();return await sheetGet('로그인이력!A:G');}
 async function usersRows(){return await sheetGet('회원!A:M');}
 async function materialsRows(){return await sheetGet('자료!A:O');}
@@ -545,11 +599,7 @@ async function api(action,args,ctx=null){
       const q=norm(f.q), qCompact=compact(q);
       const terms=q?q.split(' ').filter(Boolean):[];
       const cat=norm(f.category), lang=norm(f.language);
-      const rows=await materialsRows(), commentRows=await commentsRows(), counts={};
-      for(let i=1;i<commentRows.length;i++){
-        const mid=String(commentRows[i][1]||'');
-        if(mid)counts[mid]=(counts[mid]||0)+1;
-      }
+      const rows=await materialsRows(), counts=await commentCounts();
       const out=[];
       for(let i=1;i<rows.length;i++){
         const r=rows[i];
@@ -811,12 +861,13 @@ async function api(action,args,ctx=null){
     }
     case 'hrGetFamilies':{
       await requireRole(args[0],['관리자']);
-      const meta=await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+'?fields=sheets.properties.title');
+      const meta=await opsMeta();
       if(!(meta.sheets||[]).some(x=>x.properties?.title==='가족관리')){
         await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+':batchUpdate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requests:[{addSheet:{properties:{title:'가족관리'}}}]})});
         await googleJson(opsUrl("'가족관리'!A1:D1")+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({values:[['가족ID','회원명','가족관계','대표자']]})});
+        invalidateOpsReadCache();
       }
-      const values=(await googleJson(opsUrl("'가족관리'!A:D")+'?valueRenderOption=FORMATTED_VALUE')).values||[];
+      const values=await hrFamiliesRows();
       return {ok:true,records:values.slice(1).filter(r=>r.some(v=>String(v||'').trim())).map(r=>({familyId:String(r[0]||''),name:String(r[1]||''),relationship:String(r[2]||''),isHead:String(r[3]||'')==='TRUE'||String(r[3]||'')==='예'}))};
     }
     case 'hrAutoBuildFamilies':{
@@ -937,7 +988,7 @@ async function api(action,args,ctx=null){
       const records=Array.isArray(args[1])?args[1]:[];
       if(records.length>500)throw new Error('가족 구성원이 너무 많습니다.');
       await assertFamilyHistorySafe(records);
-      const meta=await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+'?fields=sheets.properties.title');
+      const meta=await opsMeta();
       if(!(meta.sheets||[]).some(x=>x.properties?.title==='가족관리')){
         await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+':batchUpdate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requests:[{addSheet:{properties:{title:'가족관리'}}}]})});
       }
