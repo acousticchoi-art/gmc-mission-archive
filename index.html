@@ -2421,7 +2421,7 @@ function hrRenderList(){
  let html='';
  if(HR_STATE.mode==='가정별'){
   const groups=hrFamilyGroups().filter(g=>g.members.some(m=>people.some(p=>p.name===m.name)));
-  html=groups.map(g=>{const head=all.find(p=>p.name===g.head.name);if(!head)return '';return '<button class="hr-person-row hr-family-row" onclick="'+open(head)+'"><span><b>'+E(head.name)+'</b><small>'+E(head.branch)+' · '+g.members.length+'명 회원</small></span><span class="hr-detail-link">상세 보기　›</span></button>';}).join('');
+  html=groups.map(g=>{const head=all.find(p=>p.name===g.head.name);if(!head)return '';const mkCount=HR_STATE.mk.filter(k=>g.members.some(m=>hrNorm(k.parent).includes(hrNorm(m.name))||hrNorm(m.name).includes(hrNorm(k.parent)))).length;return '<button class="hr-person-row hr-family-row" onclick="'+open(head)+'"><span><b>'+E(head.name)+'</b><small>'+E(head.branch)+' · '+g.members.length+'명 회원 · '+mkCount+'명 MK</small></span><span class="hr-detail-link">상세 보기　›</span></button>';}).join('');
  }else if(HR_STATE.mode==='지부별'){
   const grouped=new Map();people.forEach(p=>{if(!grouped.has(p.branch))grouped.set(p.branch,[]);grouped.get(p.branch).push(p);});
   html=Array.from(grouped.entries()).sort((x,y)=>x[0].localeCompare(y[0],'ko')).map(([br,members])=>'<section class="hr-branch-table-group"><div class="hr-branch-table-title"><b>'+E(br)+'</b><span>'+members.length+'명</span></div>'+table(members)+'</section>').join('');
