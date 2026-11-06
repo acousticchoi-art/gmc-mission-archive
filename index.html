@@ -2328,7 +2328,7 @@ function hrOpenPerson(name){
  const p=HR_STATE.people.find(x=>x.name===name);if(!p)return;
  const family=hrFamilyFor(name),adultNames=family?family.members.map(x=>x.name):[name];
  const familyAdults=adultNames.map(n=>HR_STATE.people.find(x=>x.name===n)||{name:n,role:'가족 구성원'});
- const kids=HR_STATE.mk.filter(k=>adultNames.some(n=>hrNorm(k.parent).includes(hrNorm(n))||hrNorm(n).includes(hrNorm(k.parent))));
+ const kids=HR_STATE.mk.filter(k=>{const parents=String(k.parent||'').split(/[,，、/&+·\n]+/).map(hrNorm).filter(Boolean);return parents.length>0&&adultNames.some(n=>parents.includes(hrNorm(n)));});
  const fields=p.headers.map((h,i)=>({h,v:(/직책/.test(String(h))&&!String(p.v[i]||'').trim()?p.role:(p.v[i]||'')),i})).filter(x=>!/No\.?|유닛/i.test(x.h));
  const fieldsHtml=fields.map(x=>'<div class="hr-detail-field"><small>'+E(x.h)+'</small><b>'+E(x.v)+'</b></div>').join('');
  const adultHtml=familyAdults.map(x=>{const rel=x.name===p.name?'본인':(x.name===family?.head?.name?'배우자 · 가정 대표':(family.members.find(m=>m.name===x.name)?.relationship||'가족'));return '<div class="hr-child"><b>'+E(x.name)+'</b><span>'+E(rel)+'</span><small>'+E(x.role||'')+'</small></div>';}).join('');
@@ -2422,7 +2422,7 @@ async function hrCreatePerson(){
 }
 async function hrDeletePerson(rowNumber){
  const p=HR_STATE.people.find(x=>x.rowNumber===rowNumber);if(!p)return;
- if(!confirm(p.name+' 회원을 회원명단에서 삭제할까요? 삭제 후에는 회원 정보가 복구되지 않습니다. 가족관계 기록은 별도로 유지됩니다.'))return;
+ if(!confirm(p.name+' 회원을 회원명단에서 삭제할까요? 회원 정보와 해당 회원의 가족관계 기록은 함께 삭제됩니다. 안식년·임시귀국 이력은 별도 기록으로 남을 수 있으니 삭제 후 확인해 주세요.'))return;
  try{await A('opsDeleteRow',[T,'회원명단',rowNumber]);const fam=HR_STATE.families.filter(x=>x.name!==p.name);await A('hrSaveFamilies',[T,fam]);await opsRenderHR();hrClosePerson();}
  catch(e){alert('회원 삭제 중 문제가 발생했습니다: '+e.message);}
 }
@@ -2492,7 +2492,9 @@ async function hrSaveFamilyEdit(id){
  const head=document.querySelector('input[name="hrFamilyHead"]:checked')?.value;
  if(!head||!selected.some(x=>x.dataset.familyName===head)){alert('선택한 가족 중 대표자를 지정하세요.');return;}
  const familyId=id||('F'+Date.now());
- const next=HR_STATE.families.filter(x=>x.familyId!==familyId);
+ const selectedNames=selected.map(el=>el.dataset.familyName);
+ // 한 회원은 한 가족 그룹에만 속하도록 기존 소속을 먼저 정리합니다.
+ const next=HR_STATE.families.filter(x=>x.familyId!==familyId&&!selectedNames.includes(x.name));
  selected.forEach(el=>{const name=el.dataset.familyName;next.push({familyId,name,relationship:document.querySelector('[data-family-rel="'+CSS.escape(name)+'"]').value,isHead:name===head});});
  try{await A('hrSaveFamilies',[T,next]);const check=await A('hrGetFamilies',[T]);HR_STATE.families=check.records||[];hrFamilyManager();}catch(e){const m=document.getElementById('hrFamilyMsg');if(m)m.innerHTML='<div class="notice error">'+E(e.message)+'</div>';}
 }
@@ -3023,7 +3025,7 @@ function userAdmin(initialTab='register'){
       <div class="member-register-field"><label for="ue">이메일</label><input id="ue" type="email" autocomplete="email" placeholder="이메일 입력"></div>
       <div class="member-register-field"><label for="ub">소속 지부</label><select id="ub"><option value="">지부 선택</option><option>1지부</option><option>2지부</option><option>3지부</option><option>4지부</option><option>5지부</option><option>수습회원</option><option>기타회원</option></select></div>
       <div class="member-register-field"><label for="ur">권한</label><select id="ur"><option>일반회원</option></select></div>
-      <div class="member-register-field"><label for="up">초기 비밀번호</label><input id="up" type="password" minlength="6" autocomplete="new-password" value="gmcgmc"></div>
+      <div class="member-register-field"><label for="up">초기 비밀번호</label><input id="up" type="password" minlength="6" autocomplete="new-password" required placeholder="6자 이상 입력"></div>
     </div>
     <div class="member-register-footer"><span class="member-form-note">등록 후 회원 목록에서 계정을 관리할 수 있습니다.</span><button class="btn" onclick="createUser()">회원 등록</button></div>
     <div id="umsg"></div>
