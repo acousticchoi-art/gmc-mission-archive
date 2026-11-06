@@ -230,7 +230,7 @@ async function sheetGet(range){
 }
 async function sheetAppend(sheet,values){
   const result=await googleJson(sheetUrl(sheet+'!A:Z')+':append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({values:[values]})});
-  invalidateSheetReadCache();return result;
+  invalidateSheetReadCache();invalidateOpsReadCache();return result;
 }
 async function sheetUpdate(range,values){const result=await googleJson(sheetUrl(range)+'?valueInputOption=USER_ENTERED',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({range,majorDimension:'ROWS',values})});invalidateSheetReadCache();return result;}
 
@@ -243,15 +243,37 @@ function opsValidateTab(name){
   if(!OPS_TAB_NAMES.includes(tab))throw new Error('허용되지 않은 운영 탭입니다.');
   return tab;
 }
+// 운영 시트 읽기 캐시: Worker 인스턴스별 30초 TTL + 동시 요청 병합
+const OPS_READ_CACHE=new Map(),OPS_READ_PENDING=new Map(),OPS_META_CACHE={value:null,expiresAt:0};
+const OPS_READ_TTL_MS=30000;
+function cloneSheetRows(rows){return (rows||[]).map(r=>Array.isArray(r)?r.slice():r);}
+function invalidateOpsReadCache(){OPS_READ_CACHE.clear();OPS_READ_PENDING.clear();OPS_META_CACHE.expiresAt=0;}
 async function opsGet(name){
   if(!CFG.OPS_SHEET_ID)throw new Error('운영 스프레드시트 ID가 설정되지 않았습니다.');
-  const range=opsRange(opsValidateTab(name),'A1','AZ');
-  const data=await googleJson(opsUrl(range)+'?valueRenderOption=FORMATTED_VALUE');
-  return data.values||[];
+  name=opsValidateTab(name);const key=name,now=Date.now(),cached=OPS_READ_CACHE.get(key);
+  if(cached&&cached.expiresAt>now)return cloneSheetRows(cached.values);
+  if(OPS_READ_PENDING.has(key))return cloneSheetRows(await OPS_READ_PENDING.get(key));
+  const task=(async()=>{try{const range=opsRange(name,'A1','AZ'),data=await googleJson(opsUrl(range)+'?valueRenderOption=FORMATTED_VALUE'),values=data.values||[];OPS_READ_CACHE.set(key,{values,expiresAt:Date.now()+OPS_READ_TTL_MS});return values;}catch(e){if(cached&&Date.now()-cached.expiresAt<120000)return cached.values;throw e;}finally{OPS_READ_PENDING.delete(key);}})();
+  OPS_READ_PENDING.set(key,task);return cloneSheetRows(await task);
+}
+async function opsGetMany(names){
+  const unique=[...new Set(names.map(opsValidateTab))],out={},missing=[];
+  for(const name of unique){const c=OPS_READ_CACHE.get(name);if(c&&c.expiresAt>Date.now())out[name]=cloneSheetRows(c.values);else missing.push(name);}
+  const pending=missing.filter(n=>OPS_READ_PENDING.has(n)),fresh=missing.filter(n=>!OPS_READ_PENDING.has(n));
+  for(const n of pending)out[n]=cloneSheetRows(await OPS_READ_PENDING.get(n));
+  if(fresh.length){
+    const ranges=fresh.map(n=>opsRange(n,'A1','AZ'));
+    const url='https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+'/values:batchGet?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS&'+ranges.map(x=>'ranges='+encodeURIComponent(x)).join('&');
+    const data=await googleJson(url),byRange=new Map((data.valueRanges||[]).map(v=>[decodeURIComponent(v.range||''),v.values||[]]));
+    fresh.forEach((n,i)=>{const values=(data.valueRanges||[])[i]?.values||[];OPS_READ_CACHE.set(n,{values,expiresAt:Date.now()+OPS_READ_TTL_MS});out[n]=cloneSheetRows(values);});
+  }
+  return out;
 }
 async function opsMeta(){
   if(!CFG.OPS_SHEET_ID)throw new Error('운영 스프레드시트 ID가 설정되지 않았습니다.');
-  return await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+'?fields=sheets.properties(title,sheetId,hidden,gridProperties(rowCount,columnCount))');
+  if(OPS_META_CACHE.value&&OPS_META_CACHE.expiresAt>Date.now())return OPS_META_CACHE.value;
+  const value=await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+'?fields=sheets.properties(title,sheetId,hidden,gridProperties(rowCount,columnCount))');
+  OPS_META_CACHE.value=value;OPS_META_CACHE.expiresAt=Date.now()+60000;return value;
 }
 function opsLastColumn(count){
   let n=Math.max(1,Number(count)||1),out='';
@@ -271,7 +293,7 @@ async function opsAppend(name,values){
   const url=opsUrl(range)+':append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS';
   try{
     const result=await googleJson(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({majorDimension:'ROWS',values:[values.map(v=>safe(v))]})});
-    invalidateSheetReadCache();
+    invalidateSheetReadCache();invalidateOpsReadCache();
     return result;
   }catch(e){throw opsPermissionError(e);}
 }
@@ -674,7 +696,7 @@ async function api(action,args,ctx=null){
       await requireRole(args[0],['관리자']);const id=String(args[1]||''),records=Array.isArray(args[2])?args[2]:[];if(!id||records.length>100)throw new Error('이력 정보가 올바르지 않습니다.');
       let meta=await opsMeta();if(!(meta.sheets||[]).some(x=>x.properties?.title==='유닛이동이력')){await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+':batchUpdate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requests:[{addSheet:{properties:{title:'유닛이동이력'}}}]})});}
       const range="'유닛이동이력'!A:J",v=(await googleJson(opsUrl(range)+'?valueRenderOption=FORMATTED_VALUE')).values||[],keep=v.slice(1).filter(r=>String(r[1]||'')!==id),rows=[['이력ID','가족ID','유형','시작일','종료일','귀국일','복귀일','목적','비고','수정일'],...keep,...records.map(x=>[x.id,id,x.type,x.startDate,x.endDate,x.returnDate,x.backDate,x.purpose,x.note,new Date().toISOString()])];
-      await googleJson(opsUrl(range)+':clear',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});await googleJson(opsUrl(range)+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({majorDimension:'ROWS',values:rows})});invalidateSheetReadCache();return {ok:true};
+      await googleJson(opsUrl(range)+':clear',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});await googleJson(opsUrl(range)+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({majorDimension:'ROWS',values:rows})});invalidateSheetReadCache();invalidateOpsReadCache();return {ok:true};
     }
     case 'hrGetFamilies':{
       await requireRole(args[0],['관리자']);
@@ -814,14 +836,15 @@ async function api(action,args,ctx=null){
     }
     case 'opsDashboardData':{
       await requireRole(args[0],['관리자']);
-      const sections=await Promise.all(OPS_TAB_NAMES.map(async name=>{
-        const rows=await opsGet(name);
+      const allRows=await opsGetMany(OPS_TAB_NAMES);
+      const sections=OPS_TAB_NAMES.map(name=>{
+        const rows=allRows[name]||[];
         const rawHeaders=rows[0]||[];
         const headers=rawHeaders.map((v,i)=>String(v??'').trim()||('항목 '+(i+1)));
         const records=[];
         for(let i=1;i<rows.length;i++)if(opsHasValues(rows[i]))records.push({rowNumber:i+1,values:headers.map((_,j)=>String(rows[i][j]??''))});
         return {name,headers,records,count:records.length,needsHeaders:!rawHeaders.some(v=>String(v??'').trim())};
-      }));
+      });
       return {ok:true,sections};
     }
     case 'opsListRows':{
