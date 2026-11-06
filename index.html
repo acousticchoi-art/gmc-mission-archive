@@ -2530,9 +2530,12 @@ async function opsRenderOrganization(){
  document.querySelectorAll('.ops-tab').forEach(b=>b.classList.toggle('active',b.textContent==='조직관리'));
  content.innerHTML='<div class="notice">조직 정보를 불러오는 중입니다.</div>';
  try{
-  const [committee,branch,dashboard,familyData]=await Promise.all([A('opsListRows',[T,'운영위원회']),A('opsListRows',[T,'지부현황']),A('opsDashboardData',[T]),A('hrGetFamilies',[T])]);
+  const [dashboard,familyData,movementData]=await Promise.all([A('opsDashboardData',[T]),A('hrGetFamilies',[T]),A('unitMovementList',[T])]);
+  const sections=dashboard.sections||[];
+  const committee=sections.find(x=>x.name==='운영위원회')||{headers:[],records:[]};
+  const branch=sections.find(x=>x.name==='지부현황')||{headers:[],records:[]};
   const ch=committee.headers||[],cr=committee.records||[],bh=branch.headers||[],br=branch.records||[];
-  const sections=dashboard.sections||[],memberSheet=sections.find(x=>x.name==='회원명단')||{headers:[],records:[]};
+  const memberSheet=sections.find(x=>x.name==='회원명단')||{headers:[],records:[]};
   const mh=memberSheet.headers||[],mr=memberSheet.records||[];
   const summaryMemberNameIndex=mh.findIndex(h=>/성명|이름/.test(String(h||'')));
   const families=familyData.records||[];
@@ -2544,7 +2547,8 @@ async function opsRenderOrganization(){
   const familyMembers=new Map();
   families.forEach(x=>{if(!familyMembers.has(x.familyId))familyMembers.set(x.familyId,[]);familyMembers.get(x.familyId).push(x);});
   const units=[...familyMembers.entries()].map(([id,members])=>({id,members,head:members.find(x=>x.isHead)||members[0]}));
-  const unitMovements=(await Promise.all(units.map(async u=>{try{const r=await A('unitMovementGet',[T,u.id]);return {unit:u,records:r.records||[]};}catch(e){return {unit:u,records:[],error:e.message};}}))).flatMap(x=>x.records.map(record=>({...record,unit:x.unit})));
+  const unitById=new Map(units.map(u=>[String(u.id),u]));
+  const unitMovements=(movementData.records||[]).map(record=>({...record,unit:unitById.get(String(record.familyId))})).filter(x=>x.unit);
   const today=new Date().toISOString().slice(0,10);
   const activeSabbaticals=unitMovements.filter(x=>x.type==='안식년'&&x.startDate&&x.endDate&&x.startDate<=today&&x.endDate>=today);
   const regionIdx=mh.findIndex(h=>/사역지역|지역/.test(String(h||'')));
