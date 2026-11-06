@@ -2377,7 +2377,7 @@ function hrClosePerson(){const m=document.getElementById('hrPersonModal');if(m)m
 function hrSetMode(mode){HR_STATE.mode=mode;HR_STATE.selected=null;hrRenderList();}
 function hrSetBranch(branch){HR_STATE.branch=branch;HR_STATE.selected=null;hrRenderList();}
 function hrSetRole(role){HR_STATE.role=role;HR_STATE.selected=null;hrRenderList();}
-function hrSetQuery(q,isComposing){HR_STATE.query=q;if(isComposing)return;hrRenderList();}
+function hrSetQuery(q,isComposing){HR_STATE.query=q;if(isComposing)return;const input=document.querySelector("#hrList .hr-filter-row input[type=search]");const start=input?.selectionStart??String(q).length,end=input?.selectionEnd??String(q).length;hrRenderList();const next=document.querySelector("#hrList .hr-filter-row input[type=search]");if(next){next.focus({preventScroll:true});try{next.setSelectionRange(start,end);}catch(e){}}}
 function hrSetSort(value){HR_STATE.sort=value;hrRenderList();}
 function hrOpenNewPerson(){
  const headers=HR_STATE.people[0]?.headers||[];if(!headers.length)return;
