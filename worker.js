@@ -447,6 +447,9 @@ async function assertFamilyHistorySafe(proposedRecords){
     const oldNames=before.get(id),newNames=after.get(id);
     if(!oldNames||!oldNames.size)throw new Error('이력 '+id+'번 가족의 기존 구성원을 확인할 수 없습니다. 가족 데이터를 임의로 덮어쓰지 않도록 저장을 중단했습니다.');
     if(!newNames||!same(oldNames,newNames))throw new Error('안식년·임시귀국 이력이 연결된 가족('+id+')의 구성원 또는 가족ID는 변경할 수 없습니다. 이력을 보존할 수 있도록 먼저 별도 이전 절차가 필요합니다.');
+    for(const name of oldNames){
+      if((proposedRecords||[]).some(x=>String(x.name||'').trim()===name&&String(x.familyId||'').trim()!==id))throw new Error('이력이 연결된 가족('+id+')의 구성원 '+name+'은 다른 가족 그룹에 중복 등록할 수 없습니다.');
+    }
   }
 }
 
