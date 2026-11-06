@@ -1733,6 +1733,108 @@ html body #app>.container.ops-page{font-family:inherit;color:#263b4d}
  #opsContent .ops-inventory-table-wrap .ops-table td{font-size:13px!important}
 }
 </style>
+<style id="gmc-mobile-header-refresh">
+/* GMC header: compact, aligned mobile navigation */
+@media(max-width:700px){
+  header{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto;
+    grid-template-areas:"brand install" "navigation navigation";
+    align-items:center!important;
+    gap:10px 12px!important;
+    min-height:0!important;
+    padding:12px 16px 11px!important;
+    background:#fff;
+    border-bottom:1px solid #e4e9ee;
+  }
+  header .logo{
+    grid-area:brand;
+    justify-self:start;
+    display:flex;
+    align-items:baseline;
+    gap:9px;
+    padding:0!important;
+    margin:0;
+    text-align:left!important;
+    white-space:nowrap;
+    line-height:1.15;
+  }
+  header .logo strong{font-size:25px;letter-spacing:-.045em;color:#17344f}
+  header .logo span{
+    display:inline!important;
+    font-size:11px!important;
+    letter-spacing:.09em;
+    text-transform:uppercase;
+    color:#7b8791;
+    font-weight:700!important;
+  }
+  header nav{
+    grid-area:navigation;
+    display:flex!important;
+    width:100%;
+    min-width:0;
+    justify-content:flex-start!important;
+    align-items:center;
+    flex-wrap:nowrap!important;
+    gap:7px!important;
+    overflow-x:auto!important;
+    overflow-y:hidden;
+    padding:1px 0 2px!important;
+    margin:0;
+    scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+  }
+  header nav::-webkit-scrollbar{display:none}
+  header nav button{
+    flex:0 0 auto!important;
+    min-height:39px;
+    padding:8px 13px!important;
+    margin:0!important;
+    border:1px solid #e2e8ed!important;
+    border-radius:9px!important;
+    background:#f7f9fa!important;
+    color:#52616d!important;
+    font-size:13px!important;
+    line-height:1.2!important;
+    font-weight:600!important;
+    white-space:nowrap;
+  }
+  header nav button.primary,
+  header nav button[aria-current="page"]{
+    border-color:#17344f!important;
+    background:#17344f!important;
+    color:#fff!important;
+    font-weight:750!important;
+  }
+  header nav button.my-material-nav,
+  header nav button.ops-nav{
+    background:#f1f5f7!important;
+    color:#29465c!important;
+  }
+  header .install-cta{
+    grid-area:install;
+    justify-self:end;
+    align-self:center;
+    display:inline-flex!important;
+    width:auto!important;
+    min-width:0!important;
+    min-height:34px!important;
+    height:34px!important;
+    gap:5px!important;
+    margin:0!important;
+    padding:6px 9px!important;
+    border:1px solid #dce4ea!important;
+    border-radius:8px!important;
+    background:#fff!important;
+    color:#60717e!important;
+    font-size:10px!important;
+    line-height:1!important;
+    box-shadow:none!important;
+  }
+  header .install-cta svg{width:13px!important;height:13px!important}
+  header .install-cta span{font-size:10px!important}
+}
+</style>
 </head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav><button id="installAppBtn" class="install-cta" type="button" aria-label="GMC 아카이브를 바탕화면에 추가"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v5h14v-5"/></svg><span>바탕화면 추가</span></button></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><button id="backToTop" type="button" aria-label="페이지 맨 위로 이동" title="맨 위로" onclick="window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})">↑</button><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
