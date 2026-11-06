@@ -229,18 +229,27 @@ function sheetUrl(range){return 'https://sheets.googleapis.com/v4/spreadsheets/'
 const SHEET_READ_CACHE=new Map();
 const SHEET_READ_TTL_MS=15000;
 function invalidateSheetReadCache(){SHEET_READ_CACHE.clear();}
-let COMMENT_COUNTS_CACHE={counts:null,expiresAt:0};
+let COMMENT_COUNTS_CACHE={counts:null,expiresAt:0},COMMENT_COUNTS_PENDING=null,COMMENT_COUNTS_VERSION=0;
 const COMMENT_COUNTS_TTL_MS=15000;
-function invalidateCommentCountsCache(){COMMENT_COUNTS_CACHE={counts:null,expiresAt:0};}
+function invalidateCommentCountsCache(){
+  COMMENT_COUNTS_VERSION++;
+  COMMENT_COUNTS_CACHE={counts:null,expiresAt:0};
+}
 async function commentCounts(){
   if(COMMENT_COUNTS_CACHE.counts&&COMMENT_COUNTS_CACHE.expiresAt>Date.now())return COMMENT_COUNTS_CACHE.counts;
-  const rows=await commentsRows(),counts=Object.create(null);
-  for(let i=1;i<rows.length;i++){
-    const mid=String(rows[i][1]||'');
-    if(mid)counts[mid]=(counts[mid]||0)+1;
-  }
-  COMMENT_COUNTS_CACHE={counts,expiresAt:Date.now()+COMMENT_COUNTS_TTL_MS};
-  return counts;
+  if(COMMENT_COUNTS_PENDING)return COMMENT_COUNTS_PENDING;
+  const version=COMMENT_COUNTS_VERSION;
+  const task=(async()=>{
+    const rows=await commentsRows(),counts=Object.create(null);
+    for(let i=1;i<rows.length;i++){
+      const mid=String(rows[i][1]||'');
+      if(mid)counts[mid]=(counts[mid]||0)+1;
+    }
+    if(version===COMMENT_COUNTS_VERSION)COMMENT_COUNTS_CACHE={counts,expiresAt:Date.now()+COMMENT_COUNTS_TTL_MS};
+    return counts;
+  })();
+  COMMENT_COUNTS_PENDING=task;
+  try{return await task;}finally{if(COMMENT_COUNTS_PENDING===task)COMMENT_COUNTS_PENDING=null;}
 }
 async function sheetGet(range){
   const now=Date.now(),cached=SHEET_READ_CACHE.get(range);
