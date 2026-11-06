@@ -109,7 +109,7 @@ header nav{position:static;flex:1 1 auto;min-width:0}
 .install-cta:hover{background:#f3f6f8;border-color:#bdcbd5;color:#17344f}
 .install-cta:focus-visible{outline:2px solid #b8cbd9;outline-offset:2px}
 @media(max-width:900px){header{flex-wrap:wrap;gap:8px;padding:12px 16px}.logo{order:1}.install-cta{order:2;margin-left:auto;padding:6px 8px;font-size:10px}.install-cta svg{width:13px;height:13px}header nav{order:3;flex:1 0 100%;width:100%;justify-content:flex-start;overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px}header nav button{flex:0 0 auto}}
-</style><style id="search-layout-refresh">
+.hr-movement-box{margin-top:18px;padding:14px;border:1px solid #e8edf1;border-radius:12px}.hr-movement-item,.hr-movement-form{padding:10px;margin:8px 0;border:1px solid #edf0f2;border-radius:9px}.hr-movement-form label{display:block;margin:8px 0}.hr-movement-form input,.hr-movement-form textarea{display:block;width:100%;padding:8px}@media(max-width:600px){.hr-movement-item{display:block}}</style><style id="search-layout-refresh">
 /* Search controls: clearer alignment and more balanced button proportions */
 .hero{padding-top:24px}
 .hero-inner{max-width:1060px}
@@ -2321,12 +2321,33 @@ function hrOpenPerson(name){
  const fieldsHtml=fields.map(x=>'<div class="hr-detail-field"><small>'+E(x.h)+'</small><b>'+E(x.v)+'</b></div>').join('');
  const adultHtml=familyAdults.map(x=>{const rel=x.name===p.name?'본인':(x.name===family?.head?.name?'배우자 · 가정 대표':(family.members.find(m=>m.name===x.name)?.relationship||'가족'));return '<div class="hr-child"><b>'+E(x.name)+'</b><span>'+E(rel)+'</span><small>'+E(x.role||'')+'</small></div>';}).join('');
  const familyHtml=(adultHtml||'')+(kids.length?kids.map(k=>'<div class="hr-child"><b>'+E(k.name)+'</b><span>'+E(k.birth||'출생연도 미입력')+'</span><small>'+E((String(k.resident||'').trim().toUpperCase()==='O'?'미얀마 거주':String(k.resident||'').trim().toUpperCase()==='X'?'해외 거주':k.resident||''))+'</small></div>').join(''):'');
+ const unitId=family?family.id:'PERSON:'+p.name;
+ const movementHtml='<section class="hr-movement-box"><h4>안식년 이력 <button class="btn light" onclick="hrMovementForm(\''+E(unitId)+'\',\'안식년\')">＋ 등록</button></h4><div id="hrMovement-sabbatical">불러오는 중...</div><h4>임시귀국 이력 <button class="btn light" onclick="hrMovementForm(\''+E(unitId)+'\',\'임시귀국\')">＋ 등록</button></h4><div id="hrMovement-return">불러오는 중...</div><div id="hrMovementForm"></div></section>';
  let modal=document.getElementById('hrPersonModal');
  if(!modal){modal=document.createElement('div');modal.id='hrPersonModal';modal.className='hr-modal';modal.onclick=e=>{if(e.target===modal)hrClosePerson();};document.body.appendChild(modal);}
  const editFields=p.headers.map((h,i)=>{if(/No\.?|유닛/i.test(h))return '';const value=E(p.v[i]||''),multi=/내용|비고|메모|설명|주소|업무|사역/i.test(h);return '<label class="hr-edit-field"><span>'+E(h)+'</span>'+(multi?'<textarea id="hrEditField'+i+'" rows="2">'+value+'</textarea>':'<input id="hrEditField'+i+'" type="text" value="'+value+'">')+'</label>';}).join('');
- modal.innerHTML='<div class="hr-modal-card hr-member-detail-modal" role="dialog" aria-modal="true" aria-label="회원 상세 정보"><div class="hr-detail-head"><div><small>MEMBER PROFILE</small><h3>'+E(p.name)+'</h3><p>'+E(p.branch)+'</p></div><button class="btn light ops-small-btn" onclick="hrClosePerson()">닫기 ✕</button></div><section id="hrReadPanel"><div class="hr-detail-section-head"><h4>회원 정보</h4><button class="hr-edit-link" id="hrEditToggle" onclick="hrToggleEdit()"><span>✎</span> 정보 수정</button></div><div class="hr-detail-grid">'+fieldsHtml+'</div><div class="hr-family"><h4>가족 구성원</h4>'+(familyHtml||'<p class="hr-empty">등록된 가족 구성원 정보가 없습니다.</p>')+'</div></section><section id="hrEditPanel" hidden><h4>회원 정보 수정</h4><form class="hr-edit-grid" onsubmit="event.preventDefault();hrSavePerson('+p.rowNumber+')">'+editFields+'<div class="hr-edit-actions"><button type="button" class="btn danger" onclick="hrDeletePerson('+p.rowNumber+')">회원 삭제</button><button type="button" class="btn light" onclick="hrToggleEdit(false)">취소</button><button type="submit" class="btn">변경사항 저장</button></div></form></section></div>';
- modal.classList.add('show');document.body.style.overflow='hidden';
+ modal.innerHTML='<div class="hr-modal-card hr-member-detail-modal" role="dialog" aria-modal="true" aria-label="회원 상세 정보"><div class="hr-detail-head"><div><small>MEMBER PROFILE</small><h3>'+E(p.name)+'</h3><p>'+E(p.branch)+'</p></div><button class="btn light ops-small-btn" onclick="hrClosePerson()">닫기 ✕</button></div><section id="hrReadPanel"><div class="hr-detail-section-head"><h4>회원 정보</h4><button class="hr-edit-link" id="hrEditToggle" onclick="hrToggleEdit()"><span>✎</span> 정보 수정</button></div><div class="hr-detail-grid">'+fieldsHtml+'</div><div class="hr-family"><h4>가족 구성원</h4>'+(familyHtml||'<p class="hr-empty">등록된 가족 구성원 정보가 없습니다.</p>')+'</div>'+movementHtml+'</section><section id="hrEditPanel" hidden><h4>회원 정보 수정</h4><form class="hr-edit-grid" onsubmit="event.preventDefault();hrSavePerson('+p.rowNumber+')">'+editFields+'<div class="hr-edit-actions"><button type="button" class="btn danger" onclick="hrDeletePerson('+p.rowNumber+')">회원 삭제</button><button type="button" class="btn light" onclick="hrToggleEdit(false)">취소</button><button type="submit" class="btn">변경사항 저장</button></div></form></section></div>';
+ modal.dataset.unitId=unitId;modal.classList.add('show');document.body.style.overflow='hidden';hrLoadMovements(unitId);
 }
+
+async function hrLoadMovements(unitId){
+ const r=await A('unitMovementGet',[T,unitId]),items=r.records||[];
+ for(const [type,id] of [['안식년','hrMovement-sabbatical'],['임시귀국','hrMovement-return']]){
+  const host=document.getElementById(id);if(!host)continue;
+  const rows=items.filter(x=>x.type===type).sort((a,b)=>String(b.startDate||b.returnDate||'').localeCompare(String(a.startDate||a.returnDate||'')));
+  host.innerHTML=rows.length?rows.map(x=>'<div class="hr-movement-item"><b>'+E(type==='안식년'?(x.startDate||'')+' ~ '+(x.endDate||''):(x.returnDate||'')+' ~ '+(x.backDate||''))+'</b><p>'+E(x.purpose||x.note||'')+'</p><button onclick="hrMovementForm(\''+E(unitId)+'\',\''+type+'\',\''+E(x.id)+'\')">수정</button> <button onclick="hrMovementDelete(\''+E(unitId)+'\',\''+E(x.id)+'\')">삭제</button></div>').join(''):'<p class="hr-empty">등록된 이력이 없습니다.</p>';
+ }
+}
+async function hrMovementForm(unitId,type,id){
+ const r=await A('unitMovementGet',[T,unitId]),old=(r.records||[]).find(x=>x.id===id)||{},s=type==='안식년',h=document.getElementById('hrMovementForm');
+ h.innerHTML='<div class="hr-movement-form"><h4>'+type+' 등록/수정</h4>'+(s?'<label>시작일 <input id="hmStart" type="date" value="'+E(old.startDate||'')+'"></label><label>종료일 <input id="hmEnd" type="date" value="'+E(old.endDate||'')+'"></label>':'<label>귀국일 <input id="hmReturn" type="date" value="'+E(old.returnDate||'')+'"></label><label>귀국 목적 <input id="hmPurpose" value="'+E(old.purpose||'')+'"></label>')+'<label>미얀마 복귀일 <input id="hmBack" type="date" value="'+E(old.backDate||'')+'"></label><label>비고 <textarea id="hmNote">'+E(old.note||'')+'</textarea></label><button onclick="hrMovementSave(\''+E(unitId)+'\',\''+type+'\',\''+E(id||'')+'\')">저장</button><button onclick="document.getElementById(\'hrMovementForm\').innerHTML=\'\'">취소</button></div>';
+}
+async function hrMovementSave(unitId,type,id){
+ const r=await A('unitMovementGet',[T,unitId]),items=r.records||[],s=type==='안식년',x={id:id||'M'+Date.now(),type,startDate:s?document.getElementById('hmStart').value:'',endDate:s?document.getElementById('hmEnd').value:'',returnDate:s?'':document.getElementById('hmReturn').value,backDate:document.getElementById('hmBack').value,purpose:s?'':document.getElementById('hmPurpose').value,note:document.getElementById('hmNote').value};
+ await A('unitMovementSave',[T,unitId,items.filter(v=>v.id!==x.id).concat(x)]);document.getElementById('hrMovementForm').innerHTML='';await hrLoadMovements(unitId);
+}
+async function hrMovementDelete(unitId,id){if(!confirm('이 이력을 삭제할까요?'))return;const r=await A('unitMovementGet',[T,unitId]);await A('unitMovementSave',[T,unitId,(r.records||[]).filter(x=>x.id!==id)]);await hrLoadMovements(unitId);}
+
 function hrToggleEdit(show){
  const read=document.getElementById('hrReadPanel'),edit=document.getElementById('hrEditPanel'),btn=document.getElementById('hrEditToggle');
  if(!read||!edit)return;const active=show===undefined?edit.hidden:show;read.hidden=active;edit.hidden=!active;if(btn)btn.hidden=active;
