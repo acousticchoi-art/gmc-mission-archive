@@ -2342,8 +2342,13 @@ function hrOpenPerson(name){
  modal.dataset.unitId=unitId;modal.classList.add('show');document.body.style.overflow='hidden';hrLoadMovements(unitId);
 }
 
-async function hrLoadMovements(unitId){
- const r=await A('unitMovementGet',[T,unitId]),items=r.records||[];
+const HR_MOVEMENT_CACHE=window.HR_MOVEMENT_CACHE||(window.HR_MOVEMENT_CACHE={});
+async function hrGetMovementItems(unitId,force){
+ if(!force&&Array.isArray(HR_MOVEMENT_CACHE[unitId]))return HR_MOVEMENT_CACHE[unitId];
+ const r=await A('unitMovementGet',[T,unitId]);HR_MOVEMENT_CACHE[unitId]=r.records||[];return HR_MOVEMENT_CACHE[unitId];
+}
+async function hrLoadMovements(unitId,force){
+ const items=await hrGetMovementItems(unitId,!!force);
  for(const [type,id] of [['안식년','hrMovement-sabbatical'],['임시귀국','hrMovement-return']]){
   const host=document.getElementById(id);if(!host)continue;
   const rows=items.filter(x=>x.type===type).sort((a,b)=>String(b.startDate||b.returnDate||'').localeCompare(String(a.startDate||a.returnDate||'')));
@@ -2351,14 +2356,14 @@ async function hrLoadMovements(unitId){
  }
 }
 async function hrMovementForm(unitId,type,id){
- const r=await A('unitMovementGet',[T,unitId]),old=(r.records||[]).find(x=>x.id===id)||{},s=type==='안식년',h=document.getElementById('hrMovementForm');
+ const items=await hrGetMovementItems(unitId),old=items.find(x=>x.id===id)||{},s=type==='안식년',h=document.getElementById('hrMovementForm');
  h.innerHTML='<div class="hr-movement-form"><h4>'+type+' 등록/수정</h4>'+(s?'<label>시작일 <input id="hmStart" type="date" value="'+E(old.startDate||'')+'"></label><label>종료일 <input id="hmEnd" type="date" value="'+E(old.endDate||'')+'"></label>':'<label>귀국일 <input id="hmReturn" type="date" value="'+E(old.returnDate||'')+'"></label><label>귀국 목적 <input id="hmPurpose" value="'+E(old.purpose||'')+'"></label>')+'<label>미얀마 복귀일 <input id="hmBack" type="date" value="'+E(old.backDate||'')+'"></label><label>비고 <textarea id="hmNote">'+E(old.note||'')+'</textarea></label><button onclick="hrMovementSave(\''+E(unitId)+'\',\''+type+'\',\''+E(id||'')+'\')">저장</button><button onclick="document.getElementById(\'hrMovementForm\').innerHTML=\'\'">취소</button></div>';
 }
 async function hrMovementSave(unitId,type,id){
- const r=await A('unitMovementGet',[T,unitId]),items=r.records||[],s=type==='안식년',x={id:id||'M'+Date.now(),type,startDate:s?document.getElementById('hmStart').value:'',endDate:s?document.getElementById('hmEnd').value:'',returnDate:s?'':document.getElementById('hmReturn').value,backDate:document.getElementById('hmBack').value,purpose:s?'':document.getElementById('hmPurpose').value,note:document.getElementById('hmNote').value};
- await A('unitMovementSave',[T,unitId,items.filter(v=>v.id!==x.id).concat(x)]);document.getElementById('hrMovementForm').innerHTML='';await hrLoadMovements(unitId);
+ const items=await hrGetMovementItems(unitId),s=type==='안식년',x={id:id||'M'+Date.now(),type,startDate:s?document.getElementById('hmStart').value:'',endDate:s?document.getElementById('hmEnd').value:'',returnDate:s?'':document.getElementById('hmReturn').value,backDate:document.getElementById('hmBack').value,purpose:s?'':document.getElementById('hmPurpose').value,note:document.getElementById('hmNote').value},next=items.filter(v=>v.id!==x.id).concat(x);
+ await A('unitMovementSave',[T,unitId,next]);HR_MOVEMENT_CACHE[unitId]=next;document.getElementById('hrMovementForm').innerHTML='';await hrLoadMovements(unitId);
 }
-async function hrMovementDelete(unitId,id){if(!confirm('이 이력을 삭제할까요?'))return;const r=await A('unitMovementGet',[T,unitId]);await A('unitMovementSave',[T,unitId,(r.records||[]).filter(x=>x.id!==id)]);await hrLoadMovements(unitId);}
+async function hrMovementDelete(unitId,id){if(!confirm('이 이력을 삭제할까요?'))return;const items=await hrGetMovementItems(unitId),next=items.filter(x=>x.id!==id);await A('unitMovementSave',[T,unitId,next]);HR_MOVEMENT_CACHE[unitId]=next;await hrLoadMovements(unitId);}
 
 function hrToggleEdit(show){
  const read=document.getElementById('hrReadPanel'),edit=document.getElementById('hrEditPanel'),btn=document.getElementById('hrEditToggle');
