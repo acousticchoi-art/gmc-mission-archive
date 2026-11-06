@@ -2523,10 +2523,29 @@ async function opsRenderOrganization(){
  document.querySelectorAll('.ops-tab').forEach(b=>b.classList.toggle('active',b.textContent==='조직관리'));
  content.innerHTML='<div class="notice">조직 정보를 불러오는 중입니다.</div>';
  try{
-  const [committee,branch,dashboard]=await Promise.all([A('opsListRows',[T,'운영위원회']),A('opsListRows',[T,'지부현황']),A('opsDashboardData',[T])]);
+  const [committee,branch,dashboard,familyData]=await Promise.all([A('opsListRows',[T,'운영위원회']),A('opsListRows',[T,'지부현황']),A('opsDashboardData',[T]),A('hrGetFamilies',[T])]);
   const ch=committee.headers||[],cr=committee.records||[],bh=branch.headers||[],br=branch.records||[];
   const sections=dashboard.sections||[],memberSheet=sections.find(x=>x.name==='회원명단')||{headers:[],records:[]};
   const mh=memberSheet.headers||[],mr=memberSheet.records||[];
+  const families=familyData.records||[];
+  const mkSheet=sections.find(x=>x.name==='MK 명단')||{headers:[],records:[]};
+  const mkHeaders=mkSheet.headers||[],mkRows=mkSheet.records||[];
+  const parentIdx=mkHeaders.findIndex(h=>/부모|선교사/.test(String(h||'')));
+  const mkNameIdx=mkHeaders.findIndex(h=>/MK 이름|이름/.test(String(h||'')));
+  const mkCount=mkRows.filter(r=>String(r.values[mkNameIdx]||'').trim()).length;
+  const familyMembers=new Map();
+  families.forEach(x=>{if(!familyMembers.has(x.familyId))familyMembers.set(x.familyId,[]);familyMembers.get(x.familyId).push(x);});
+  const units=[...familyMembers.entries()].map(([id,members])=>({id,members,head:members.find(x=>x.isHead)||members[0]}));
+  const unitMovements=(await Promise.all(units.map(async u=>{try{const r=await A('unitMovementGet',[T,u.id]);return {unit:u,records:r.records||[]};}catch(e){return {unit:u,records:[],error:e.message};}}))).flatMap(x=>x.records.map(record=>({...record,unit:x.unit})));
+  const today=new Date().toISOString().slice(0,10);
+  const activeSabbaticals=unitMovements.filter(x=>x.type==='안식년'&&x.startDate&&x.endDate&&x.startDate<=today&&x.endDate>=today);
+  const regionIdx=mh.findIndex(h=>/사역지역|지역/.test(String(h||'')));
+  const nameIdxForRegion=mh.findIndex(h=>/성명|이름/.test(String(h||'')));
+  const regionByName=new Map(mr.map(r=>[String(r.values[nameIdxForRegion]||'').trim(),String(r.values[regionIdx]||'').trim()||'미분류']));
+  const regionUnits=new Map();
+  units.forEach(u=>{const region=regionByName.get(u.head.name)||'미분류';regionUnits.set(region,(regionUnits.get(region)||0)+1);});
+  const regionSummary=[...regionUnits.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'ko'));
+  const summaryHtml='<section class="org-summary"><div class="org-summary-head"><div><small>GMC ORGANIZATION SUMMARY</small><h3>선교부 현황 요약</h3></div><span>실시간 등록 데이터 기준</span></div><div class="org-summary-kpis"><article><small>전체 회원</small><strong>'+mr.filter(r=>String(r.values[memberNameIndex]||'').trim()).length+'</strong><span>명</span></article><article><small>전체 유닛</small><strong>'+units.length+'</strong><span>가정</span></article><article><small>전체 MK</small><strong>'+mkCount+'</strong><span>명</span></article><article><small>현재 안식년</small><strong>'+activeSabbaticals.length+'</strong><span>가정</span></article></div><div class="org-summary-bottom"><section><h4>지역별 유닛 현황</h4>'+(regionSummary.length?'<div class="org-region-list">'+regionSummary.map(([name,count])=>'<div><span>'+E(name)+'</span><b>'+count+' 유닛</b></div>').join('')+'</div>':'<p>지역 정보가 등록되어 있지 않습니다.</p>')+'</section><section><h4>현재 안식년 중인 선교사</h4>'+(activeSabbaticals.length?'<div class="org-sabbatical-list">'+activeSabbaticals.sort((a,b)=>String(a.endDate).localeCompare(String(b.endDate))).map(x=>'<div><b>'+E(x.unit.head.name)+'</b><span>'+E(x.startDate)+' ~ '+E(x.endDate)+'까지</span></div>').join('')+'</div>':'<p>현재 안식년 중인 유닛이 없습니다.</p>')+'</section></div></section>';
   const memberNameIndex=mh.findIndex(h=>/성명|이름/.test(String(h||'')));
   const memberBranchIndex=mh.findIndex(h=>/지부/.test(String(h||'')));
   const memberRoleIndex=mh.findIndex(h=>/GMC.*직책|직책/.test(String(h||'')));
@@ -2554,7 +2573,7 @@ async function opsRenderOrganization(){
    const memberRows=members.length?members.map(m=>'<div class="org-branch-member-row"><b>'+E(m.name)+'</b><span>'+E(m.role||'직책 미입력')+'</span></div>').join(''):'<div class="org-branch-members-empty">회원명단에 등록된 소속 인원이 없습니다.</div>';
    return '<section class="org-branch-card"><button type="button" class="org-branch-card-head org-branch-toggle" aria-expanded="false" onclick="opsToggleBranchMembers('+branchNo+')"><h4>'+E(branchName)+'</h4><span>'+members.length+'명 <i aria-hidden="true">＋</i></span></button><div class="org-branch-members" id="orgBranchMembers'+branchNo+'" hidden>'+memberRows+'</div><div class="org-branch-officers">'+items.map(r=>'<article class="org-branch-officer">'+bh.map((head,i)=>i===branchIndex?'':('<div class="org-branch-officer-field"><small>'+E(head)+'</small><b>'+E(r.values[i]||'—')+'</b></div>')).join('')+'<div class="org-branch-officer-actions"><button class="btn light ops-small-btn" onclick="opsOpenForm('+r.rowNumber+')">수정</button></div></article>').join('')+'</div></section>';
   }).join('');
-  content.innerHTML='<div class="org-page-head"><h3>지역선교부 조직도</h3></div>'+
+  content.innerHTML=summaryHtml+'<div class="org-page-head"><h3>지역선교부 조직도</h3></div>'+
    '<div class="org-chart-root">'+leadersHtml+'</div>'+
    '<div class="org-chart-branches">'+coordinatorHtml+'</div>'+
    (research?'<section class="org-chart-group org-research-group"><h4>지역연구소 <span style="margin-left:8px;color:#74808b;font-size:12px;font-weight:500">전략 연구·자료화·네트워크</span></h4><div class="org-chart-items">'+line('지역연구소 소장',research.name||'')+(researchMembers.length?researchMembers.map(name=>line('위원',name)).join(''):'')+'</div></section>':'')+
@@ -3477,4 +3496,24 @@ if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.se
 .org-branch-members-empty{padding:12px 2px;color:#7b8995;font-size:13px}
 @media(max-width:700px){.org-branch-member-row{padding:10px 2px}.org-branch-member-row b{font-size:14px}.org-branch-member-row span{font-size:12px}}
 </style>
-</body></html>
+<style id="gmc-org-summary-style">
+.org-summary{margin:0 0 24px;padding:20px;background:#fff;border:1px solid #dfe7ed;border-radius:14px;box-shadow:0 4px 16px rgba(23,52,79,.045)}
+.org-summary-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px}
+.org-summary-head small{display:block;color:#9a805d;font-size:10px;font-weight:800;letter-spacing:.12em}
+.org-summary-head h3{margin:3px 0 0;color:#17344f;font-size:20px}
+.org-summary-head>span{color:#8996a1;font-size:11px}
+.org-summary-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.org-summary-kpis article{padding:13px 14px;background:#f6f8fa;border-radius:10px}
+.org-summary-kpis small{display:block;color:#71808d;font-size:12px;font-weight:700}
+.org-summary-kpis strong{display:inline-block;margin-top:5px;color:#17344f;font-size:27px;line-height:1.1}
+.org-summary-kpis span{margin-left:4px;color:#82909b;font-size:12px}
+.org-summary-bottom{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:17px;padding-top:15px;border-top:1px solid #edf0f2}
+.org-summary-bottom h4{margin:0 0 9px;color:#30495d;font-size:14px}
+.org-summary-bottom p{margin:0;color:#8b969f;font-size:12px}
+.org-region-list,.org-sabbatical-list{display:grid;gap:7px}
+.org-region-list>div,.org-sabbatical-list>div{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 9px;background:#fafbfc;border-radius:7px;font-size:12px}
+.org-region-list span,.org-sabbatical-list b{color:#344d60}
+.org-region-list b{color:#17344f}
+.org-sabbatical-list span{color:#7b8995;text-align:right}
+@media(max-width:700px){.org-summary{padding:15px;margin-bottom:19px}.org-summary-head{align-items:flex-start}.org-summary-head h3{font-size:18px}.org-summary-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.org-summary-kpis article{padding:11px}.org-summary-kpis strong{font-size:25px}.org-summary-bottom{grid-template-columns:1fr;gap:15px}.org-region-list>div,.org-sabbatical-list>div{padding:8px}}
+</style></body></html>
