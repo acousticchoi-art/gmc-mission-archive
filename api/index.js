@@ -27,9 +27,22 @@ async function fetchGoogleDownload(initialUrl) {
           await response.body?.cancel();
           throw new Error('File is too large to proxy');
         }
-        const body = Buffer.from(await response.arrayBuffer());
-        if (body.length > 250 * 1024 * 1024) throw new Error('File is too large to proxy');
-        return { response, body };
+        const reader = response.body?.getReader();
+        const chunks = [];
+        let total = 0;
+        if (reader) {
+          while (true) {
+            const part = await reader.read();
+            if (part.done) break;
+            total += part.value.byteLength;
+            if (total > 250 * 1024 * 1024) {
+              await reader.cancel();
+              throw new Error('File is too large to proxy');
+            }
+            chunks.push(Buffer.from(part.value));
+          }
+        }
+        return { response, body: Buffer.concat(chunks, total) };
       }
       await response.body?.cancel();
       const next = allowedGoogleUrl(new URL(location, url).toString());
