@@ -2214,7 +2214,7 @@ let OPS_TAB_INFO=[],OPS_CURRENT_TAB='대시보드',OPS_HEADERS=[],OPS_RECORDS=[]
 
 function opsToggleMenu(){
  const menu=document.getElementById('opsTabs'),button=document.getElementById('opsMenuToggle'),label=document.getElementById('opsMenuCurrent');
- if(!menu||!button)return;const expanded=menu.hidden;menu.hidden=!expanded;button.setAttribute('aria-expanded',String(expanded));button.classList.toggle('expanded',expanded);if(label)label.textContent=expanded?'메뉴 접기':'메뉴 펼치기';
+ if(!menu||!button)return;const expanded=menu.hidden;menu.hidden=!expanded;button.setAttribute('aria-expanded',String(expanded));button.classList.toggle('expanded',expanded);if(label)label.textContent=expanded?'메뉴 접기':'다른 메뉴 보기';
 }
 function opsCollapseMenuOnMobile(){
  if(window.matchMedia&&window.matchMedia('(max-width: 760px)').matches){
@@ -2250,6 +2250,13 @@ async function opsDashboard(selected){
         return '<button type="button" class="ops-tab'+(name===selected?' active':'')+'" '+(!exists?'disabled':'')+' data-tab="'+E(name)+'" onclick="opsOpenTab(this.dataset.tab)">'+E(name)+'</button>';
       }).join('')+'</div></section>'
     ).join('');
+    if(selected==='MK 명단'){
+      const menu=document.getElementById('opsTabs'),toggle=document.getElementById('opsMenuToggle'),label=document.getElementById('opsMenuCurrent');
+      if(menu)menu.hidden=true;
+      if(toggle){toggle.classList.remove('expanded');toggle.setAttribute('aria-expanded','false');}
+      if(label)label.textContent='다른 메뉴 보기';
+      document.querySelector('.ops-page')?.classList.add('ops-mk-focus');
+    }
     if(selected==='인사관리'){await opsRenderHR();return;}
     if(selected==='조직관리'||selected==='지부현황'||selected==='지역선교부 코디'){await opsRenderOrganization();return;}
     if(!OPS_TAB_NAMES.includes(selected)||!OPS_TAB_INFO.some(x=>x.name===selected&&x.exists)){await opsRenderHR();return;}
@@ -3559,3 +3566,9 @@ if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.se
 .org-mk-breakdown{display:grid;gap:3px;margin-top:8px;color:#71808d;font-size:11px}.org-mk-breakdown span{display:flex;justify-content:space-between;gap:8px}.org-mk-breakdown b{color:#17344f}
 .org-region-map{margin-top:12px;padding:10px;background:#f8fafb;border:1px solid #e7edf1;border-radius:10px}.org-region-map #orgRegionLeaflet{width:100%;height:360px;border-radius:8px;overflow:hidden;background:#edf2f5;z-index:0}.org-region-map p{margin:7px 2px 0;color:#87939d;font-size:11px;line-height:1.5}.org-region-map .leaflet-popup-content{font-size:13px}
 </style></body></html>
+
+<style id="gmc-mk-focus-layout">
+.ops-mk-focus #opsTabs[hidden]{display:none!important}
+.ops-mk-focus #opsMenuToggle{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:260px;min-height:38px;margin:0 0 10px;padding:7px 11px;border:1px solid #dce5eb;border-radius:8px;background:#fff;color:#526879;font-size:12px}
+.ops-mk-focus #opsContent{width:100%;max-width:none}
+</style>
