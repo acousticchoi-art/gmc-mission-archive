@@ -2733,7 +2733,7 @@ function opsRenderTable(){
   content.innerHTML=
     orgNav+'<div class="ops-section-head"><div><h3>'+E(OPS_CURRENT_TAB==='지부현황'?'지부 현황':OPS_CURRENT_TAB)+'</h3></div>'+
     '<div class="ops-head-actions">'+(OPS_CURRENT_TAB==='회원명단'?'<button class="btn light" onclick="opsRenderHR()">← 인사관리</button>':'')+'<button class="btn" onclick="opsOpenForm()">＋ '+(isMK?'MK 등록':'항목 추가')+'</button></div></div>'+
-    '<div class="ops-table-tools"><input id="opsSearch" type="search" placeholder="'+(isMK?'MK 이름·부모 선교사 검색':'항목 내용 검색')+'" oninput="opsFilterRows()"><span id="opsRowCount">'+rows.length+'명</span></div>'+
+    (isMK?'<div class="ops-mk-filters"><input id="opsSearch" type="search" placeholder="MK 이름 또는 부모 선교사 검색" oninput="opsFilterRows()"><select id="opsMkBranch" onchange="opsFilterRows()"><option value="">전체 지부</option>'+[...new Set(rows.map(r=>String(r.values[1]||"").trim()).filter(Boolean))].sort().map(v=>'<option value="'+E(v)+'">'+E(v)+'</option>').join('')+'</select><select id="opsMkResidence" onchange="opsFilterRows()"><option value="">전체 거주 상태</option><option value="O">미얀마 거주</option><option value="X">해외 거주</option></select><select id="opsMkYear" onchange="opsFilterRows()"><option value="">전체 출생연도</option>'+[...new Set(rows.map(r=>String(r.values[5]||"").trim()).filter(v=>v.length===4&&Number(v)>1900))].sort((a,b)=>Number(b)-Number(a)).map(v=>'<option value="'+E(v)+'">'+E(v)+'</option>').join('')+'</select><button type="button" class="btn light" onclick="opsResetMkFilters()">초기화</button><span id="opsRowCount">'+rows.length+'명</span></div>':'<div class="ops-table-tools"><input id="opsSearch" type="search" placeholder="항목 내용 검색" oninput="opsFilterRows()"><span id="opsRowCount">'+rows.length+'명</span></div>')+
     '<div class="ops-table-wrap'+(isMK?' ops-mk-table-wrap':OPS_CURRENT_TAB==='업무관리'?' ops-task-table-wrap':OPS_CURRENT_TAB==='사무실 비품대장'?' ops-inventory-table-wrap':OPS_CURRENT_TAB==='운영위원회'?' ops-committee-table-wrap':'')+'"><table class="ops-table"><thead><tr>'+headers.map(h=>'<th>'+E(h)+'</th>').join('')+'<th class="ops-actions-head">관리</th></tr></thead><tbody id="opsRows">'+opsRowsHtml(rows)+'</tbody></table></div>'+
     (!rows.length?'<div class="ops-empty-inline">등록된 MK가 없습니다. <b>MK 등록</b>을 눌러 첫 자료를 입력하세요.</div>':'');
 }
@@ -2752,11 +2752,23 @@ function opsRowsHtml(rows){
 
 function opsFilterRows(){
   const q=(document.getElementById('opsSearch')?.value||'').trim().toLowerCase();
-  const filtered=OPS_RECORDS.filter(row=>row.values.some(v=>String(v||'').toLowerCase().includes(q)));
+  const branch=document.getElementById('opsMkBranch')?.value||'';
+  const residence=document.getElementById('opsMkResidence')?.value||'';
+  const year=document.getElementById('opsMkYear')?.value||'';
+  const isMK=OPS_CURRENT_TAB==='MK 명단';
+  const filtered=OPS_RECORDS.filter(row=>{
+    const matchesText=!q||row.values.some(v=>String(v||'').toLowerCase().includes(q));
+    if(!isMK)return matchesText;
+    return matchesText&&(!branch||String(row.values[1]||'').trim()===branch)&&(!residence||String(row.values[6]||'').trim().toUpperCase()===residence)&&(!year||String(row.values[5]||'').trim()===year);
+  });
   const tbody=document.getElementById('opsRows');
   const count=document.getElementById('opsRowCount');
   if(tbody)tbody.innerHTML=opsRowsHtml(filtered);
-  if(count)count.textContent=filtered.length+'개 항목 표시 / 전체 '+OPS_RECORDS.length+'개';
+  if(count)count.textContent=isMK?filtered.length+'명 표시 / 전체 '+OPS_RECORDS.length+'명':filtered.length+'개 항목 표시 / 전체 '+OPS_RECORDS.length+'개';
+}
+function opsResetMkFilters(){
+  ['opsSearch','opsMkBranch','opsMkResidence','opsMkYear'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  opsFilterRows();
 }
 
 function opsDateIso(value){
@@ -3478,7 +3490,7 @@ if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.se
 }
 @media(max-width:380px){.hr-result-actions{grid-template-columns:1fr}.hr-result-actions .btn,.hr-result-actions .btn.light{grid-column:1}}
 </style>
-<style id="gmc-mk-list-mobile-refinement">
+<style id="gmc-mk-filter-style">.ops-mk-filters{display:grid;grid-template-columns:minmax(220px,1.5fr) repeat(3,minmax(130px,1fr)) auto;gap:8px;align-items:center;margin:12px 0}.ops-mk-filters input,.ops-mk-filters select{width:100%;height:44px;min-width:0;padding:0 11px;border:1px solid #d7e0e7;border-radius:8px;background:#fff;color:#344b5e;font-size:13px}.ops-mk-filters .btn{height:44px;min-height:44px;padding:0 13px;white-space:nowrap}.ops-mk-filters #opsRowCount{grid-column:1/-1;text-align:right;color:#718596;font-size:12px}@media(max-width:700px){.ops-mk-filters{grid-template-columns:1fr 1fr;gap:7px}.ops-mk-filters input{grid-column:1/-1;height:46px;font-size:15px}.ops-mk-filters select{height:43px;font-size:12px}.ops-mk-filters .btn{height:43px;min-height:43px}.ops-mk-filters #opsRowCount{grid-column:1/-1}}</style><style id="gmc-mk-list-mobile-refinement">
 @media(max-width:700px){
  #opsContent .ops-mk-table-wrap{max-height:none!important;overflow:visible!important;border:0!important;background:transparent!important}
  #opsContent .ops-mk-table-wrap .ops-table{display:block!important;width:100%!important;min-width:0!important;border:0!important}
