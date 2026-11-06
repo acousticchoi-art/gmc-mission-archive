@@ -2227,8 +2227,7 @@ async function opsDashboard(selected){
   selected=selected||'운영현황';
   document.getElementById('app').innerHTML=
     '<div class="container admin-page ops-page">'+
-      '<div class="admin-head ops-page-head"><div><h2>운영 대시보드</h2></div>'+
-      '<button class="btn light" onclick="admin()">← 관리자</button></div>'+
+      '<div class="admin-head ops-page-head"><div><h2>운영 대시보드</h2></div></div>'+
       '<button type="button" class="ops-menu-toggle expanded" id="opsMenuToggle" aria-expanded="true" onclick="opsToggleMenu()"><span>운영 메뉴</span><span class="ops-menu-toggle-current" id="opsMenuCurrent">메뉴 접기</span><span class="ops-menu-toggle-arrow">⌄</span></button>'+
       '<div id="opsTabs" class="ops-menu-groups" role="tablist" aria-label="운영 대시보드 메뉴"></div>'+
       '<div id="opsContent" class="ops-content"><div class="notice">불러오는 중</div></div>'+
