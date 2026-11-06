@@ -1013,6 +1013,23 @@ async function api(action,args,ctx=null){
       if(!Number.isInteger(rowNumber)||rowNumber<2)throw new Error('삭제할 행 번호가 올바르지 않습니다.');
       const rows=await opsGet(name);
       if(rowNumber>rows.length||!opsHasValues(rows[rowNumber-1]))throw new Error('삭제할 행을 찾지 못했습니다. 새로고침 후 다시 시도해 주세요.');
+      if(name==='회원명단'){
+        const headers=rows[0]||[],nameIndex=headers.findIndex(h=>/성명|이름/.test(String(h||'')));
+        if(nameIndex<0)throw new Error('회원명단에서 이름 열을 확인하지 못해 안전한 삭제를 진행할 수 없습니다.');
+        const memberName=String(rows[rowNumber-1][nameIndex]||'').trim();
+        const familyMeta=await opsMeta();
+        const familySheetExists=(familyMeta.sheets||[]).some(x=>x.properties?.title==='가족관리');
+        const movementSheetExists=(familyMeta.sheets||[]).some(x=>x.properties?.title==='유닛이동이력');
+        if(familySheetExists&&movementSheetExists){
+          const [familyData,movementData]=await Promise.all([
+            googleJson(opsUrl("'가족관리'!A:D")+'?valueRenderOption=FORMATTED_VALUE'),
+            googleJson(opsUrl("'유닛이동이력'!A:J")+'?valueRenderOption=FORMATTED_VALUE')
+          ]);
+          const familyIds=new Set((familyData.values||[]).slice(1).filter(r=>String(r[1]||'').trim()===memberName).map(r=>String(r[0]||'').trim()).filter(Boolean));
+          const hasHistory=(movementData.values||[]).slice(1).some(r=>familyIds.has(String(r[1]||'').trim())&&r.some(v=>String(v||'').trim()));
+          if(hasHistory)throw new Error('이 회원이 속한 가족에는 안식년·임시귀국 이력이 연결되어 있습니다. 이력과 가족관계를 보존하기 위해 회원 삭제를 차단했습니다.');
+        }
+      }
       await opsClearRow(name,rowNumber);
       return {ok:true};
     }
