@@ -2216,6 +2216,12 @@ function opsToggleMenu(){
  const menu=document.getElementById('opsTabs'),button=document.getElementById('opsMenuToggle'),label=document.getElementById('opsMenuCurrent');
  if(!menu||!button)return;const expanded=menu.hidden;menu.hidden=!expanded;button.setAttribute('aria-expanded',String(expanded));button.classList.toggle('expanded',expanded);if(label)label.textContent=expanded?'메뉴 접기':'메뉴 펼치기';
 }
+function opsCollapseMenuOnMobile(){
+ if(window.matchMedia&&window.matchMedia('(max-width: 760px)').matches){
+  const menu=document.getElementById('opsTabs');
+  if(menu&&!menu.hidden)opsToggleMenu();
+ }
+}
 async function opsDashboard(selected){
   if(!ME||ME.role!=='관리자')return;
   selected=selected||'운영현황';
@@ -2484,6 +2490,7 @@ async function hrDeleteFamily(id){
 }
 async function opsRenderHR(){
  if(!ME||ME.role!=='관리자')return;
+ opsCollapseMenuOnMobile();
  OPS_CURRENT_TAB='인사관리';OPS_EDIT_ROW=null;
  document.querySelectorAll('.ops-tab').forEach(b=>b.classList.toggle('active',b.textContent==='회원관리'));
  const content=document.getElementById('opsContent');if(!content)return;
@@ -2518,6 +2525,7 @@ function opsToggleBranchMembers(index){
 }
 async function opsRenderOrganization(){
  if(!ME||ME.role!=='관리자')return;
+ opsCollapseMenuOnMobile();
  OPS_CURRENT_TAB='지부현황';OPS_EDIT_ROW=null;
  const content=document.getElementById('opsContent');if(!content)return;
  document.querySelectorAll('.ops-tab').forEach(b=>b.classList.toggle('active',b.textContent==='조직관리'));
@@ -2584,6 +2592,7 @@ async function opsRenderOrganization(){
 }
 async function opsOpenTab(name){
   if(!ME||ME.role!=='관리자')return;
+  opsCollapseMenuOnMobile();
   if(!OPS_TAB_NAMES.includes(name))return;
   OPS_CURRENT_TAB=name;
   OPS_EDIT_ROW=null;
