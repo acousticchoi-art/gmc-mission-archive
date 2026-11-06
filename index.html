@@ -2493,15 +2493,27 @@ async function hrSaveFamilyEdit(id){
  if(!head||!selected.some(x=>x.dataset.familyName===head)){alert('선택한 가족 중 대표자를 지정하세요.');return;}
  const familyId=id||('F'+Date.now());
  const selectedNames=selected.map(el=>el.dataset.familyName);
- // 한 회원은 한 가족 그룹에만 속하도록 기존 소속을 먼저 정리합니다.
- const next=HR_STATE.families.filter(x=>x.familyId!==familyId&&!selectedNames.includes(x.name));
- selected.forEach(el=>{const name=el.dataset.familyName;next.push({familyId,name,relationship:document.querySelector('[data-family-rel="'+CSS.escape(name)+'"]').value,isHead:name===head});});
- try{await A('hrSaveFamilies',[T,next]);const check=await A('hrGetFamilies',[T]);HR_STATE.families=check.records||[];hrFamilyManager();}catch(e){const m=document.getElementById('hrFamilyMsg');if(m)m.innerHTML='<div class="notice error">'+E(e.message)+'</div>';}
+ // 가족 ID에 연결된 이력이 있는 구성원을 이동·제외하면 이력이 고아 데이터가 되므로 먼저 차단합니다.
+ const affectedIds=new Set(HR_STATE.families.filter(x=>x.familyId&&((x.familyId===familyId&&!selectedNames.includes(x.name))||(x.familyId!==familyId&&selectedNames.includes(x.name)))).map(x=>x.familyId));
+ try{
+  for(const affectedId of affectedIds){
+   const history=await hrGetMovementItems(affectedId,true);
+   if(history.length){alert('선택한 구성원 중 안식년·임시귀국 이력이 연결된 가족이 있습니다. 이력 보존을 위해 가족 구성원 이동 또는 제외를 중단했습니다. 먼저 이력 이전 방식을 정해야 합니다.');return;}
+  }
+  // 한 회원은 한 가족 그룹에만 속하도록 기존 소속을 먼저 정리합니다.
+  const next=HR_STATE.families.filter(x=>x.familyId!==familyId&&!selectedNames.includes(x.name));
+  selected.forEach(el=>{const name=el.dataset.familyName;next.push({familyId,name,relationship:document.querySelector('[data-family-rel="'+CSS.escape(name)+'"]').value,isHead:name===head});});
+  await A('hrSaveFamilies',[T,next]);const check=await A('hrGetFamilies',[T]);HR_STATE.families=check.records||[];hrFamilyManager();
+ }catch(e){const m=document.getElementById('hrFamilyMsg');if(m)m.innerHTML='<div class="notice error">'+E(e.message)+'</div>';}
 }
 async function hrDeleteFamily(id){
- if(!confirm('이 가족 그룹을 삭제할까요? 회원명부의 원본 정보는 변경되지 않습니다. 안식년·임시귀국 이력이 이 가족 ID에 연결되어 있다면 삭제 후 가족 화면에서 조회되지 않을 수 있습니다. 이력 보존 여부를 확인한 뒤 진행하세요.'))return;
- const next=HR_STATE.families.filter(x=>x.familyId!==id);
- try{await A('hrSaveFamilies',[T,next]);const check=await A('hrGetFamilies',[T]);HR_STATE.families=check.records||[];hrFamilyManager();}catch(e){alert(e.message);}
+ if(!confirm('이 가족 그룹을 삭제할까요? 회원명부의 원본 정보는 변경되지 않습니다. 연결된 안식년·임시귀국 이력이 있으면 삭제를 막습니다.'))return;
+ try{
+  const history=await hrGetMovementItems(id,true);
+  if(history.length){alert('이 가족에는 안식년·임시귀국 이력이 '+history.length+'건 연결되어 있습니다. 이력을 보존하기 위해 가족 삭제를 중단했습니다. 먼저 이력 이전 방식을 정해야 합니다.');return;}
+  const next=HR_STATE.families.filter(x=>x.familyId!==id);
+  await A('hrSaveFamilies',[T,next]);const check=await A('hrGetFamilies',[T]);HR_STATE.families=check.records||[];hrFamilyManager();
+ }catch(e){alert('이력 확인 또는 가족 삭제에 실패했습니다. 데이터 보호를 위해 삭제하지 않았습니다: '+e.message);}
 }
 async function opsRenderHR(){
  if(!ME||ME.role!=='관리자')return;
