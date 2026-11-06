@@ -232,7 +232,7 @@ async function sheetAppend(sheet,values){
   const result=await googleJson(sheetUrl(sheet+'!A:Z')+':append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({values:[values]})});
   invalidateSheetReadCache();invalidateOpsReadCache();return result;
 }
-async function sheetUpdate(range,values){const result=await googleJson(sheetUrl(range)+'?valueInputOption=USER_ENTERED',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({range,majorDimension:'ROWS',values})});invalidateSheetReadCache();return result;}
+async function sheetUpdate(range,values){const result=await googleJson(sheetUrl(range)+'?valueInputOption=USER_ENTERED',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({range,majorDimension:'ROWS',values})});invalidateSheetReadCache();invalidateOpsReadCache();return result;}
 
 const OPS_TAB_NAMES = ['회원명단','MK 명단','지부현황','지역선교부 코디','행사관리','사무실 예약','업무관리','운영위원회','사무실 비품대장'];
 function opsQuoteSheet(name){return "'"+String(name).replace(/'/g,"''")+"'";}
@@ -304,7 +304,7 @@ async function opsUpdateRow(name,rowNumber,values,headerCount){
   while(payload.length<headerCount)payload.push('');
   try{
     const result=await googleJson(opsUrl(range)+'?valueInputOption=USER_ENTERED',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({range,majorDimension:'ROWS',values:[payload]})});
-    invalidateSheetReadCache();
+    invalidateSheetReadCache();invalidateOpsReadCache();
     return result;
   }catch(e){throw opsPermissionError(e);}
 }
@@ -312,7 +312,7 @@ async function opsClearRow(name,rowNumber){
   const range=opsQuoteSheet(name)+'!A'+rowNumber+':AZ'+rowNumber;
   try{
     const result=await googleJson(opsUrl(range)+':clear',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({})});
-    invalidateSheetReadCache();
+    invalidateSheetReadCache();invalidateOpsReadCache();
     return result;
   }catch(e){throw opsPermissionError(e);}
 }
@@ -642,10 +642,10 @@ async function api(action,args,ctx=null){
             if(current[name].length)await googleJson(sheetUrl(name+'!A1')+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({range:name+'!A1',majorDimension:'ROWS',values:current[name]})});
           }catch(re){rollbackErrors.push(name+': '+String(re.message||re));}
         }
-        invalidateSheetReadCache();
+        invalidateSheetReadCache();invalidateOpsReadCache();
         throw new Error('복구 중 오류가 발생했습니다: '+String(err.message||err)+(rollbackErrors.length?' / 자동 되돌리기에도 오류: '+rollbackErrors.join('; '):' / 변경한 시트는 가능한 범위에서 복구를 시도했습니다.'));
       }
-      invalidateSheetReadCache();
+      invalidateSheetReadCache();invalidateOpsReadCache();
       return {ok:true,message:'복구 완료. Google Drive 파일 자체는 변경하지 않았습니다.',counts,currentCounts,changed};
     }
     case 'dashboard':{await requireRole(args[0],['관리자']);const us=await usersRows(),ms=await materialsRows();return {ok:true,stats:{users:Math.max(0,us.length-1),activeUsers:us.slice(1).filter(r=>r[10]==='활성').length,materials:ms.slice(1).filter(r=>r[12]==='공개').length,views:ms.slice(1).reduce((a,r)=>a+Number(r[14]||0),0)}};}
@@ -671,7 +671,7 @@ async function api(action,args,ctx=null){
         await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+':batchUpdate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requests:[{appendDimension:{sheetId,dimension:'COLUMNS',length:1}}]})});
         const range=opsQuoteSheet('지역선교부 코디')+'!'+nextCol+'1:'+nextCol+'1';
         await googleJson(opsUrl(range)+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({values:[['직책']]})});
-        invalidateSheetReadCache();
+        invalidateSheetReadCache();invalidateOpsReadCache();
       }
       const tabs=OPS_TAB_NAMES.map(name=>{
         const properties=byName.get(name);
@@ -748,7 +748,7 @@ async function api(action,args,ctx=null){
       if(records.length>500)throw new Error('가족 구성원이 500명을 초과했습니다.');
       const range="'가족관리'!A:D";
       await googleJson(opsUrl(range)+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({majorDimension:'ROWS',values:[['가족ID','회원명','가족관계','대표자'],...records.map(x=>[x.familyId,x.name,x.relationship,x.isHead?'TRUE':'FALSE'])]})});
-      invalidateSheetReadCache();
+      invalidateSheetReadCache();invalidateOpsReadCache();
       return {ok:true,families:groups.length,members:records.length,unassigned:people.filter(p=>!records.some(x=>x.name===p.name)).map(p=>p.name)};
     }
     case 'hrRepairFamilyGroups':{
@@ -816,7 +816,7 @@ async function api(action,args,ctx=null){
       const rows=[['가족ID','회원명','가족관계','대표자'],...output.map(x=>[x.familyId,x.name,x.relationship,x.isHead?'TRUE':'FALSE'])];
       await googleJson(opsUrl("'가족관리'!A:D")+':clear',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({})});
       await googleJson(opsUrl("'가족관리'!A:D")+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({majorDimension:'ROWS',values:rows})});
-      invalidateSheetReadCache();
+      invalidateSheetReadCache();invalidateOpsReadCache();
       return {ok:true,merged,added,families:buckets.size,members:output.length};
     }
     case 'hrSaveFamilies':{
@@ -831,7 +831,7 @@ async function api(action,args,ctx=null){
       const range="'가족관리'!A:D";
       await googleJson(opsUrl(range)+':clear',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({})});
       await googleJson(opsUrl(range)+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({majorDimension:'ROWS',values:rows})});
-      invalidateSheetReadCache();
+      invalidateSheetReadCache();invalidateOpsReadCache();
       return {ok:true,count:records.length};
     }
     case 'opsDashboardData':{
@@ -868,7 +868,7 @@ async function api(action,args,ctx=null){
       const last=opsLastColumn(headers.length),range=opsQuoteSheet(name)+'!A1:'+last+'1';
       try{
         await googleJson(opsUrl(range)+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({range,majorDimension:'ROWS',values:[headers]})});
-        invalidateSheetReadCache();
+        invalidateSheetReadCache();invalidateOpsReadCache();
       }catch(e){throw opsPermissionError(e);}
       return {ok:true,headers};
     }
