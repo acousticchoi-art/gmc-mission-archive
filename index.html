@@ -2534,6 +2534,7 @@ async function opsRenderOrganization(){
   const ch=committee.headers||[],cr=committee.records||[],bh=branch.headers||[],br=branch.records||[];
   const sections=dashboard.sections||[],memberSheet=sections.find(x=>x.name==='회원명단')||{headers:[],records:[]};
   const mh=memberSheet.headers||[],mr=memberSheet.records||[];
+  const summaryMemberNameIndex=mh.findIndex(h=>/성명|이름/.test(String(h||'')));
   const families=familyData.records||[];
   const mkSheet=sections.find(x=>x.name==='MK 명단')||{headers:[],records:[]};
   const mkHeaders=mkSheet.headers||[],mkRows=mkSheet.records||[];
@@ -2553,11 +2554,10 @@ async function opsRenderOrganization(){
   units.forEach(u=>{const region=regionByName.get(u.head.name)||'미분류';regionUnits.set(region,(regionUnits.get(region)||0)+1);});
   const regionSummary=[...regionUnits.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'ko'));
   const summaryHtml='<section class="org-summary"><div class="org-summary-head"><div><small>GMC ORGANIZATION SUMMARY</small><h3>선교부 현황 요약</h3></div><span>실시간 등록 데이터 기준</span></div><div class="org-summary-kpis"><article><small>전체 회원</small><strong>'+mr.filter(r=>String(r.values[summaryMemberNameIndex]||'').trim()).length+'</strong><span>명</span></article><article><small>전체 유닛</small><strong>'+units.length+'</strong><span>가정</span></article><article><small>전체 MK</small><strong>'+mkCount+'</strong><span>명</span></article><article><small>현재 안식년</small><strong>'+activeSabbaticals.length+'</strong><span>가정</span></article></div><div class="org-summary-bottom"><section><h4>지역별 유닛 현황</h4>'+(regionSummary.length?'<div class="org-region-list">'+regionSummary.map(([name,count])=>'<div><span>'+E(name)+'</span><b>'+count+' 유닛</b></div>').join('')+'</div>':'<p>지역 정보가 등록되어 있지 않습니다.</p>')+'</section><section><h4>현재 안식년 중인 선교사</h4>'+(activeSabbaticals.length?'<div class="org-sabbatical-list">'+activeSabbaticals.sort((a,b)=>String(a.endDate).localeCompare(String(b.endDate))).map(x=>'<div><b>'+E(x.unit.head.name)+'</b><span>'+E(x.startDate)+' ~ '+E(x.endDate)+'까지</span></div>').join('')+'</div>':'<p>현재 안식년 중인 유닛이 없습니다.</p>')+'</section></div></section>';
-  const summaryMemberNameIndex=mh.findIndex(h=>/성명|이름/.test(String(h||'')));
   const memberBranchIndex=mh.findIndex(h=>/지부/.test(String(h||'')));
   const memberRoleIndex=mh.findIndex(h=>/GMC.*직책|직책/.test(String(h||'')));
   const branchMembers=new Map();
-  mr.forEach(r=>{const b=String(r.values[memberBranchIndex]||'').trim();const n=String(r.values[memberNameIndex]||'').trim();if(!b||!n)return;if(!branchMembers.has(b))branchMembers.set(b,[]);branchMembers.get(b).push({name:n,role:String(memberRoleIndex>=0?r.values[memberRoleIndex]||'사원':'사원').trim()||'사원'});});
+  mr.forEach(r=>{const b=String(r.values[memberBranchIndex]||'').trim();const n=String(r.values[summaryMemberNameIndex]||'').trim();if(!b||!n)return;if(!branchMembers.has(b))branchMembers.set(b,[]);branchMembers.get(b).push({name:n,role:String(memberRoleIndex>=0?r.values[memberRoleIndex]||'사원':'사원').trim()||'사원'});});
   const idx=(re)=>ch.findIndex(x=>re.test(String(x||'')));
   const ci={role:idx(/직책|담당/),name:idx(/성명|이름/),members:idx(/부코디|위원|구성원/),work:idx(/주요 업무|업무|역할/)};
   const val=(row,i)=>i>=0?String(row.values[i]||'').trim():'';
