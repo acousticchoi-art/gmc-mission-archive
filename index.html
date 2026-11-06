@@ -2543,7 +2543,10 @@ async function opsRenderOrganization(){
   const mkHeaders=mkSheet.headers||[],mkRows=mkSheet.records||[];
   const parentIdx=mkHeaders.findIndex(h=>/부모|선교사/.test(String(h||'')));
   const mkNameIdx=mkHeaders.findIndex(h=>/MK 이름|이름/.test(String(h||'')));
-  const mkCount=mkRows.filter(r=>String(r.values[mkNameIdx]||'').trim()).length;
+  const residentIdx=mkHeaders.findIndex(h=>/거주 여부|거주 지역|거주/.test(String(h||'')));
+  const mkPeople=mkRows.filter(r=>String(r.values[mkNameIdx]||'').trim());
+  const mkResidence=mkPeople.reduce((acc,r)=>{const v=String(residentIdx>=0?r.values[residentIdx]||'':'').trim();if(/양곤|yangon/i.test(v))acc.yangon++;else if(/해외|한국|태국|미국|외국|overseas|abroad/i.test(v))acc.overseas++;else acc.unknown++;return acc;},{yangon:0,overseas:0,unknown:0});
+  const mkCount=mkPeople.length;
   const familyMembers=new Map();
   families.forEach(x=>{if(!familyMembers.has(x.familyId))familyMembers.set(x.familyId,[]);familyMembers.get(x.familyId).push(x);});
   const units=[...familyMembers.entries()].map(([id,members])=>({id,members,head:members.find(x=>x.isHead)||members[0]}));
@@ -2554,10 +2557,13 @@ async function opsRenderOrganization(){
   const regionIdx=mh.findIndex(h=>/사역지역|지역/.test(String(h||'')));
   const nameIdxForRegion=mh.findIndex(h=>/성명|이름/.test(String(h||'')));
   const regionByName=new Map(mr.map(r=>[String(r.values[nameIdxForRegion]||'').trim(),String(r.values[regionIdx]||'').trim()||'미분류']));
-  const regionUnits=new Map();
-  units.forEach(u=>{const region=regionByName.get(u.head.name)||'미분류';regionUnits.set(region,(regionUnits.get(region)||0)+1);});
+  const regionUnits=new Map(),unclassifiedUnits=[];
+  units.forEach(u=>{const region=regionByName.get(u.head.name)||'미분류';regionUnits.set(region,(regionUnits.get(region)||0)+1);if(region==='미분류')unclassifiedUnits.push(u);});
   const regionSummary=[...regionUnits.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'ko'));
-  const summaryHtml='<section class="org-summary"><div class="org-summary-head"><div><small>GMC ORGANIZATION SUMMARY</small><h3>선교부 현황 요약</h3></div><span>실시간 등록 데이터 기준</span></div><div class="org-summary-kpis"><article><small>전체 회원</small><strong>'+mr.filter(r=>String(r.values[summaryMemberNameIndex]||'').trim()).length+'</strong><span>명</span></article><article><small>전체 유닛</small><strong>'+units.length+'</strong><span>가정</span></article><article><small>전체 MK</small><strong>'+mkCount+'</strong><span>명</span></article><article><small>현재 안식년</small><strong>'+activeSabbaticals.length+'</strong><span>가정</span></article></div><div class="org-summary-bottom"><section><h4>지역별 유닛 현황</h4>'+(regionSummary.length?'<div class="org-region-list">'+regionSummary.map(([name,count])=>'<div><span>'+E(name)+'</span><b>'+count+' 유닛</b></div>').join('')+'</div>':'<p>지역 정보가 등록되어 있지 않습니다.</p>')+'</section><section><h4>현재 안식년 중인 선교사</h4>'+(activeSabbaticals.length?'<div class="org-sabbatical-list">'+activeSabbaticals.sort((a,b)=>String(a.endDate).localeCompare(String(b.endDate))).map(x=>'<div><b>'+E(x.unit.head.name)+'</b><span>'+E(x.startDate)+' ~ '+E(x.endDate)+'까지</span></div>').join('')+'</div>':'<p>현재 안식년 중인 유닛이 없습니다.</p>')+'</section></div></section>';
+  const mapPlaces=[{name:'양곤',lat:16.87,lon:96.20},{name:'네피도',lat:19.76,lon:96.08},{name:'따웅우',lat:18.94,lon:96.43},{name:'만달레이',lat:21.96,lon:96.09},{name:'뻐떼인',lat:16.78,lon:94.73},{name:'국경지역',lat:16.69,lon:98.51}];
+  const mapPoints=mapPlaces.map(p=>({...p,count:regionUnits.get(p.name)||0})).filter(p=>p.count>0);
+  const mapSvg='<div class="org-region-map"><svg viewBox="0 0 360 430" role="img" aria-label="미얀마 지역별 유닛 분포 지도"><path d="M160 18 L202 32 225 63 216 91 238 118 220 147 229 177 208 205 218 237 195 266 205 298 183 323 176 356 151 389 132 370 139 341 119 318 126 286 108 261 118 230 99 204 111 177 93 149 111 119 103 91 126 69 132 40 Z" fill="#edf2f5" stroke="#9eafbb" stroke-width="2" stroke-linejoin="round"/>'+mapPoints.map(p=>{const x=140+(p.lon-94.5)*35,y=95+(22.5-p.lat)*22;return '<g><circle cx="'+x+'" cy="'+y+'" r="'+(7+Math.min(p.count,15)*.45)+'" fill="#1d3854" fill-opacity=".88" stroke="#fff" stroke-width="2"/><text x="'+(x+11)+'" y="'+(y+4)+'" font-size="10" fill="#263f54">'+E(p.name)+' '+p.count+'</text></g>';}).join('')+'</svg><p>등록된 사역지역을 기준으로 표시한 개략도입니다. 점의 크기는 유닛 수를 나타냅니다.</p></div>';
+  const summaryHtml='<section class="org-summary"><div class="org-summary-head"><div><small>GMC ORGANIZATION SUMMARY</small><h3>선교부 현황 요약</h3></div><span>실시간 등록 데이터 기준</span></div><div class="org-summary-kpis"><article><small>전체 회원</small><strong>'+mr.filter(r=>String(r.values[summaryMemberNameIndex]||'').trim()).length+'</strong><span>명</span></article><article><small>전체 유닛</small><strong>'+units.length+'</strong><span>가정</span></article><article><small>전체 MK</small><strong>'+mkCount+'</strong><span>명</span><div class="org-mk-breakdown"><span>양곤 거주 <b>'+mkResidence.yangon+'</b></span><span>해외 <b>'+mkResidence.overseas+'</b></span>'+(mkResidence.unknown?'<span>미기재 <b>'+mkResidence.unknown+'</b></span>':'')+'</div></article><article><small>현재 안식년</small><strong>'+activeSabbaticals.length+'</strong><span>가정</span></article></div><div class="org-summary-bottom"><section><h4>지역별 유닛 현황</h4>'+(regionSummary.length?'<div class="org-region-list">'+regionSummary.map(([name,count])=>'<div><span>'+E(name)+(name==='미분류'&&unclassifiedUnits.length?' · '+unclassifiedUnits.map(u=>E(u.head.name)).join(', '):'')+'</span><b>'+count+' 유닛</b></div>').join('')+'</div>'+mapSvg:'<p>지역 정보가 등록되어 있지 않습니다.</p>')+'</section><section><h4>현재 안식년 중인 선교사</h4>'+(activeSabbaticals.length?'<div class="org-sabbatical-list">'+activeSabbaticals.sort((a,b)=>String(a.endDate).localeCompare(String(b.endDate))).map(x=>'<div><b>'+E(x.unit.head.name)+'</b><span>'+E(x.startDate)+' ~ '+E(x.endDate)+'까지</span></div>').join('')+'</div>':'<p>현재 안식년 중인 유닛이 없습니다.</p>')+'</section></div></section>';
   const memberBranchIndex=mh.findIndex(h=>/지부/.test(String(h||'')));
   const memberRoleIndex=mh.findIndex(h=>/GMC.*직책|직책/.test(String(h||'')));
   const branchMembers=new Map();
@@ -3528,4 +3534,7 @@ if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.se
 .org-region-list b{color:#17344f}
 .org-sabbatical-list span{color:#7b8995;text-align:right}
 @media(max-width:700px){.org-summary{padding:15px;margin-bottom:19px}.org-summary-head{align-items:flex-start}.org-summary-head h3{font-size:18px}.org-summary-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.org-summary-kpis article{padding:11px}.org-summary-kpis strong{font-size:25px}.org-summary-bottom{grid-template-columns:1fr;gap:15px}.org-region-list>div,.org-sabbatical-list>div{padding:8px}}
+</style><style id="gmc-org-map-style">
+.org-mk-breakdown{display:grid;gap:3px;margin-top:8px;color:#71808d;font-size:11px}.org-mk-breakdown span{display:flex;justify-content:space-between;gap:8px}.org-mk-breakdown b{color:#17344f}
+.org-region-map{margin-top:12px;padding:10px;background:#f8fafb;border:1px solid #e7edf1;border-radius:10px}.org-region-map svg{display:block;width:100%;max-height:360px}.org-region-map p{margin:7px 2px 0;color:#87939d;font-size:11px;line-height:1.5}
 </style></body></html>
