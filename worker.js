@@ -229,6 +229,19 @@ function sheetUrl(range){return 'https://sheets.googleapis.com/v4/spreadsheets/'
 const SHEET_READ_CACHE=new Map();
 const SHEET_READ_TTL_MS=15000;
 function invalidateSheetReadCache(){SHEET_READ_CACHE.clear();}
+let COMMENT_COUNTS_CACHE={counts:null,expiresAt:0};
+const COMMENT_COUNTS_TTL_MS=15000;
+function invalidateCommentCountsCache(){COMMENT_COUNTS_CACHE={counts:null,expiresAt:0};}
+async function commentCounts(){
+  if(COMMENT_COUNTS_CACHE.counts&&COMMENT_COUNTS_CACHE.expiresAt>Date.now())return COMMENT_COUNTS_CACHE.counts;
+  const rows=await commentsRows(),counts=Object.create(null);
+  for(let i=1;i<rows.length;i++){
+    const mid=String(rows[i][1]||'');
+    if(mid)counts[mid]=(counts[mid]||0)+1;
+  }
+  COMMENT_COUNTS_CACHE={counts,expiresAt:Date.now()+COMMENT_COUNTS_TTL_MS};
+  return counts;
+}
 async function sheetGet(range){
   const now=Date.now(),cached=SHEET_READ_CACHE.get(range);
   if(cached&&cached.expiresAt>now)return cached.values.map(row=>row.slice());
@@ -244,9 +257,9 @@ async function sheetGet(range){
 }
 async function sheetAppend(sheet,values){
   const result=await googleJson(sheetUrl(sheet+'!A:Z')+':append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({values:[values]})});
-  invalidateSheetReadCache();invalidateOpsReadCache();return result;
+  invalidateSheetReadCache();invalidateOpsReadCache();if(sheet==='댓글')invalidateCommentCountsCache();return result;
 }
-async function sheetUpdate(range,values){const result=await googleJson(sheetUrl(range)+'?valueInputOption=USER_ENTERED',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({range,majorDimension:'ROWS',values})});invalidateSheetReadCache();invalidateOpsReadCache();return result;}
+async function sheetUpdate(range,values){const result=await googleJson(sheetUrl(range)+'?valueInputOption=USER_ENTERED',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({range,majorDimension:'ROWS',values})});invalidateSheetReadCache();invalidateOpsReadCache();if(String(range).startsWith('댓글!'))invalidateCommentCountsCache();return result;}
 
 const OPS_TAB_NAMES = ['회원명단','MK 명단','지부현황','지역선교부 코디','행사관리','사무실 예약','업무관리','운영위원회','사무실 비품대장'];
 function opsQuoteSheet(name){return "'"+String(name).replace(/'/g,"''")+"'";}
@@ -559,11 +572,7 @@ async function api(action,args,ctx=null){
       const q=norm(f.q), qCompact=compact(q);
       const terms=q?q.split(' ').filter(Boolean):[];
       const cat=norm(f.category), lang=norm(f.language);
-      const rows=await materialsRows(), commentRows=await commentsRows(), counts={};
-      for(let i=1;i<commentRows.length;i++){
-        const mid=String(commentRows[i][1]||'');
-        if(mid)counts[mid]=(counts[mid]||0)+1;
-      }
+      const rows=await materialsRows(), counts=await commentCounts();
       const out=[];
       for(let i=1;i<rows.length;i++){
         const r=rows[i];
