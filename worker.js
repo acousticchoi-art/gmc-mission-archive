@@ -865,6 +865,7 @@ async function api(action,args,ctx=null){
       if(!(meta.sheets||[]).some(x=>x.properties?.title==='가족관리')){
         await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+':batchUpdate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requests:[{addSheet:{properties:{title:'가족관리'}}}]})});
         await googleJson(opsUrl("'가족관리'!A1:D1")+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({values:[['가족ID','회원명','가족관계','대표자']]})});
+        invalidateOpsReadCache();
       }
       const values=await hrFamiliesRows();
       return {ok:true,records:values.slice(1).filter(r=>r.some(v=>String(v||'').trim())).map(r=>({familyId:String(r[0]||''),name:String(r[1]||''),relationship:String(r[2]||''),isHead:String(r[3]||'')==='TRUE'||String(r[3]||'')==='예'}))};
