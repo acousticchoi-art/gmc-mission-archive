@@ -2437,7 +2437,9 @@ function hrRenderList(){
  const table=rows=>'<div class="hr-table-wrap"><table class="hr-member-table"><thead><tr><th>회원 이름</th><th>소속 지부</th><th>직책</th><th>사역시작일</th><th>주요사역</th><th></th></tr></thead><tbody>'+rows.map(p=>'<tr onclick="'+open(p)+'"><td data-label="회원 이름"><strong>'+E(p.name)+'</strong></td><td data-label="소속 지부">'+E(p.branch)+'</td><td data-label="직책"><span class="hr-role-pill">'+E(p.role||'직책 미입력')+'</span></td><td data-label="사역시작일" class="hr-muted">'+E(p.start||'—')+'</td><td data-label="주요사역" class="hr-muted hr-major-cell">'+E(p.major||'—')+'</td><td class="hr-detail-link">상세 정보 보기　›</td></tr>').join('')+'</tbody></table></div>';
  let html='';
  if(HR_STATE.mode==='가정별'){
+  const familySorter=sorters[HR_STATE.sort]||sorters['name-asc'];
   const groups=hrFamilyGroups().filter(g=>g.members.some(m=>people.some(p=>p.name===m.name)));
+  groups.sort((a,b)=>{const ah=all.find(p=>p.name===a.head.name),bh=all.find(p=>p.name===b.head.name);if(!ah)return 1;if(!bh)return -1;return familySorter(ah,bh);});
   html=groups.map(g=>{const head=all.find(p=>p.name===g.head.name);if(!head)return '';const mkCount=HR_STATE.mk.filter(k=>g.members.some(m=>hrNorm(k.parent).includes(hrNorm(m.name))||hrNorm(m.name).includes(hrNorm(k.parent)))).length;return '<button class="hr-person-row hr-family-row" onclick="'+open(head)+'"><span><b>'+E(head.name)+'</b><small>'+E(head.branch)+' · '+g.members.length+'명 회원 · '+mkCount+'명 MK</small></span><span class="hr-detail-link">상세 보기　›</span></button>';}).join('');
  }else if(HR_STATE.mode==='지부별'){
   const grouped=new Map();people.forEach(p=>{if(!grouped.has(p.branch))grouped.set(p.branch,[]);grouped.get(p.branch).push(p);});
