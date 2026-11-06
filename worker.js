@@ -526,6 +526,10 @@ async function validateOfficeReservation(values,skipRowNumber){
   }
 }
 
+function escapeDriveQueryValue(value){
+  return String(value??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+}
+
 async function api(action,args,ctx=null){
   switch(action){
     case 'login':{const u=await findUserByUsername(args[0]);if(!u||u.status!=='활성')return {ok:false,message:'아이디 또는 비밀번호가 올바르지 않습니다.'};const h=await hashPassword(args[1],u.salt);if(!constEq(h,u.hash))return {ok:false,message:'아이디 또는 비밀번호가 올바르지 않습니다.'};const loginAt=nowText();const token=await makeSession(u);const recordLogin=async()=>{try{await sheetUpdate('회원!M'+u.row+':M'+u.row,[[loginAt]]);const lrows=await loginHistoryRows(),lid=maxNextId(lrows,'L');await sheetAppend('로그인이력',[lid,u.id,safe(u.name),safe(u.username),u.role,safe(u.branch),loginAt]);}catch(e){}};if(ctx?.waitUntil)ctx.waitUntil(recordLogin());else await recordLogin();return {ok:true,token,user:publicUser(u)};}
@@ -666,13 +670,13 @@ async function api(action,args,ctx=null){
       if(!data.fileName && !data.uploadId)throw new Error('파일 정보가 없습니다.');
       let target=null;
       if(data.uploadId){
-        const esc=String(data.uploadId).replace(/'/g,"\'");
+        const esc=escapeDriveQueryValue(data.uploadId);
         const q=encodeURIComponent("appProperties has { key='gmcUploadId' and value='"+esc+"' } and trashed=false");
         const d=await driveJson('https://www.googleapis.com/drive/v3/files?q='+q+'&orderBy=modifiedTime desc&fields=files(id,name,mimeType,size,webViewLink,modifiedTime,parents,appProperties)&pageSize=10');
         target=(d.files||[])[0]||null;
       }
       if(!target && data.fileName){
-        const name=String(data.fileName).replace(/'/g,"\'");
+        const name=escapeDriveQueryValue(data.fileName);
         const q=encodeURIComponent("name='"+name+"' and trashed=false");
         const d=await driveJson('https://www.googleapis.com/drive/v3/files?q='+q+'&orderBy=modifiedTime desc&fields=files(id,name,mimeType,size,webViewLink,modifiedTime,parents,appProperties)&pageSize=50');
         let files=d.files||[];
@@ -1038,12 +1042,35 @@ async function api(action,args,ctx=null){
   }
 }
 
+async function readJsonLimited(request,maxBytes=2*1024*1024){
+  const declared=Number(request.headers.get('content-length')||0);
+  if(declared>maxBytes){const error=new Error('요청 본문이 허용 크기(2 MiB)를 초과했습니다.');error.status=413;throw error;}
+  if(!request.body)return {};
+  const reader=request.body.getReader(),chunks=[];
+  let total=0;
+  try{
+    while(true){
+      const {done,value}=await reader.read();
+      if(done)break;
+      total+=value.byteLength;
+      if(total>maxBytes){
+        try{await reader.cancel();}catch(_){}
+        const error=new Error('요청 본문이 허용 크기(2 MiB)를 초과했습니다.');error.status=413;throw error;
+      }
+      chunks.push(value);
+    }
+  }finally{try{reader.releaseLock();}catch(_){}}
+  const bytes=new Uint8Array(total);let offset=0;
+  for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength;}
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
 async function handleApi(request,env,ctx){
   try{
     config(env);
     if(!CFG.SHEET_ID||!CFG.ROOT_FOLDER_ID||!CFG.SA_EMAIL||!CFG.SA_PRIVATE_KEY||!CFG.SESSION_SECRET)return jsonResponse({ok:false,message:'Cloudflare Worker Secret/Variable 설정이 아직 완료되지 않았습니다.'},500);
-    const body=await request.json();const result=await api(String(body.action||''),Array.isArray(body.args)?body.args:[],ctx);return jsonResponse(result);
-  }catch(e){return jsonResponse({ok:false,message:String(e?.message||e)},400);}
+    const body=await readJsonLimited(request);const result=await api(String(body.action||''),Array.isArray(body.args)?body.args:[],ctx);return jsonResponse(result);
+  }catch(e){return jsonResponse({ok:false,message:String(e?.message||e)},Number(e?.status)||400);}
 }
 
 export default {
