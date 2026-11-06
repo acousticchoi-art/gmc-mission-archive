@@ -658,6 +658,13 @@ async function api(action,args,ctx=null){
       return {ok:true,tabs,serviceAccountEmail:CFG.SA_EMAIL};
     }
 
+    case 'unitMovementList':{
+      await requireRole(args[0],['관리자']);
+      const meta=await opsMeta();
+      if(!(meta.sheets||[]).some(x=>x.properties?.title==='유닛이동이력'))return {ok:true,records:[]};
+      const values=(await googleJson(opsUrl("'유닛이동이력'!A:J")+'?valueRenderOption=FORMATTED_VALUE')).values||[];
+      return {ok:true,records:values.slice(1).filter(r=>r.some(v=>String(v||'').trim())).map(r=>({id:String(r[0]||''),familyId:String(r[1]||''),type:String(r[2]||''),startDate:String(r[3]||''),endDate:String(r[4]||''),returnDate:String(r[5]||''),backDate:String(r[6]||''),purpose:String(r[7]||''),note:String(r[8]||'')}))};
+    }
     case 'unitMovementGet':{
       await requireRole(args[0],['관리자']);const id=String(args[1]||'');if(!id)throw new Error('가족 식별자가 없습니다.');
       let meta=await opsMeta();if(!(meta.sheets||[]).some(x=>x.properties?.title==='유닛이동이력')){await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+':batchUpdate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requests:[{addSheet:{properties:{title:'유닛이동이력'}}}]})});await googleJson(opsUrl("'유닛이동이력'!A1:J1")+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({values:[['이력ID','가족ID','유형','시작일','종료일','귀국일','복귀일','목적','비고','수정일']]})});}
