@@ -43,11 +43,13 @@ async function fetchGoogleDownload(initialUrl) {
   }
 }
 
-async function fetchWithTimeout(url, options, milliseconds = 30000) {
+async function fetchTextWithTimeout(url, options, milliseconds = 30000) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), milliseconds);
   try {
-    return await fetch(url, { ...options, signal: controller.signal });
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    const upstreamText = await response.text();
+    return { response, upstreamText };
   } finally {
     clearTimeout(timeout);
   }
@@ -91,7 +93,7 @@ module.exports = async (req, res) => {
       }
       const body = Buffer.concat(chunks, total);
 
-      const upstream = await fetchWithTimeout(url.toString(), {
+      const { response: upstream, upstreamText } = await fetchTextWithTimeout(url.toString(), {
         method: 'PUT',
         redirect: 'manual',
         headers: {
@@ -107,13 +109,12 @@ module.exports = async (req, res) => {
         return res.status(502).json({ ok: false, message: 'Upload redirect host is not allowed' });
       }
 
-      const text = await upstream.text();
       res.status(upstream.status);
       const ct = upstream.headers.get('content-type');
       if (ct) res.setHeader('content-type', ct);
       const range = upstream.headers.get('range');
       if (range) res.setHeader('range', range);
-      return res.end(text);
+      return res.end(upstreamText);
     }
 
     let body = req.body;
@@ -121,16 +122,15 @@ module.exports = async (req, res) => {
       try { body = JSON.parse(body); } catch (_) {}
     }
 
-    const upstream = await fetchWithTimeout(WORKER_API, {
+    const { response: upstream, upstreamText } = await fetchTextWithTimeout(WORKER_API, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(body || {})
     }, 30000);
 
-    const text = await upstream.text();
     res.status(upstream.status);
     res.setHeader('content-type', upstream.headers.get('content-type') || 'application/json; charset=UTF-8');
-    return res.end(text);
+    return res.end(upstreamText);
   } catch (e) {
     return res.status(502).json({ ok: false, message: 'Vercel API proxy error: ' + (e?.message || 'unknown error') });
   }
