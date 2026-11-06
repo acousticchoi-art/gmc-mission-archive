@@ -657,6 +657,18 @@ async function api(action,args,ctx=null){
       });
       return {ok:true,tabs,serviceAccountEmail:CFG.SA_EMAIL};
     }
+
+    case 'unitMovementGet':{
+      await requireRole(args[0],['관리자']);const id=String(args[1]||'');if(!id)throw new Error('가족 식별자가 없습니다.');
+      let meta=await opsMeta();if(!(meta.sheets||[]).some(x=>x.properties?.title==='유닛이동이력')){await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+':batchUpdate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requests:[{addSheet:{properties:{title:'유닛이동이력'}}}]})});await googleJson(opsUrl("'유닛이동이력'!A1:J1")+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({values:[['이력ID','가족ID','유형','시작일','종료일','귀국일','복귀일','목적','비고','수정일']]})});}
+      const v=(await googleJson(opsUrl("'유닛이동이력'!A:J")+'?valueRenderOption=FORMATTED_VALUE')).values||[];return {ok:true,records:v.slice(1).filter(r=>String(r[1]||'')===id).map(r=>({id:String(r[0]||''),type:String(r[2]||''),startDate:String(r[3]||''),endDate:String(r[4]||''),returnDate:String(r[5]||''),backDate:String(r[6]||''),purpose:String(r[7]||''),note:String(r[8]||'')}))};
+    }
+    case 'unitMovementSave':{
+      await requireRole(args[0],['관리자']);const id=String(args[1]||''),records=Array.isArray(args[2])?args[2]:[];if(!id||records.length>100)throw new Error('이력 정보가 올바르지 않습니다.');
+      let meta=await opsMeta();if(!(meta.sheets||[]).some(x=>x.properties?.title==='유닛이동이력')){await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+':batchUpdate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requests:[{addSheet:{properties:{title:'유닛이동이력'}}}]})});}
+      const range="'유닛이동이력'!A:J",v=(await googleJson(opsUrl(range)+'?valueRenderOption=FORMATTED_VALUE')).values||[],keep=v.slice(1).filter(r=>String(r[1]||'')!==id),rows=[['이력ID','가족ID','유형','시작일','종료일','귀국일','복귀일','목적','비고','수정일'],...keep,...records.map(x=>[x.id,id,x.type,x.startDate,x.endDate,x.returnDate,x.backDate,x.purpose,x.note,new Date().toISOString()])];
+      await googleJson(opsUrl(range)+':clear',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});await googleJson(opsUrl(range)+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({majorDimension:'ROWS',values:rows})});invalidateSheetReadCache();return {ok:true};
+    }
     case 'hrGetFamilies':{
       await requireRole(args[0],['관리자']);
       const meta=await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+'?fields=sheets.properties.title');
