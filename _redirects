@@ -1,2 +1,0 @@
-/api https://gmc-mission-archive.tyzm.workers.dev/api 200
-/api/* https://gmc-mission-archive.tyzm.workers.dev/api/:splat 200

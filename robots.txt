@@ -1,3 +1,0 @@
-User-agent: *
-Allow: /
-Sitemap: https://gmc-mission-archive-nemk.vercel.app/sitemap.xml
