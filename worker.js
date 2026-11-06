@@ -1017,7 +1017,7 @@ async function api(action,args,ctx=null){
         const headers=rows[0]||[],nameIndex=headers.findIndex(h=>/성명|이름/.test(String(h||'')));
         if(nameIndex<0)throw new Error('회원명단에서 이름 열을 확인하지 못해 안전한 삭제를 진행할 수 없습니다.');
         const memberName=String(rows[rowNumber-1][nameIndex]||'').trim();
-        const familyMeta=await opsMeta();
+        const familyMeta=await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+'?fields=sheets.properties.title');
         const familySheetExists=(familyMeta.sheets||[]).some(x=>x.properties?.title==='가족관리');
         const movementSheetExists=(familyMeta.sheets||[]).some(x=>x.properties?.title==='유닛이동이력');
         if(familySheetExists&&movementSheetExists){
