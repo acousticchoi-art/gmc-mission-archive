@@ -3785,7 +3785,26 @@ if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.se
 </style><style id="gmc-org-map-style">
 .org-mk-breakdown{display:grid;gap:3px;margin-top:8px;color:#71808d;font-size:11px}.org-mk-breakdown span{display:flex;justify-content:space-between;gap:8px}.org-mk-breakdown b{color:#17344f}
 .org-region-map{margin-top:12px;padding:10px;background:#f8fafb;border:1px solid #e7edf1;border-radius:10px}.org-region-map #orgRegionLeaflet{width:100%;height:360px;border-radius:8px;overflow:hidden;background:#edf2f5;z-index:0}.org-region-map p{margin:7px 2px 0;color:#87939d;font-size:11px;line-height:1.5}.org-region-map .leaflet-popup-content{font-size:13px}
-</style></body></html>
+</style>
+<style id="gmc-ops-full-page-scroll">
+/* 운영 메뉴의 목록은 내부 세로 스크롤 대신 페이지 전체가 아래로 이어지도록 표시 */
+html body #app > .container.ops-page .ops-table-wrap,
+html body #app > .container.ops-page .ops-matrix-wrap,
+#opsContent .ops-mk-table-wrap,
+#opsContent .ops-task-table-wrap,
+#opsContent .ops-inventory-table-wrap,
+#opsContent .ops-committee-table-wrap {
+  max-height: none !important;
+  height: auto !important;
+  overflow-y: visible !important;
+  overscroll-behavior-y: auto !important;
+}
+/* 화면 폭이 좁아 표가 넓은 경우에만 가로 스크롤 허용 */
+html body #app > .container.ops-page .ops-table-wrap {
+  overflow-x: auto !important;
+}
+</style>
+</body></html>
 
 <style id="gmc-mk-focus-layout">
 .ops-mk-focus #opsTabs[hidden]{display:none!important}
