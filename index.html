@@ -3963,6 +3963,104 @@ html body #app > .container.ops-page .ops-table-wrap {
  #opsContent .org-research-group .org-chart-items{grid-template-columns:1fr!important}
 }
 </style>
+
+<style id="gmc-family-registration-polish">
+/* Family section: calmer hierarchy consistent with the member form */
+.hr-new-family-box{
+  margin-top:18px!important;
+  padding:16px!important;
+  border:1px solid #e2e9ef!important;
+  border-radius:12px!important;
+  background:#fbfcfd!important;
+}
+.hr-new-section-title{
+  display:flex!important;
+  align-items:baseline!important;
+  gap:7px!important;
+  margin:18px 0 12px!important;
+  padding-bottom:9px!important;
+  border-bottom:1px solid #e7edf2!important;
+  color:#1d405c!important;
+  font-size:15px!important;
+  font-weight:800!important;
+  line-height:1.4!important;
+}
+.hr-new-family-box>.hr-new-section-title:first-child{margin-top:0!important}
+.hr-new-section-title small{
+  color:#81909c!important;
+  font-size:12px!important;
+  font-weight:500!important;
+}
+.hr-new-family-box .hr-edit-field>span{
+  margin-bottom:6px!important;
+  color:#536b7e!important;
+  font-size:12px!important;
+  font-weight:700!important;
+}
+.hr-new-family-box input,
+.hr-new-family-box select{
+  min-height:44px!important;
+  border:1px solid #d7e1e9!important;
+  border-radius:9px!important;
+  background:#fff!important;
+  color:#263b4d!important;
+  font-size:14px!important;
+  box-shadow:none!important;
+}
+.hr-new-family-box input:focus,
+.hr-new-family-box select:focus{
+  border-color:#7896ad!important;
+  outline:3px solid rgba(76,119,150,.10)!important;
+}
+.hr-new-hint{
+  margin:9px 0 16px!important;
+  padding:9px 11px!important;
+  border-left:3px solid #c5d3de!important;
+  border-radius:0 7px 7px 0!important;
+  background:#f1f5f8!important;
+  color:#687e8f!important;
+  font-size:12px!important;
+  line-height:1.6!important;
+}
+.hr-new-child-row{
+  display:grid!important;
+  grid-template-columns:minmax(0,1.5fr) minmax(110px,.75fr) minmax(140px,1fr) auto!important;
+  gap:10px!important;
+  align-items:end!important;
+  margin:0 0 9px!important;
+  padding:12px!important;
+  border:1px solid #e3eaf0!important;
+  border-radius:10px!important;
+  background:#fff!important;
+}
+.hr-new-child-row .hr-edit-field{min-width:0!important}
+.hr-child-remove{
+  min-height:42px!important;
+  height:42px!important;
+  padding:0 13px!important;
+  border-radius:8px!important;
+  font-size:13px!important;
+}
+.hr-new-family-box>button.btn.light{
+  min-height:42px!important;
+  margin-top:3px!important;
+  padding:0 14px!important;
+  border:1px solid #d9e3ea!important;
+  border-radius:9px!important;
+  background:#f0f4f7!important;
+  color:#294b65!important;
+  font-size:13px!important;
+  font-weight:750!important;
+}
+.hr-new-family-box>button.btn.light:hover{background:#e8eff4!important}
+@media(max-width:650px){
+ .hr-new-family-box{padding:12px!important}
+ .hr-new-child-row{grid-template-columns:1fr 1fr!important;gap:9px!important}
+ .hr-new-child-row .hr-edit-field:first-child{grid-column:1/-1!important}
+ .hr-new-child-row .hr-edit-field:nth-child(3){grid-column:1/-1!important}
+ .hr-child-remove{grid-column:2!important;justify-self:end!important}
+}
+</style>
 </body></html>
 
 <style id="gmc-mk-focus-layout">
