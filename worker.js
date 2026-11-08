@@ -206,27 +206,52 @@ async function googleFetch(url,opts={}){
   return r;
 }
 async function googleJson(url,opts={}){
-  const r=await googleFetch(url,opts); const text=await r.text(); let d=null; try{d=JSON.parse(text)}catch(_){ }
-  if(!r.ok)throw new Error((d&&d.error&&d.error.message)||('Google API 오류 HTTP '+r.status));
-  return d;
+  const method=String(opts.method||'GET').toUpperCase();
+  const retryable=method==='GET';
+  const maxAttempts=retryable?4:1;
+  for(let attempt=0;attempt<maxAttempts;attempt++){
+    const r=await googleFetch(url,opts);
+    const text=await r.text();
+    let d=null;try{d=JSON.parse(text)}catch(_){}
+    if(r.ok)return d;
+    const message=(d&&d.error&&d.error.message)||('Google API 오류 HTTP '+r.status);
+    const transient=[429,500,502,503,504].includes(r.status);
+    if(retryable&&transient&&attempt<maxAttempts-1){
+      const retryAfter=Number(r.headers.get('retry-after')||0)*1000;
+      const backoff=Math.min(8000,1000*Math.pow(2,attempt));
+      const delay=Math.max(retryAfter,backoff)+Math.floor(Math.random()*250);
+      await new Promise(resolve=>setTimeout(resolve,delay));
+      continue;
+    }
+    const error=new Error(message);error.status=r.status;throw error;
+  }
+  throw new Error('Google API 요청을 완료하지 못했습니다.');
 }
 function sheetUrl(range){return 'https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.SHEET_ID)+'/values/'+encodeURIComponent(range);}
-// Short-lived per-isolate cache reduces repeated Google Sheets reads during page navigation/search.
+// Short-lived per-isolate cache + in-flight request deduplication for Sheets reads.
 const SHEET_READ_CACHE=new Map();
+const SHEET_READ_PENDING=new Map();
 const SHEET_READ_TTL_MS=15000;
+function cloneSheetValues(values){return (values||[]).map(row=>Array.isArray(row)?row.slice():row);}
 function invalidateSheetReadCache(){SHEET_READ_CACHE.clear();}
 async function sheetGet(range){
   const now=Date.now(),cached=SHEET_READ_CACHE.get(range);
-  if(cached&&cached.expiresAt>now)return cached.values.map(row=>row.slice());
-  try{
-    const values=(await googleJson(sheetUrl(range)+'?valueRenderOption=FORMATTED_VALUE')).values||[];
-    SHEET_READ_CACHE.set(range,{values,expiresAt:Date.now()+SHEET_READ_TTL_MS});
-    return values.map(row=>row.slice());
-  }catch(e){
-    // If Google temporarily rate-limits reads, use a recent successful result if available.
-    if(cached&&Date.now()-cached.expiresAt<=60000)return cached.values.map(row=>row.slice());
-    throw e;
-  }
+  if(cached&&cached.expiresAt>now)return cloneSheetValues(cached.values);
+  if(SHEET_READ_PENDING.has(range))return cloneSheetValues(await SHEET_READ_PENDING.get(range));
+  const task=(async()=>{
+    try{
+      const values=(await googleJson(sheetUrl(range)+'?valueRenderOption=FORMATTED_VALUE')).values||[];
+      SHEET_READ_CACHE.set(range,{values,expiresAt:Date.now()+SHEET_READ_TTL_MS});
+      return values;
+    }catch(e){
+      if(cached&&Date.now()-cached.expiresAt<=60000)return cached.values;
+      throw e;
+    }finally{
+      SHEET_READ_PENDING.delete(range);
+    }
+  })();
+  SHEET_READ_PENDING.set(range,task);
+  return cloneSheetValues(await task);
 }
 async function sheetAppend(sheet,values){
   const result=await googleJson(sheetUrl(sheet+'!A:Z')+':append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({values:[values]})});
@@ -365,7 +390,8 @@ async function usersRows(){return await sheetGet('회원!A:M');}
 async function materialsRows(){return await sheetGet('자료!A:O');}
 async function findUserByUsername(x){const rows=await usersRows(),q=String(x||'').trim().toLowerCase();for(let i=1;i<rows.length;i++)if(String(rows[i][2]||'').toLowerCase()===q)return rowObj(rows[i],i+1);return null;}
 async function findUserById(id){const rows=await usersRows();for(let i=1;i<rows.length;i++)if(String(rows[i][0]||'')===String(id))return rowObj(rows[i],i+1);return null;}
-async function findUserByIdFresh(id){const rows=(await googleJson(sheetUrl('회원!A:M')+'?valueRenderOption=FORMATTED_VALUE')).values||[];for(let i=1;i<rows.length;i++)if(String(rows[i][0]||'')===String(id))return rowObj(rows[i],i+1);return null;}
+// Reuse the short-lived member-sheet cache during session checks; avoid one forced Sheets read per API call.
+async function findUserByIdFresh(id){const rows=await usersRows();for(let i=1;i<rows.length;i++)if(String(rows[i][0]||'')===String(id))return rowObj(rows[i],i+1);return null;}
 function publicUser(u){return {id:u.id,name:u.name,username:u.username,email:u.email,branch:u.branch,role:u.role,firstLogin:u.firstLogin};}
 function maxNextId(rows,prefix){let n=0;for(let i=1;i<rows.length;i++){const m=String(rows[i][0]||'').match(new RegExp('^'+prefix+'(\\d+)$'));if(m)n=Math.max(n,Number(m[1]));}return prefix+String(n+1).padStart(4,'0');}
 async function hashPassword(p,salt){const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(String(salt)+String(p)));return Array.from(new Uint8Array(d)).map(b=>b.toString(16).padStart(2,'0')).join('');}
