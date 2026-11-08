@@ -3804,6 +3804,80 @@ html body #app > .container.ops-page .ops-table-wrap {
   overflow-x: auto !important;
 }
 </style>
+
+<style id="gmc-coordinator-card-redesign">
+/* Coordinator directory: compact cards with natural height and clear hierarchy */
+#opsContent .org-coordinator-list{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  align-items:start!important;
+  align-content:start!important;
+  gap:12px!important;
+}
+#opsContent .org-coordinator-card{
+  align-self:start!important;
+  height:auto!important;
+  min-height:0!important;
+  padding:10px!important;
+  border:1px solid #e2e8ee!important;
+  border-radius:12px!important;
+  background:#fff!important;
+  box-shadow:0 2px 8px rgba(22,48,68,.045)!important;
+}
+#opsContent .org-coordinator-card>.org-chart-line{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  align-items:center!important;
+  gap:5px 12px!important;
+  min-height:0!important;
+  padding:11px 12px!important;
+  border:0!important;
+  border-radius:8px!important;
+  background:#f3f6f8!important;
+}
+#opsContent .org-coordinator-card>.org-chart-line .org-chart-role{
+  color:#607487!important;
+  font-size:12px!important;
+  font-weight:700!important;
+}
+#opsContent .org-coordinator-card>.org-chart-line .org-chart-name{
+  color:#18364e!important;
+  font-size:16px!important;
+  font-weight:800!important;
+  text-align:right!important;
+}
+#opsContent .org-coordinator-card>.org-chart-line small{
+  grid-column:1/-1!important;
+  margin-top:2px!important;
+  color:#7b8995!important;
+  font-size:11px!important;
+}
+#opsContent .org-deputy-list{
+  display:grid!important;
+  gap:5px!important;
+  margin:8px 0 0!important;
+  padding:0!important;
+  border:0!important;
+}
+#opsContent .org-deputy-list .org-chart-line{
+  grid-template-columns:minmax(0,1fr) auto!important;
+  gap:8px!important;
+  padding:8px 10px!important;
+  border:1px solid #edf1f4!important;
+  border-radius:7px!important;
+  background:#fff!important;
+}
+#opsContent .org-deputy-list .org-chart-role{font-size:11px!important;color:#84919c!important}
+#opsContent .org-deputy-list .org-chart-name{font-size:13px!important;color:#40576a!important;text-align:right!important}
+@media(max-width:1100px){
+  #opsContent .org-coordinator-list{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(max-width:650px){
+  #opsContent .org-coordinator-list{grid-template-columns:1fr!important;gap:9px!important}
+  #opsContent .org-coordinator-card{padding:9px!important}
+  #opsContent .org-coordinator-card>.org-chart-line{grid-template-columns:minmax(0,1fr) auto!important;padding:10px!important}
+}
+</style>
 </body></html>
 
 <style id="gmc-mk-focus-layout">
