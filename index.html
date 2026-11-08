@@ -3878,6 +3878,37 @@ html body #app > .container.ops-page .ops-table-wrap {
   #opsContent .org-coordinator-card>.org-chart-line{grid-template-columns:minmax(0,1fr) auto!important;padding:10px!important}
 }
 </style>
+
+<style id="gmc-coordinator-name-emphasis">
+/* Make coordinator names the primary visual anchor */
+#opsContent .org-coordinator-card>.org-chart-line .org-chart-name{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:5px 11px!important;
+  border-radius:7px!important;
+  background:#173b59!important;
+  color:#fff!important;
+  font-size:18px!important;
+  font-weight:900!important;
+  letter-spacing:-.035em!important;
+  line-height:1.35!important;
+  text-align:center!important;
+  box-shadow:0 1px 2px rgba(16,42,62,.12)!important;
+}
+#opsContent .org-coordinator-card>.org-chart-line .org-chart-role{
+  color:#61788b!important;
+  font-size:12px!important;
+  font-weight:750!important;
+}
+#opsContent .org-coordinator-card>.org-chart-line{
+  background:#f0f4f7!important;
+  border-left:3px solid #c39a5b!important;
+}
+@media(max-width:650px){
+  #opsContent .org-coordinator-card>.org-chart-line .org-chart-name{font-size:17px!important;padding:5px 9px!important}
+}
+</style>
 </body></html>
 
 <style id="gmc-mk-focus-layout">
