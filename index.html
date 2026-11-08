@@ -2366,7 +2366,7 @@ function opsCollapseMenuOnMobile(){
 }
 async function opsDashboard(selected){
   if(!ME||ME.role!=='관리자')return;
-  selected=selected||'운영현황';
+  selected=selected||'조직관리';
   document.getElementById('app').innerHTML=
     '<div class="container admin-page ops-page">'+
       '<div class="admin-head ops-page-head"><div><h2>운영 대시보드</h2></div></div>'+
@@ -2380,7 +2380,7 @@ async function opsDashboard(selected){
     const r=await A('opsListTabs',[T]);
     OPS_TAB_INFO=Array.isArray(r.tabs)?r.tabs:[];
     const menuGroups=[
-      {title:'조직 · 인사',items:['회원관리','조직관리','MK 명단']},
+      {title:'조직 · 인사',items:['조직관리','회원관리','MK 명단']},
       {title:'사역 · 행정',items:['행사관리','업무관리']},
       {title:'시설 · 자산',items:['사무실 예약','사무실 비품대장']}
     ];
@@ -2401,7 +2401,7 @@ async function opsDashboard(selected){
     }
     if(selected==='인사관리'){await opsRenderHR();return;}
     if(selected==='조직관리'||selected==='지부현황'||selected==='지역선교부 코디'){await opsRenderOrganization();return;}
-    if(!OPS_TAB_NAMES.includes(selected)||!OPS_TAB_INFO.some(x=>x.name===selected&&x.exists)){await opsRenderHR();return;}
+    if(!OPS_TAB_NAMES.includes(selected)||!OPS_TAB_INFO.some(x=>x.name===selected&&x.exists)){await opsRenderOrganization();return;}
     await opsOpenTab(selected);
   }catch(e){
     const target=document.getElementById('opsContent');
