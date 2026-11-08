@@ -4076,6 +4076,33 @@ html body #app > .container.ops-page .ops-table-wrap {
   height:0!important;
 }
 </style>
+
+<style id="gmc-member-detail-expand-all">
+/* Expand member profile content fully; remove height caps causing inner scrollbars */
+.hr-modal-card.hr-member-detail-modal{
+  max-height:none!important;
+  height:auto!important;
+  overflow:visible!important;
+}
+.hr-modal-card.hr-member-detail-modal .hr-detail-grid{
+  max-height:none!important;
+  height:auto!important;
+  overflow:visible!important;
+}
+.hr-modal-card.hr-member-detail-modal .hr-family{
+  overflow:visible!important;
+}
+@media(max-width:650px){
+  .hr-modal.show{
+    align-items:flex-start!important;
+    overflow-y:auto!important;
+  }
+  .hr-modal-card.hr-member-detail-modal{
+    max-height:none!important;
+    margin:auto 0!important;
+  }
+}
+</style>
 </body></html>
 
 <style id="gmc-mk-focus-layout">
