@@ -511,9 +511,9 @@ function workerReservationNorm(value){
   return String(value||'').normalize('NFKC').replace(/\s+/g,'').toLowerCase();
 }
 async function validateOfficeReservation(values,skipRowNumber){
-  const range=opsRange('사무실 예약','A1','AZ');
-  const data=await googleJson(opsUrl(range)+'?valueRenderOption=FORMATTED_VALUE');
-  const rows=data.values||[],headers=rows[0]||[];
+  // Reuse the same validated/cached rows and header schema used by the operations table.
+  const rows=await opsGet('사무실 예약');
+  const headers=rows[0]||[];
   const ix=re=>headers.findIndex(h=>re.test(String(h||'')));
   const dateIx=ix(/예약일|사용일|이용일|날짜|일자|시작일/);
   const endIx=ix(/종료일|반납일/),roomIx=ix(/장소|공간|회의실|사무실/),timeIx=ix(/시간|이용시간|사용시간/);
