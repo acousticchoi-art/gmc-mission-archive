@@ -2574,7 +2574,7 @@ function hrRenderList(){
  let people=all.filter(p=>(branch==='전체'||p.branch===branch)&&(role==='전체'||p.role===role)&&(!q||hrNorm([p.name,p.branch,p.role,p.place,p.major,p.start].join(' ')).includes(q)));
  const sorters={'name-asc':(a,b)=>a.name.localeCompare(b.name,'ko'),'name-desc':(a,b)=>b.name.localeCompare(a.name,'ko'),'start-asc':(a,b)=>hrDateSort(a.start)-hrDateSort(b.start),'start-desc':(a,b)=>hrDateSort(b.start)-hrDateSort(a.start),'branch':(a,b)=>a.branch.localeCompare(b.branch,'ko')||a.name.localeCompare(b.name,'ko')};
  people.sort(sorters[HR_STATE.sort]||sorters['name-asc']);
- const modes=['전체','지부별','가정별'],modeBtns=modes.map(x=>'<button class="hr-mode '+(HR_STATE.mode===x?'active':'')+'" onclick="hrSetMode(\''+x+'\')">'+x+'</button>').join('');
+ const modes=['전체','지부별','가정별'],modeBtns=modes.map(x=>'<button class="hr-mode '+(HR_STATE.mode===x?'active':'')+'" onclick="hrSetMode(\''+x+'\')">'+x+'</button>').join('')+'<button type="button" class="hr-mode" onclick="opsOpenTab(\'MK 명단\')">MK 명단</button>';
  const open=p=>'hrOpenPerson(\''+E(p.name).replace(/\\'/g,'&#039;')+'\')';
  const table=rows=>'<div class="hr-table-wrap"><table class="hr-member-table"><thead><tr><th>회원 이름</th><th>소속 지부</th><th>직책</th><th>사역시작일</th><th>주요사역</th><th></th></tr></thead><tbody>'+rows.map(p=>'<tr onclick="'+open(p)+'"><td data-label="회원 이름"><strong>'+E(p.name)+'</strong></td><td data-label="소속 지부">'+E(p.branch)+'</td><td data-label="직책"><span class="hr-role-pill">'+E(p.role||'직책 미입력')+'</span></td><td data-label="사역시작일" class="hr-muted">'+E(p.start||'—')+'</td><td data-label="주요사역" class="hr-muted hr-major-cell">'+E(p.major||'—')+'</td><td class="hr-detail-link">상세 정보 보기　›</td></tr>').join('')+'</tbody></table></div>';
  let html='';
@@ -2678,7 +2678,7 @@ async function opsRenderHR(){
   HR_STATE.mkHeaders=mk.headers||[];HR_STATE.mk=mk.records.map(x=>({parent:x.values[pi]||'',name:x.values[mi]||'',birth:x.values[yi]||'',resident:x.values[ri2]||''})).filter(x=>x.name);
   HR_STATE.families=f.records||[];
   HR_STATE.mode='전체';HR_STATE.branch='전체';HR_STATE.role='전체';HR_STATE.query='';HR_STATE.selected=null;
-  content.innerHTML='<div class="ops-overview-head"><div><h3>회원관리 리스트</h3><p>회원 및 가족 정보를 관리합니다.</p></div><div class="ops-head-actions"><button type="button" class="btn light" onclick="opsOpenTab(\'MK 명단\')">MK 명단 보기</button></div></div><div id="hrList"></div>';
+  content.innerHTML='<div class="ops-overview-head"><div><h3>회원관리 리스트</h3><p>회원 및 가족 정보를 관리합니다.</p></div></div><div id="hrList"></div>';
   hrRenderList();
  }catch(e){content.innerHTML='<div class="panel ops-error"><h3>인사정보를 불러오지 못했습니다.</h3><p>'+E(e.message)+'</p><button class="btn light" onclick="opsRenderHR()">다시 시도</button></div>';}
 }
