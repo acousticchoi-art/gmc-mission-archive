@@ -511,19 +511,22 @@ function workerReservationNorm(value){
   return String(value||'').normalize('NFKC').replace(/\s+/g,'').toLowerCase();
 }
 async function validateOfficeReservation(values,skipRowNumber){
-  // Reuse the same validated/cached rows and header schema used by the operations table.
+  // Office reservation sheet may represent one shared office and therefore have no separate room/space column.
   const rows=await opsGet('사무실 예약');
   const headers=rows[0]||[];
-  const ix=re=>headers.findIndex(h=>re.test(String(h||'')));
+  const ix=re=>headers.findIndex(h=>re.test(String(h||'').trim()));
   const dateIx=ix(/예약일|사용일|이용일|날짜|일자|시작일/);
-  const endIx=ix(/종료일|반납일/),roomIx=ix(/장소|공간|회의실|사무실/),timeIx=ix(/시간|이용시간|사용시간/);
-  if(dateIx<0||roomIx<0)throw new Error('사무실 예약 시트의 날짜·공간 열을 확인할 수 없어 저장을 중단했습니다.');
+  const endIx=ix(/종료일|반납일/);
+  const roomIx=ix(/장소|공간|회의실|사무실/);
+  const timeIx=ix(/시간|이용시간|사용시간/);
+  if(dateIx<0)throw new Error('사무실 예약 시트에서 날짜 열을 찾을 수 없습니다. 첫 행의 열 제목을 확인해 주세요.');
+  // If no room column exists, treat all reservations as using the same office space.
   const date=parseWorkerReservationDate(values[dateIx]);
   if(!date)throw new Error('예약 날짜를 확인해 주세요. 날짜 열에 유효한 날짜를 입력해야 합니다.');
   const endDate=endIx>=0?(parseWorkerReservationDate(values[endIx])||date):date;
   if(endDate<date)throw new Error('종료일은 시작일보다 빠를 수 없습니다.');
-  const room=workerReservationNorm(values[roomIx]);
-  if(!room)throw new Error('예약 공간을 입력해 주세요.');
+  const room=roomIx>=0?workerReservationNorm(values[roomIx]):'__single_office__';
+  if(roomIx>=0&&!room)throw new Error('예약 공간을 입력해 주세요.');
   const time=workerReservationNorm(timeIx>=0?values[timeIx]:'');
   const candidateRange=parseWorkerReservationTime(timeIx>=0?values[timeIx]:'');
   const startDay=Date.UTC(date.getUTCFullYear(),date.getUTCMonth(),date.getUTCDate());
@@ -538,7 +541,7 @@ async function validateOfficeReservation(values,skipRowNumber){
     const existingStartDay=Date.UTC(existingDate.getUTCFullYear(),existingDate.getUTCMonth(),existingDate.getUTCDate());
     const existingEndDay=Date.UTC(existingEnd.getUTCFullYear(),existingEnd.getUTCMonth(),existingEnd.getUTCDate());
     if(startDay>existingEndDay||existingStartDay>finishDay)continue;
-    if(workerReservationNorm(row[roomIx])!==room)continue;
+    if(roomIx>=0&&workerReservationNorm(row[roomIx])!==room)continue;
     const existingTime=workerReservationNorm(timeIx>=0?row[timeIx]:'');
     const existingRange=parseWorkerReservationTime(timeIx>=0?row[timeIx]:'');
     let overlaps=false;
@@ -547,7 +550,7 @@ async function validateOfficeReservation(values,skipRowNumber){
     else overlaps=time===existingTime;
     if(overlaps){
       const dateText=String(row[dateIx]||'');
-      throw new Error('예약이 겹칩니다. 기존 예약('+dateText+(timeIx>=0&&row[timeIx]?' '+row[timeIx]:'')+')과 공간·날짜·시간이 충돌합니다.');
+      throw new Error('예약이 겹칩니다. 기존 예약('+dateText+(timeIx>=0&&row[timeIx]?' '+row[timeIx]:'')+')과 날짜·시간이 충돌합니다.');
     }
   }
 }
