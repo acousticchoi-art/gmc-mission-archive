@@ -4062,47 +4062,6 @@ html body #app > .container.ops-page .ops-table-wrap {
 }
 </style>
 
-<style id="gmc-member-modal-scrollbar-hide">
-/* Hide visible inner scrollbars in member detail/edit modal while preserving scrolling */
-.hr-modal-card.hr-member-detail-modal,
-.hr-modal-card.hr-member-detail-modal .hr-detail-grid{
-  scrollbar-width:none!important;
-  -ms-overflow-style:none!important;
-}
-.hr-modal-card.hr-member-detail-modal::-webkit-scrollbar,
-.hr-modal-card.hr-member-detail-modal .hr-detail-grid::-webkit-scrollbar{
-  display:none!important;
-  width:0!important;
-  height:0!important;
-}
-</style>
-
-<style id="gmc-member-detail-expand-all">
-/* Expand member profile content fully; remove height caps causing inner scrollbars */
-.hr-modal-card.hr-member-detail-modal{
-  max-height:none!important;
-  height:auto!important;
-  overflow:visible!important;
-}
-.hr-modal-card.hr-member-detail-modal .hr-detail-grid{
-  max-height:none!important;
-  height:auto!important;
-  overflow:visible!important;
-}
-.hr-modal-card.hr-member-detail-modal .hr-family{
-  overflow:visible!important;
-}
-@media(max-width:650px){
-  .hr-modal.show{
-    align-items:flex-start!important;
-    overflow-y:auto!important;
-  }
-  .hr-modal-card.hr-member-detail-modal{
-    max-height:none!important;
-    margin:auto 0!important;
-  }
-}
-</style>
 </body></html>
 
 <style id="gmc-mk-focus-layout">
@@ -4128,4 +4087,42 @@ html body #app > .container.ops-page .ops-table-wrap {
 .hr-movement-form button:hover{filter:brightness(.97)}
 @media(min-width:700px){.hr-movement-form{padding:22px 24px}.hr-movement-form label{max-width:100%}}
 @media(max-width:600px){.hr-movement-box{padding:12px}.hr-movement-form{padding:15px}.hr-movement-item{align-items:flex-start;flex-direction:column}}
+</style>
+<style id="gmc-member-detail-single-scroll-final">
+/* Keep the member detail modal at its usual size and use one scroll container only. */
+.hr-modal{
+  overflow-y:auto!important;
+  align-items:center!important;
+}
+.hr-modal-card.hr-member-detail-modal{
+  width:min(860px,100%)!important;
+  max-height:90vh!important;
+  height:auto!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+}
+.hr-modal-card.hr-member-detail-modal .hr-detail-grid{
+  max-height:none!important;
+  height:auto!important;
+  overflow:visible!important;
+}
+.hr-modal-card.hr-member-detail-modal .hr-family,
+.hr-modal-card.hr-member-detail-modal .hr-detail-section-head{
+  overflow:visible!important;
+}
+@media(max-width:650px){
+  .hr-modal{padding:10px!important;align-items:center!important}
+  .hr-modal-card.hr-member-detail-modal{
+    width:100%!important;
+    max-height:88vh!important;
+    height:auto!important;
+    overflow-x:hidden!important;
+    overflow-y:auto!important;
+    margin:auto 0!important;
+  }
+  .hr-modal-card.hr-member-detail-modal .hr-detail-grid{
+    max-height:none!important;
+    overflow:visible!important;
+  }
+}
 </style>
