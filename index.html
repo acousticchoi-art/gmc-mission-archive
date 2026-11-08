@@ -3903,6 +3903,83 @@ html body #app > .container.ops-page .ops-table-wrap {
   #opsContent .org-coordinator-card>.org-chart-line .org-chart-role{font-size:13px!important}
 }
 </style>
+
+<style id="gmc-research-section-redesign">
+#opsContent .org-research-group{
+  margin-top:18px!important;
+  padding:18px!important;
+  border:1px solid #dce5ec!important;
+  border-radius:14px!important;
+  background:linear-gradient(180deg,#fbfcfd 0%,#fff 100%)!important;
+  box-shadow:0 3px 12px rgba(24,52,75,.045)!important;
+}
+#opsContent .org-research-group>h4{
+  display:flex!important;
+  align-items:center!important;
+  gap:12px!important;
+  margin:0 0 14px!important;
+  padding:0 0 12px!important;
+  border-bottom:1px solid #e5ebf0!important;
+  color:#183b57!important;
+  font-size:18px!important;
+  font-weight:850!important;
+  letter-spacing:-.025em!important;
+}
+#opsContent .org-research-group>h4:before{
+  content:"";display:block;width:4px;height:21px;border-radius:4px;background:#bd965d;flex:0 0 4px;
+}
+#opsContent .org-research-group>h4 span{
+  margin-left:auto!important;
+  padding:5px 9px!important;
+  border-radius:6px!important;
+  background:#eef3f6!important;
+  color:#6b7d8d!important;
+  font-size:11px!important;
+  font-weight:650!important;
+}
+#opsContent .org-research-group .org-chart-items{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:9px!important;
+}
+#opsContent .org-research-group .org-chart-line{
+  min-height:54px!important;
+  padding:11px 13px!important;
+  border:1px solid #e8edf1!important;
+  border-radius:9px!important;
+  background:#f5f8fa!important;
+}
+#opsContent .org-research-group .org-chart-line:first-child{
+  grid-column:1/-1!important;
+  min-height:68px!important;
+  padding:14px 16px!important;
+  border:1px solid #d7e2eb!important;
+  border-left:4px solid #bd965d!important;
+  background:#edf3f7!important;
+}
+#opsContent .org-research-group .org-chart-line:first-child .org-chart-role{
+  color:#526d82!important;font-size:13px!important;font-weight:800!important;
+}
+#opsContent .org-research-group .org-chart-line:first-child .org-chart-name{
+  color:#173b59!important;font-size:18px!important;font-weight:900!important;
+}
+#opsContent .org-research-group .org-chart-line:not(:first-child) .org-chart-role{
+  color:#788999!important;font-size:11px!important;font-weight:750!important;
+}
+#opsContent .org-research-group .org-chart-line:not(:first-child) .org-chart-name{
+  color:#304c63!important;font-size:15px!important;font-weight:800!important;
+}
+@media(max-width:760px){
+ #opsContent .org-research-group{padding:13px!important}
+ #opsContent .org-research-group .org-chart-items{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #opsContent .org-research-group .org-chart-line:first-child{grid-column:1/-1!important}
+}
+@media(max-width:520px){
+ #opsContent .org-research-group>h4{font-size:16px!important;flex-wrap:wrap}
+ #opsContent .org-research-group>h4 span{margin-left:0!important}
+ #opsContent .org-research-group .org-chart-items{grid-template-columns:1fr!important}
+}
+</style>
 </body></html>
 
 <style id="gmc-mk-focus-layout">
