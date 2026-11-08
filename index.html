@@ -4061,6 +4061,21 @@ html body #app > .container.ops-page .ops-table-wrap {
  .hr-child-remove{grid-column:2!important;justify-self:end!important}
 }
 </style>
+
+<style id="gmc-member-modal-scrollbar-hide">
+/* Hide visible inner scrollbars in member detail/edit modal while preserving scrolling */
+.hr-modal-card.hr-member-detail-modal,
+.hr-modal-card.hr-member-detail-modal .hr-detail-grid{
+  scrollbar-width:none!important;
+  -ms-overflow-style:none!important;
+}
+.hr-modal-card.hr-member-detail-modal::-webkit-scrollbar,
+.hr-modal-card.hr-member-detail-modal .hr-detail-grid::-webkit-scrollbar{
+  display:none!important;
+  width:0!important;
+  height:0!important;
+}
+</style>
 </body></html>
 
 <style id="gmc-mk-focus-layout">
