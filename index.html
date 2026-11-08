@@ -2966,7 +2966,7 @@ function opsOpenForm(rowNumber){
       (multiline?'<textarea id="opsField'+i+'" rows="3">'+value+'</textarea>':'<input id="opsField'+i+'" type="'+(isDate?'date':'text')+'" value="'+(isDate?E(opsDateIso(raw)):value)+'">')+'</div>';
   }).join('');
   document.getElementById('opsContent').innerHTML=
-    '<div class="ops-form-panel"><div class="ops-section-head"><div><div class="admin-kicker">DATA ENTRY</div><h3>'+(record?'항목 수정':'새 항목 등록')+'</h3><p>'+E(OPS_CURRENT_TAB)+'</p></div><div class="ops-head-actions">'+(OPS_CURRENT_TAB==='회원명단'?'<button class="btn light" onclick="opsRenderHR()">← 인사관리</button>':'')+'<button class="btn light" onclick="opsRenderTable()">목록으로</button></div></div>'+
+    '<div class="ops-form-panel"><div class="ops-section-head"><div><div class="admin-kicker">DATA ENTRY</div><h3>'+(record?'항목 수정':'새 항목 등록')+'</h3><p>'+E(OPS_CURRENT_TAB)+'</p></div><div class="ops-head-actions">'+(OPS_CURRENT_TAB==='회원명단'?'<button class="btn light" onclick="opsRenderHR()">← 인사관리</button>':'')+(OPS_CURRENT_TAB==='사무실 예약'&&record?'<button type="button" class="btn danger" onclick="opsDeleteRecord('+record.rowNumber+')">예약 삭제</button>':'')+'<button class="btn light" onclick="opsRenderTable()">목록으로</button></div></div>'+
     '<form class="ops-form-grid" onsubmit="event.preventDefault();opsSaveRecord()">'+fields+
     '<div class="ops-form-actions"><button type="button" class="btn light" onclick="opsRenderTable()">취소</button><button type="submit" class="btn">저장</button></div></form></div>';
 }
