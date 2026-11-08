@@ -2380,7 +2380,7 @@ async function opsDashboard(selected){
     const r=await A('opsListTabs',[T]);
     OPS_TAB_INFO=Array.isArray(r.tabs)?r.tabs:[];
     const menuGroups=[
-      {title:'조직 · 인사',items:['조직관리','회원관리','MK 명단']},
+      {title:'조직 · 인사',items:['조직관리','회원관리']},
       {title:'사역 · 행정',items:['행사관리','업무관리']},
       {title:'시설 · 자산',items:['사무실 예약','사무실 비품대장']}
     ];
@@ -2678,7 +2678,7 @@ async function opsRenderHR(){
   HR_STATE.mkHeaders=mk.headers||[];HR_STATE.mk=mk.records.map(x=>({parent:x.values[pi]||'',name:x.values[mi]||'',birth:x.values[yi]||'',resident:x.values[ri2]||''})).filter(x=>x.name);
   HR_STATE.families=f.records||[];
   HR_STATE.mode='전체';HR_STATE.branch='전체';HR_STATE.role='전체';HR_STATE.query='';HR_STATE.selected=null;
-  content.innerHTML='<div class="ops-overview-head"><div><h3>회원관리 리스트</h3></div></div><div id="hrList"></div>';
+  content.innerHTML='<div class="ops-overview-head"><div><h3>회원관리 리스트</h3><p>회원 및 가족 정보를 관리합니다.</p></div><div class="ops-head-actions"><button type="button" class="btn light" onclick="opsOpenTab(\'MK 명단\')">MK 명단 보기</button></div></div><div id="hrList"></div>';
   hrRenderList();
  }catch(e){content.innerHTML='<div class="panel ops-error"><h3>인사정보를 불러오지 못했습니다.</h3><p>'+E(e.message)+'</p><button class="btn light" onclick="opsRenderHR()">다시 시도</button></div>';}
 }
@@ -2902,7 +2902,7 @@ function opsRenderTable(){
   const isMK=OPS_CURRENT_TAB==='MK 명단';
   content.innerHTML=
     orgNav+'<div class="ops-section-head"><div><h3>'+E(OPS_CURRENT_TAB==='지부현황'?'지부 현황':OPS_CURRENT_TAB)+'</h3></div>'+
-    '<div class="ops-head-actions">'+(OPS_CURRENT_TAB==='회원명단'?'<button class="btn light" onclick="opsRenderHR()">← 인사관리</button>':'')+'<button class="btn" onclick="opsOpenForm()">＋ '+(isMK?'MK 등록':'항목 추가')+'</button></div></div>'+
+    '<div class="ops-head-actions">'+((OPS_CURRENT_TAB==='회원명단'||OPS_CURRENT_TAB==='MK 명단')?'<button class="btn light" onclick="opsRenderHR()">← 회원관리</button>':'')+'<button class="btn" onclick="opsOpenForm()">＋ '+(isMK?'MK 등록':'항목 추가')+'</button></div></div>'+
     (isMK?'<div class="ops-mk-filters"><input id="opsSearch" type="search" placeholder="MK 이름 또는 부모 선교사 검색" oninput="opsFilterRows()"><select id="opsMkBranch" onchange="opsFilterRows()"><option value="">전체 지부</option>'+[...new Set(rows.map(r=>String(r.values[1]||"").trim()).filter(Boolean))].sort().map(v=>'<option value="'+E(v)+'">'+E(v)+'</option>').join('')+'</select><select id="opsMkResidence" onchange="opsFilterRows()"><option value="">전체 거주 상태</option><option value="O">미얀마 거주</option><option value="X">해외 거주</option></select><select id="opsMkYear" onchange="opsFilterRows()"><option value="">전체 출생연도</option>'+[...new Set(rows.map(r=>String(r.values[5]||"").trim()).filter(v=>v.length===4&&Number(v)>1900))].sort((a,b)=>Number(b)-Number(a)).map(v=>'<option value="'+E(v)+'">'+E(v)+'</option>').join('')+'</select><button type="button" class="btn light" onclick="opsResetMkFilters()">초기화</button><span id="opsRowCount">'+rows.length+'명</span></div>':'<div class="ops-table-tools"><input id="opsSearch" type="search" placeholder="항목 내용 검색" oninput="opsFilterRows()"><span id="opsRowCount">'+rows.length+'명</span></div>')+
     '<div class="ops-table-wrap'+(isMK?' ops-mk-table-wrap':OPS_CURRENT_TAB==='업무관리'?' ops-task-table-wrap':OPS_CURRENT_TAB==='사무실 비품대장'?' ops-inventory-table-wrap':OPS_CURRENT_TAB==='운영위원회'?' ops-committee-table-wrap':'')+'"><table class="ops-table"><thead><tr>'+headers.map(h=>'<th>'+E(h)+'</th>').join('')+'<th class="ops-actions-head">관리</th></tr></thead><tbody id="opsRows">'+opsRowsHtml(rows)+'</tbody></table></div>'+
     (!rows.length?'<div class="ops-empty-inline">등록된 MK가 없습니다. <b>MK 등록</b>을 눌러 첫 자료를 입력하세요.</div>':'');
