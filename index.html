@@ -3615,7 +3615,21 @@ if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.se
     box-sizing:border-box !important;
   }
   #opsContent{width:100%;min-width:0;box-sizing:border-box}
-  #opsContent .ops-section-head{width:100%;margin-left:0;margin-right:0;box-sizing:border-box}
+  #opsContent .ops-section-head{
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:flex-start !important;
+    justify-content:flex-start !important;
+    width:100% !important;
+    margin:0 0 16px !important;
+    text-align:left !important;
+    box-sizing:border-box !important;
+  }
+  #opsContent .ops-section-head>div:first-child{
+    width:100% !important;
+    align-self:flex-start !important;
+    text-align:left !important;
+  }
 }
 </style>
 <style id="ops-event-calendar-style">
