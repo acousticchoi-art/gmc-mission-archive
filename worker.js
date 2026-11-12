@@ -1000,6 +1000,39 @@ async function api(action,args,ctx=null){
       invalidateSheetReadCache();invalidateOpsReadCache();
       return {ok:true,count:records.length};
     }
+    case 'orgGetOverview':{
+      await requireRole(args[0],['관리자']);
+      let meta=await opsMeta();
+      const existing=new Set((meta.sheets||[]).map(x=>x.properties?.title));
+      if(!existing.has('가족관리')){
+        await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+':batchUpdate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requests:[{addSheet:{properties:{title:'가족관리'}}}]})});
+        await googleJson(opsUrl("'가족관리'!A1:D1")+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({values:[['가족ID','회원명','가족관계','대표자']]})});
+        invalidateOpsReadCache();
+        meta=await opsMeta();
+      }
+      const names=['운영위원회','지부현황','회원명단','MK 명단'];
+      const ranges=[...names.map(n=>opsRange(n,'A1','AZ')),"'가족관리'!A:D"];
+      const hasMovement=(meta.sheets||[]).some(x=>x.properties?.title==='유닛이동이력');
+      if(hasMovement)ranges.push("'유닛이동이력'!A:J");
+      const url='https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+'/values:batchGet?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS&'+ranges.map(x=>'ranges='+encodeURIComponent(x)).join('&');
+      const data=await googleJson(url),valueRanges=data.valueRanges||[];
+      const sections=names.map((name,index)=>{
+        const rows=valueRanges[index]?.values||[];
+        OPS_READ_CACHE.set(name,{values:rows,expiresAt:Date.now()+OPS_READ_TTL_MS});
+        const headers=(rows[0]||[]).map((v,i)=>String(v??'').trim()||('항목 '+(i+1)));
+        const records=[];
+        for(let i=1;i<rows.length;i++)if(opsHasValues(rows[i]))records.push({rowNumber:i+1,values:headers.map((_,j)=>String(rows[i][j]??''))});
+        return {name,headers,records,count:records.length,needsHeaders:!headers.some(v=>String(v||'').trim())};
+      });
+      const familyRows=valueRanges[4]?.values||[];
+      const families=familyRows.slice(1).filter(r=>opsHasValues(r)).map(r=>({familyId:String(r[0]||''),name:String(r[1]||''),relationship:String(r[2]||''),isHead:String(r[3]||'')==='TRUE'||String(r[3]||'')==='예'}));
+      let movements=[];
+      if(hasMovement){
+        const movementRows=valueRanges[5]?.values||[];
+        movements=movementRows.slice(1).filter(r=>opsHasValues(r)).map(r=>({id:String(r[0]||''),familyId:String(r[1]||''),type:String(r[2]||''),startDate:String(r[3]||''),endDate:String(r[4]||''),returnDate:String(r[5]||''),backDate:String(r[6]||''),purpose:String(r[7]||''),note:String(r[8]||'')}));
+      }
+      return {ok:true,sections,families,movements};
+    }
     case 'opsDashboardData':{
       await requireRole(args[0],['관리자']);
       const allRows=await opsGetMany(OPS_TAB_NAMES);
