@@ -3602,6 +3602,22 @@ if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.se
 }
 </style>
 
+<style id="ops-mobile-event-heading-fix">
+/* Mobile: align the event-management heading with the viewport, not a centered/narrow content column. */
+@media(max-width:700px){
+  html body #app > .container.ops-page{
+    width:100% !important;
+    max-width:none !important;
+    margin-left:0 !important;
+    margin-right:0 !important;
+    padding-left:14px !important;
+    padding-right:14px !important;
+    box-sizing:border-box !important;
+  }
+  #opsContent{width:100%;min-width:0;box-sizing:border-box}
+  #opsContent .ops-section-head{width:100%;margin-left:0;margin-right:0;box-sizing:border-box}
+}
+</style>
 <style id="ops-event-calendar-style">
 .ops-event-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:14px 0}
 .ops-event-nav,.ops-event-actions,.ops-event-views{display:flex;align-items:center;gap:7px}
