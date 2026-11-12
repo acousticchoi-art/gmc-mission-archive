@@ -564,7 +564,21 @@ async function api(action,args,ctx=null){
     case 'login':{const u=await findUserByUsername(args[0]);if(!u||u.status!=='활성')return {ok:false,message:'아이디 또는 비밀번호가 올바르지 않습니다.'};const h=await hashPassword(args[1],u.salt);if(!constEq(h,u.hash))return {ok:false,message:'아이디 또는 비밀번호가 올바르지 않습니다.'};const loginAt=nowText();const token=await makeSession(u);const recordLogin=async()=>{try{await sheetUpdate('회원!M'+u.row+':M'+u.row,[[loginAt]]);const lrows=await loginHistoryRows(),lid=maxNextId(lrows,'L');await sheetAppend('로그인이력',[lid,u.id,safe(u.name),safe(u.username),u.role,safe(u.branch),loginAt]);}catch(e){}};if(ctx?.waitUntil)ctx.waitUntil(recordLogin());else await recordLogin();return {ok:true,token,user:publicUser(u)};}
     case 'logout':return {ok:true};
     case 'me':{const s=await session(args[0]),u=await findUserById(s.uid);if(!u)throw new Error('회원 정보를 찾을 수 없습니다.');return {ok:true,user:publicUser(u)};}
-    case 'changePassword':{const s=await session(args[0]);const u=await findUserById(s.uid);if(!u)throw new Error('회원 정보를 찾을 수 없습니다.');validatePassword(args[1]);validatePassword(args[2]);const oldHash=await hashPassword(args[1],u.salt);if(!constEq(oldHash,u.hash))throw new Error('현재 비밀번호가 올바르지 않습니다.');const salt=randomHex(16),hash=await hashPassword(args[2],salt);await sheetUpdate('회원!H'+u.row+':J'+u.row,[[hash,salt,false]]);return {ok:true};}
+    case 'changePassword':{
+      const s=await session(args[0]),u=await findUserById(s.uid);
+      if(!u)throw new Error('회원 정보를 찾을 수 없습니다.');
+      const newPassword=args[2];
+      validatePassword(newPassword);
+      // 첫 로그인 또는 관리자가 초기화한 계정은 현재 비밀번호 확인 없이 새 비밀번호를 설정할 수 있다.
+      if(!u.firstLogin){
+        if(typeof args[1]!=='string'||!args[1])throw new Error('현재 비밀번호를 입력해 주세요.');
+        const oldHash=await hashPassword(args[1],u.salt);
+        if(!constEq(oldHash,u.hash))throw new Error('현재 비밀번호가 올바르지 않습니다.');
+      }
+      const salt=randomHex(16),hash=await hashPassword(newPassword,salt);
+      await sheetUpdate('회원!H'+u.row+':J'+u.row,[[hash,salt,false]]);
+      return {ok:true};
+    }
     case 'categories':{await session(args[0]);return {ok:true,categories:['신학교·지도자','교육','어린이·청소년','교회개척','주일학교','제자훈련','전도','사역자훈련','교단협력','기숙사','학사','고아원','BAM','어학원','NGO 개발','문화사역','GMC 자료','사진·영상','서적','미얀마 이해']};}
     case 'listMaterials':{
       await session(args[0]);
