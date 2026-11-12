@@ -838,6 +838,29 @@ async function api(action,args,ctx=null){
       const range="'유닛이동이력'!A:J",v=(await googleJson(opsUrl(range)+'?valueRenderOption=FORMATTED_VALUE')).values||[],existingForFamily=v.slice(1).filter(r=>String(r[1]||'')===id&&r.some(x=>String(x||'').trim()));if(existingForFamily.length&&!records.length)throw new Error('기존 이력이 있는 가족의 이력 전체를 빈 목록으로 삭제할 수 없습니다. 이력 보존을 위해 저장을 중단했습니다.');const keep=v.slice(1).filter(r=>String(r[1]||'')!==id),rows=[['이력ID','가족ID','유형','시작일','종료일','귀국일','복귀일','목적','비고','수정일'],...keep,...records.map(x=>[x.id,id,x.type,x.startDate,x.endDate,x.returnDate,x.backDate,x.purpose,x.note,new Date().toISOString()])];
       await googleJson(opsUrl(range)+':clear',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});await googleJson(opsUrl(range)+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({majorDimension:'ROWS',values:rows})});invalidateSheetReadCache();invalidateOpsReadCache();return {ok:true};
     }
+    case 'hrGetOverview':{
+      await requireRole(args[0],['관리자']);
+      let meta=await opsMeta();
+      if(!(meta.sheets||[]).some(x=>x.properties?.title==='가족관리')){
+        await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+':batchUpdate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requests:[{addSheet:{properties:{title:'가족관리'}}}]})});
+        invalidateOpsReadCache();
+        meta=await opsMeta();
+      }
+      const names=['회원명단','MK 명단','운영위원회'];
+      const ranges=[...names.map(n=>opsRange(n,'A1','AZ')),opsQuoteSheet('가족관리')+'!A:D'];
+      const url='https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+'/values:batchGet?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS&'+ranges.map(x=>'ranges='+encodeURIComponent(x)).join('&');
+      const data=await googleJson(url),valueRanges=data.valueRanges||[];
+      const rowsByName={};
+      names.forEach((name,index)=>{
+        const values=valueRanges[index]?.values||[];
+        rowsByName[name]=values;
+        OPS_READ_CACHE.set(name,{values,expiresAt:Date.now()+OPS_READ_TTL_MS});
+      });
+      const familyRows=valueRanges[3]?.values||[];
+      const members=rowsByName['회원명단']||[],mk=rowsByName['MK 명단']||[],committee=rowsByName['운영위원회']||[];
+      const records=familyRows.slice(1).filter(r=>r.some(v=>String(v||'').trim())).map(r=>({familyId:String(r[0]||''),name:String(r[1]||''),relationship:String(r[2]||''),isHead:String(r[3]||'')==='TRUE'||String(r[3]||'')==='예'}));
+      return {ok:true,members:{headers:(members[0]||[]).map((v,i)=>String(v??'').trim()||('항목 '+(i+1))),records:members.slice(1).map((values,i)=>({rowNumber:i+2,values:(members[0]||[]).map((_,j)=>String(values[j]??''))})).filter(x=>x.values.some(v=>v.trim()))},mk:{headers:(mk[0]||[]).map((v,i)=>String(v??'').trim()||('항목 '+(i+1))),records:mk.slice(1).map((values,i)=>({rowNumber:i+2,values:(mk[0]||[]).map((_,j)=>String(values[j]??''))})).filter(x=>x.values.some(v=>v.trim()))},committee:{headers:(committee[0]||[]).map((v,i)=>String(v??'').trim()||('항목 '+(i+1))),records:committee.slice(1).map((values,i)=>({rowNumber:i+2,values:(committee[0]||[]).map((_,j)=>String(values[j]??''))})).filter(x=>x.values.some(v=>v.trim()))},families:records};
+    }
     case 'hrGetFamilies':{
       await requireRole(args[0],['관리자']);
       const meta=await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+'?fields=sheets.properties.title');
