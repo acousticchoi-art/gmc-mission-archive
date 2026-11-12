@@ -2665,8 +2665,8 @@ async function opsRenderHR(){
  const content=document.getElementById('opsContent');if(!content)return;
  content.innerHTML='<div class="notice">회원 및 가족 정보를 불러오는 중입니다.</div>';
  try{
-  const [r,f,committee]=await Promise.all([A('opsDashboardData',[T]),A('hrGetFamilies',[T]),A('opsListRows',[T,'운영위원회'])]),ss=r.sections||[],get=n=>ss.find(x=>x.name===n)||{headers:[],records:[]};
-  const m=get('회원명단'),mk=get('MK 명단'),ix=(hs,re)=>hs.findIndex(h=>re.test(String(h)));
+  const overview=await A('hrGetOverview',[T]);
+  const m=overview.members||{headers:[],records:[]},mk=overview.mk||{headers:[],records:[]},committee=overview.committee||{headers:[],records:[]},ix=(hs,re)=>hs.findIndex(h=>re.test(String(h)));
   const ci=committee.headers||[],cr=committee.records||[],cix=re=>ci.findIndex(h=>re.test(String(h||'')));
   const researchRow=cr.find(x=>/지역연구소/.test(String(x.values[cix(/직책|담당/)]||'')));
   const researchNameIdx=cix(/성명|이름/),researchMembersIdx=cix(/부코디|위원|구성원/);
@@ -2676,7 +2676,7 @@ async function opsRenderHR(){
   HR_STATE.people=m.records.map(x=>{const name=String(x.values[ni]||'').trim(),base=String(x.values[ri]||'').trim()||'사원',isResearch=researchNames.has(name);return {name,branch:x.values[bi]||'미분류',role:isResearch?(base==='사원'?'연구위원':base+' · 연구위원'):base,place:x.values[li]||'',start:si>=0?String(x.values[si]||''):'',major:mai>=0?String(x.values[mai]||''):'',v:x.values,headers:m.headers,rowNumber:x.rowNumber};}).filter(x=>x.name);
   const pi=ix(mk.headers,/부모|선교사/),mi=ix(mk.headers,/MK 이름|이름/),yi=ix(mk.headers,/출생연도/),ri2=ix(mk.headers,/거주 여부|거주/);
   HR_STATE.mkHeaders=mk.headers||[];HR_STATE.mk=mk.records.map(x=>({parent:x.values[pi]||'',name:x.values[mi]||'',birth:x.values[yi]||'',resident:x.values[ri2]||''})).filter(x=>x.name);
-  HR_STATE.families=f.records||[];
+  HR_STATE.families=overview.families||[];
   HR_STATE.mode='전체';HR_STATE.branch='전체';HR_STATE.role='전체';HR_STATE.query='';HR_STATE.selected=null;
   content.innerHTML='<div class="ops-overview-head"><div><h3>회원관리 리스트</h3><p>회원 및 가족 정보를 관리합니다.</p></div></div><div id="hrList"></div>';
   hrRenderList();
