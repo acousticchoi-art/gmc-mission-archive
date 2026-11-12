@@ -574,11 +574,8 @@ async function api(action,args,ctx=null){
       const q=norm(f.q), qCompact=compact(q);
       const terms=q?q.split(' ').filter(Boolean):[];
       const cat=norm(f.category), lang=norm(f.language);
-      const rows=await materialsRows(), commentRows=await commentsRows(), counts={};
-      for(let i=1;i<commentRows.length;i++){
-        const mid=String(commentRows[i][1]||'');
-        if(mid)counts[mid]=(counts[mid]||0)+1;
-      }
+      // 검색 목록에서는 댓글 수를 표시하지 않으므로 댓글 시트 전체 조회를 생략한다.
+      const rows=await materialsRows();
       const out=[];
       for(let i=1;i<rows.length;i++){
         const r=rows[i];
@@ -592,7 +589,7 @@ async function api(action,args,ctx=null){
         if(cat && !String(r[3]||'').split(/[，,;|]/).some(c=>compact(c)===compact(cat))) continue;
         if(lang && norm(r[4])!==lang) continue;
         const id=String(r[0]);
-        out.push({id,title:String(r[1]||''),description:String(r[2]||''),category:String(r[3]||''),language:String(r[4]||''),author:String(r[5]||''),year:String(r[6]||''),fileName:String(r[8]||''),fileType:String(r[9]||''),date:String(r[10]||''),views:Number(r[14]||0),commentCount:counts[id]||0,viewUrl:'https://drive.google.com/file/d/'+encodeURIComponent(String(r[7]||''))+'/view',downloadUrl:'https://drive.google.com/uc?export=download&id='+encodeURIComponent(String(r[7]||''))});
+        out.push({id,title:String(r[1]||''),description:String(r[2]||''),category:String(r[3]||''),language:String(r[4]||''),author:String(r[5]||''),year:String(r[6]||''),fileName:String(r[8]||''),fileType:String(r[9]||''),date:String(r[10]||''),views:Number(r[14]||0),viewUrl:'https://drive.google.com/file/d/'+encodeURIComponent(String(r[7]||''))+'/view',downloadUrl:'https://drive.google.com/uc?export=download&id='+encodeURIComponent(String(r[7]||''))});
       }
       out.reverse();
       return {ok:true,materials:out};
