@@ -3732,6 +3732,29 @@ if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.se
 }
 </style>
 
+<style id="gmc-member-heading-spacing">
+/* Tighten the member-management heading block on all screen sizes. */
+#opsContent .ops-overview-head{
+  display:block !important;
+  margin:0 0 12px !important;
+  padding:0 !important;
+}
+#opsContent .ops-overview-head>div{min-width:0}
+#opsContent .ops-overview-head h3{
+  margin:0 0 5px !important;
+  line-height:1.3 !important;
+}
+#opsContent .ops-overview-head p{
+  margin:0 !important;
+  padding:0 !important;
+  line-height:1.5 !important;
+}
+@media(max-width:700px){
+  #opsContent .ops-overview-head{margin-bottom:10px !important}
+  #opsContent .ops-overview-head h3{font-size:21px !important}
+  #opsContent .ops-overview-head p{font-size:14px !important}
+}
+</style>
 <style id="gmc-member-toolbar-refinement">
 .hr-list-toolbar{display:block;margin:14px 0 10px}
 .hr-filter-row{display:grid;grid-template-columns:minmax(260px,1fr) 180px 180px;gap:9px;max-width:none;width:100%}
