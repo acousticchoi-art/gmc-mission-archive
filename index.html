@@ -2956,13 +2956,13 @@ async function opsPaymentList(){
  try{
   const d=await A('opsListRows',[T,'결제 요청서']),rows=(d.records||[]).slice().reverse();
   window.__gmcPaySavedRows=rows;
-  c.innerHTML='<div class="ops-section-head"><div><div class="admin-kicker">PAYMENT HISTORY</div><h3>결제 목록</h3></div><button class="btn" type="button" onclick="opsPaymentRequest()">새 결제 요청</button></div>'+
+  c.innerHTML='<div class="ops-section-head"><div><h3>결제 목록</h3></div><button class="btn" type="button" onclick="opsPaymentRequest()">새 결제 요청</button></div>'+
    '<div class="panel" style="margin-top:14px;padding:14px"><div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px"><input id="payListSearch" placeholder="요청자, 소속, 요청일 검색" oninput="opsPayFilterList()" style="flex:1;min-width:190px;padding:10px;border:1px solid var(--line);border-radius:8px"><select id="payListStatus" onchange="opsPayFilterList()" style="padding:10px;border:1px solid var(--line);border-radius:8px"><option value="">전체 상태</option><option>접수</option><option>검토 중</option><option>지급 완료</option><option>반려</option></select></div><div id="payListTable">'+opsPayListTable(rows)+'</div></div>';
  }catch(e){c.innerHTML='<div class="notice error">결제 목록을 불러오지 못했습니다: '+E(e.message)+'</div><button class="btn light" onclick="opsPaymentList()">다시 시도</button>';}
 }
 function opsPayListTable(rows){
  if(!rows.length)return '<div class="ops-empty" style="padding:28px;text-align:center"><h3>등록된 요청이 없습니다.</h3></div>';
- return '<div style="overflow-x:auto"><table class="ops-table" style="min-width:700px"><thead><tr><th>요청일</th><th>요청자</th><th>소속 / 부서</th><th>결제 합계</th><th>상태</th><th>관리</th></tr></thead><tbody>'+rows.map(r=>{const v=r.values||[];return '<tr><td>'+E(v[1]||'')+'</td><td><b>'+E(v[2]||'')+'</b></td><td>'+E(v[3]||'')+'</td><td>'+E(v[4]||'')+'</td><td>'+E(v[5]||'접수')+'</td><td><button class="btn light" type="button" onclick="opsPayOpenSavedFromList('+r.rowNumber+')">요청서 열기</button></td></tr>';}).join('')+'</tbody></table></div><div class="meta" style="margin-top:10px">총 '+rows.length+'건</div>';
+ return '<div style="overflow-x:auto"><table class="ops-table" style="width:100%;min-width:760px;table-layout:auto"><thead><tr><th>요청일</th><th>요청자</th><th>소속 / 부서</th><th>결제 합계</th><th>상태</th><th>관리</th></tr></thead><tbody>'+rows.map(r=>{const v=r.values||[];return '<tr><td>'+E(v[1]||'')+'</td><td><b>'+E(v[2]||'')+'</b></td><td>'+E(v[3]||'')+'</td><td>'+E(v[4]||'')+'</td><td>'+E(v[5]||'접수')+'</td><td><button class="btn light" type="button" onclick="opsPayOpenSavedFromList('+r.rowNumber+')">요청서 열기</button></td></tr>';}).join('')+'</tbody></table></div><div class="meta" style="margin-top:10px">총 '+rows.length+'건</div>';
 }
 function opsPayFilterList(){
  const q=String(document.getElementById('payListSearch')?.value||'').trim().toLowerCase();
@@ -2982,7 +2982,7 @@ function opsPaymentRequest(){
   document.querySelectorAll('.ops-tab').forEach(b=>b.classList.toggle('active',b.textContent.trim()==='결제 요청서'));
   const c=document.getElementById('opsContent');if(!c)return;
   const today=new Date(),date=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
-  window.__gmcPayItems=[{id:1,description:'',amount:'',currency:'MMK'}];window.__gmcPayItemSeq=1;
+  window.__gmcPayEditingRow=null;window.__gmcPayItems=[{id:1,description:'',amount:'',currency:'MMK'}];window.__gmcPayItemSeq=1;
   c.innerHTML=
   '<style>'+
   '.pay-wrap{display:grid;grid-template-columns:minmax(290px,.9fr) minmax(320px,1.1fr);gap:18px;align-items:start}'+
@@ -3050,7 +3050,7 @@ async function opsPaySave(){
   const payload={date:opsPayVal('payDate'),name:opsPayVal('payName'),dept:opsPayVal('payDept'),phone:opsPayVal('payPhone'),attach:opsPayVal('payAttach'),note:opsPayVal('payNote'),payouts:Object.fromEntries(['MMK','KRW'].map(c=>[c,{method:opsPayVal('payMethod_'+c)||'현금',provider:opsPayVal('payProvider_'+c),number:opsPayVal('payReceiverNumber_'+c)}])),items:(window.__gmcPayItems||[]).map(x=>({...x})),totals};
   if(!payload.name){alert('요청자를 입력해 주세요.');document.getElementById('payName')?.focus();return;}
   const id='PAY-'+Date.now(),summary=[totals.MMK?'MMK '+opsPayFormat(totals.MMK,'MMK'):'',totals.KRW?'KRW '+opsPayFormat(totals.KRW,'KRW'):''].filter(Boolean).join(' / ');
-  try{await A('opsCreateRow',[T,'결제 요청서',[id,payload.date,payload.name,payload.dept,summary,'접수',JSON.stringify(payload),new Date().toISOString()]]);alert('결제 요청서가 저장되었습니다.');await opsPaymentList();}
+  try{if(window.__gmcPayEditingRow){const old=(window.__gmcPaySavedRows||[]).find(r=>r.rowNumber===window.__gmcPayEditingRow);const oldValues=old?.values||[];await A('opsUpdateRow',[T,'결제 요청서',window.__gmcPayEditingRow,[oldValues[0]||id,payload.date,payload.name,payload.dept,summary,oldValues[5]||'접수',JSON.stringify(payload),oldValues[7]||new Date().toISOString()]]);alert('수정 내용을 저장했습니다.');}else{await A('opsCreateRow',[T,'결제 요청서',[id,payload.date,payload.name,payload.dept,summary,'접수',JSON.stringify(payload),new Date().toISOString()]]);alert('결제 요청서를 저장했습니다.');}window.__gmcPayEditingRow=null;await opsPaymentList();}
   catch(e){alert('저장하지 못했습니다: '+e.message);}
 }
 async function opsPayShowList(){
@@ -3065,6 +3065,7 @@ async function opsPayShowList(){
 function opsPayOpenSaved(rowNumber){
   const row=(window.__gmcPaySavedRows||[]).find(r=>r.rowNumber===rowNumber);if(!row){alert('저장된 요청을 찾지 못했습니다.');return;}
   try{const data=JSON.parse(row.values?.[6]||'{}');
+    window.__gmcPayEditingRow=rowNumber;const saveBtn=document.querySelector('.pay-actions button[onclick="opsPaySave()"]');if(saveBtn)saveBtn.textContent='수정 저장';
     const ids={date:'payDate',name:'payName',dept:'payDept',phone:'payPhone',attach:'payAttach',note:'payNote'};
     Object.keys(ids).forEach(k=>{const el=document.getElementById(ids[k]);if(el)el.value=data[k]||'';});
     ['MMK','KRW'].forEach(c=>{const q=data.payouts?.[c]||{};const m=document.getElementById('payMethod_'+c);if(m)m.value=q.method||'현금';const v=document.getElementById('payProvider_'+c);if(v)v.value=q.provider||'';const n=document.getElementById('payReceiverNumber_'+c);if(n)n.value=q.number||'';opsPayPayoutChanged(c);});
