@@ -2383,12 +2383,13 @@ async function opsDashboard(selected){
       {title:'조직 · 인사',items:['조직관리','회원관리']},
       {title:'사역 · 행정',items:['행사관리','업무관리']},
       {title:'시설 · 자산',items:['사무실 예약','사무실 비품대장']},
-      {title:'결제',items:['결제 요청서']}
+      {title:'결제',items:['결제 요청서','결제 목록']}
     ];
     document.getElementById('opsTabs').innerHTML=menuGroups.map(group=>
       '<section class="ops-menu-group"><h3>'+group.title+'</h3><div class="ops-menu-items">'+group.items.map(name=>{
-        const exists=name==='회원관리'||name==='결제 요청서'||!!OPS_TAB_INFO.find(x=>x.name===name&&x.exists);
+        const exists=name==='회원관리'||name==='결제 요청서'||name==='결제 목록'||!!OPS_TAB_INFO.find(x=>x.name===name&&x.exists);
         if(name==='결제 요청서')return '<button type="button" class="ops-tab'+(selected===name?' active':'')+'" onclick="opsPaymentRequest()">결제 요청서</button>';
+        if(name==='결제 목록')return '<button type="button" class="ops-tab'+(selected===name?' active':'')+'" onclick="opsPaymentList()">결제 목록</button>';
         if(name==='조직관리')return '<button type="button" class="ops-tab'+((selected==='조직관리'||selected==='지부현황'||selected==='지역선교부 코디')?' active':'')+'" onclick="opsRenderOrganization()">조직관리</button>';
         if(name==='회원관리')return '<button type="button" class="ops-tab'+(selected==='인사관리'?' active':'')+'" onclick="opsRenderHR()">회원관리</button>';
         return '<button type="button" class="ops-tab'+(name===selected?' active':'')+'" '+(!exists?'disabled':'')+' data-tab="'+E(name)+'" onclick="opsOpenTab(this.dataset.tab)">'+E(name)+'</button>';
@@ -2402,6 +2403,7 @@ async function opsDashboard(selected){
       document.querySelector('.ops-page')?.classList.add('ops-mk-focus');
     }
     if(selected==='결제 요청서'){opsPaymentRequest();return;}
+    if(selected==='결제 목록'){await opsPaymentList();return;}
     if(selected==='인사관리'){await opsRenderHR();return;}
     if(selected==='조직관리'||selected==='지부현황'||selected==='지역선교부 코디'){await opsRenderOrganization();return;}
     if(!OPS_TAB_NAMES.includes(selected)||!OPS_TAB_INFO.some(x=>x.name===selected&&x.exists)){await opsRenderOrganization();return;}
@@ -2945,6 +2947,35 @@ function opsResetMkFilters(){
 }
 
 
+async function opsPaymentList(){
+ if(!ME||ME.role!=='관리자')return;
+ opsCollapseMenuOnMobile();OPS_CURRENT_TAB='결제 요청서';OPS_EDIT_ROW=null;
+ document.querySelectorAll('.ops-tab').forEach(b=>b.classList.toggle('active',b.textContent.trim()==='결제 목록'));
+ const c=document.getElementById('opsContent');if(!c)return;
+ c.innerHTML='<div class="notice">저장된 결제 요청을 불러오는 중입니다.</div>';
+ try{
+  const d=await A('opsListRows',[T,'결제 요청서']),rows=(d.records||[]).slice().reverse();
+  window.__gmcPaySavedRows=rows;
+  c.innerHTML='<div class="ops-section-head"><div><div class="admin-kicker">PAYMENT HISTORY</div><h3>저장된 결제 요청</h3><p class="meta">저장된 결제 요청서를 확인하고 다시 열 수 있습니다.</p></div><button class="btn" type="button" onclick="opsPaymentRequest()">새 결제 요청</button></div>'+
+   '<div class="panel" style="margin-top:14px;padding:14px"><div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px"><input id="payListSearch" placeholder="요청자, 소속, 요청일 검색" oninput="opsPayFilterList()" style="flex:1;min-width:190px;padding:10px;border:1px solid var(--line);border-radius:8px"><select id="payListStatus" onchange="opsPayFilterList()" style="padding:10px;border:1px solid var(--line);border-radius:8px"><option value="">전체 상태</option><option>접수</option><option>검토 중</option><option>지급 완료</option><option>반려</option></select></div><div id="payListTable">'+opsPayListTable(rows)+'</div></div>';
+ }catch(e){c.innerHTML='<div class="notice error">결제 목록을 불러오지 못했습니다: '+E(e.message)+'</div><button class="btn light" onclick="opsPaymentList()">다시 시도</button>';}
+}
+function opsPayListTable(rows){
+ if(!rows.length)return '<div class="ops-empty" style="padding:28px;text-align:center"><h3>저장된 결제 요청이 없습니다.</h3><p class="meta">새 결제 요청서를 작성하면 이곳에 표시됩니다.</p></div>';
+ return '<div style="overflow-x:auto"><table class="ops-table" style="min-width:700px"><thead><tr><th>요청일</th><th>요청자</th><th>소속 / 부서</th><th>결제 합계</th><th>상태</th><th>관리</th></tr></thead><tbody>'+rows.map(r=>{const v=r.values||[];return '<tr><td>'+E(v[1]||'')+'</td><td><b>'+E(v[2]||'')+'</b></td><td>'+E(v[3]||'')+'</td><td>'+E(v[4]||'')+'</td><td>'+E(v[5]||'접수')+'</td><td><button class="btn light" type="button" onclick="opsPayOpenSavedFromList('+r.rowNumber+')">요청서 열기</button></td></tr>';}).join('')+'</tbody></table></div><div class="meta" style="margin-top:10px">총 '+rows.length+'건</div>';
+}
+function opsPayFilterList(){
+ const q=String(document.getElementById('payListSearch')?.value||'').trim().toLowerCase();
+ const status=String(document.getElementById('payListStatus')?.value||'');
+ const rows=(window.__gmcPaySavedRows||[]).filter(r=>{const v=r.values||[];return (!status||String(v[5]||'접수')===status)&&(!q||[v[1],v[2],v[3],v[4]].join(' ').toLowerCase().includes(q));});
+ const box=document.getElementById('payListTable');if(box)box.innerHTML=opsPayListTable(rows);
+}
+async function opsPayOpenSavedFromList(rowNumber){
+ const row=(window.__gmcPaySavedRows||[]).find(r=>r.rowNumber===rowNumber);
+ if(!row){alert('저장된 요청을 찾지 못했습니다. 목록을 새로고침해 주세요.');return;}
+ await opsDashboard('결제 요청서');window.__gmcPaySavedRows=[row];opsPayOpenSaved(rowNumber);
+}
+
 function opsPaymentRequest(){
   if(!ME||ME.role!=='관리자')return;
   OPS_CURRENT_TAB='결제 요청서';OPS_EDIT_ROW=null;
@@ -3007,7 +3038,7 @@ function opsPaymentRequest(){
   '<div class="pay-field full"><label>결제 항목</label><div id="payItems" class="pay-items"></div><button type="button" class="pay-add" onclick="opsPayAddItem()">＋ 결제 항목 추가</button></div>'+
   '<div class="pay-field full"><label>첨부 자료</label><input id="payAttach" placeholder="견적서, 영수증 등 (선택)" oninput="opsPayPreview()"></div>'+
   '<div class="pay-field full"><label>비고</label><textarea id="payNote" rows="2" placeholder="추가 전달 사항" oninput="opsPayPreview()"></textarea></div>'+
-  '</div><div class="pay-actions"><button class="btn" type="button" onclick="opsPaySave()">요청서 저장</button><button class="btn light" type="button" onclick="opsPayShowList()">저장된 요청 목록</button><button class="btn light" type="button" onclick="opsPayDownload()">PNG 다운로드</button><button class="btn light" type="button" onclick="opsPayShare()">카카오톡 공유</button><button class="btn light" type="button" onclick="opsDashboard()">닫기</button></div><div id="paySavedList" class="pay-saved-list" hidden></div>'+
+  '</div><div class="pay-actions"><button class="btn" type="button" onclick="opsPaySave()">요청서 저장</button><button class="btn light" type="button" onclick="opsPaymentList()">저장된 요청 목록</button><button class="btn light" type="button" onclick="opsPayDownload()">PNG 다운로드</button><button class="btn light" type="button" onclick="opsPayShare()">카카오톡 공유</button><button class="btn light" type="button" onclick="opsDashboard()">닫기</button></div><div id="paySavedList" class="pay-saved-list" hidden></div>'+
   '<p class="meta" style="margin-top:10px">항목마다 통화를 따로 선택할 수 있습니다. 수령 방법이 페이 또는 은행 송금이면 수령 번호를 입력해야 합니다.</p>'+
   '</section><section class="pay-panel"><div class="admin-kicker">LIVE PREVIEW</div><h3>결제 요청서 미리보기</h3><div class="pay-preview"><div class="pay-paper" id="payPaper"></div></div></section></div>';
   opsPayRenderItems();opsPayMethodChanged();opsPayPreview();
@@ -3019,7 +3050,7 @@ async function opsPaySave(){
   const payload={date:opsPayVal('payDate'),name:opsPayVal('payName'),dept:opsPayVal('payDept'),phone:opsPayVal('payPhone'),attach:opsPayVal('payAttach'),note:opsPayVal('payNote'),payouts:Object.fromEntries(['MMK','KRW'].map(c=>[c,{method:opsPayVal('payMethod_'+c)||'현금',provider:opsPayVal('payProvider_'+c),number:opsPayVal('payReceiverNumber_'+c)}])),items:(window.__gmcPayItems||[]).map(x=>({...x})),totals};
   if(!payload.name){alert('요청자를 입력해 주세요.');document.getElementById('payName')?.focus();return;}
   const id='PAY-'+Date.now(),summary=[totals.MMK?'MMK '+opsPayFormat(totals.MMK,'MMK'):'',totals.KRW?'KRW '+opsPayFormat(totals.KRW,'KRW'):''].filter(Boolean).join(' / ');
-  try{await A('opsCreateRow',[T,'결제 요청서',[id,payload.date,payload.name,payload.dept,summary,'접수',JSON.stringify(payload),new Date().toISOString()]]);alert('결제 요청서가 저장되었습니다.');await opsPayShowList();}
+  try{await A('opsCreateRow',[T,'결제 요청서',[id,payload.date,payload.name,payload.dept,summary,'접수',JSON.stringify(payload),new Date().toISOString()]]);alert('결제 요청서가 저장되었습니다.');await opsPaymentList();}
   catch(e){alert('저장하지 못했습니다: '+e.message);}
 }
 async function opsPayShowList(){
