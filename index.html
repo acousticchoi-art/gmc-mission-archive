@@ -2382,11 +2382,13 @@ async function opsDashboard(selected){
     const menuGroups=[
       {title:'조직 · 인사',items:['조직관리','회원관리']},
       {title:'사역 · 행정',items:['행사관리','업무관리']},
-      {title:'시설 · 자산',items:['사무실 예약','사무실 비품대장']}
+      {title:'시설 · 자산',items:['사무실 예약','사무실 비품대장']},
+      {title:'재정 · 행정',items:['결제 요청서']}
     ];
     document.getElementById('opsTabs').innerHTML=menuGroups.map(group=>
       '<section class="ops-menu-group"><h3>'+group.title+'</h3><div class="ops-menu-items">'+group.items.map(name=>{
-        const exists=name==='회원관리'||!!OPS_TAB_INFO.find(x=>x.name===name&&x.exists);
+        const exists=name==='회원관리'||name==='결제 요청서'||!!OPS_TAB_INFO.find(x=>x.name===name&&x.exists);
+        if(name==='결제 요청서')return '<button type="button" class="ops-tab'+(selected===name?' active':'')+'" onclick="opsPaymentRequest()">결제 요청서</button>';
         if(name==='조직관리')return '<button type="button" class="ops-tab'+((selected==='조직관리'||selected==='지부현황'||selected==='지역선교부 코디')?' active':'')+'" onclick="opsRenderOrganization()">조직관리</button>';
         if(name==='회원관리')return '<button type="button" class="ops-tab'+(selected==='인사관리'?' active':'')+'" onclick="opsRenderHR()">회원관리</button>';
         return '<button type="button" class="ops-tab'+(name===selected?' active':'')+'" '+(!exists?'disabled':'')+' data-tab="'+E(name)+'" onclick="opsOpenTab(this.dataset.tab)">'+E(name)+'</button>';
@@ -2399,6 +2401,7 @@ async function opsDashboard(selected){
       if(label)label.textContent='다른 메뉴 보기';
       document.querySelector('.ops-page')?.classList.add('ops-mk-focus');
     }
+    if(selected==='결제 요청서'){opsPaymentRequest();return;}
     if(selected==='인사관리'){await opsRenderHR();return;}
     if(selected==='조직관리'||selected==='지부현황'||selected==='지역선교부 코디'){await opsRenderOrganization();return;}
     if(!OPS_TAB_NAMES.includes(selected)||!OPS_TAB_INFO.some(x=>x.name===selected&&x.exists)){await opsRenderOrganization();return;}
@@ -2939,6 +2942,118 @@ function opsFilterRows(){
 function opsResetMkFilters(){
   ['opsSearch','opsMkBranch','opsMkResidence','opsMkYear'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   opsFilterRows();
+}
+
+
+function opsPaymentRequest(){
+  if(!ME||ME.role!=='관리자')return;
+  OPS_CURRENT_TAB='결제 요청서';OPS_EDIT_ROW=null;
+  document.querySelectorAll('.ops-tab').forEach(b=>b.classList.toggle('active',b.textContent.trim()==='결제 요청서'));
+  const c=document.getElementById('opsContent');if(!c)return;
+  const today=new Date(),date=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  c.innerHTML=`
+  <style>
+  .pay-wrap{display:grid;grid-template-columns:minmax(280px,.85fr) minmax(320px,1.15fr);gap:18px;align-items:start}
+  .pay-panel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px}
+  .pay-panel h3{margin:0 0 14px;color:var(--n);font-size:17px}
+  .pay-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .pay-field{display:flex;flex-direction:column;gap:5px;min-width:0}
+  .pay-field.full{grid-column:1/-1}
+  .pay-field label{font-size:12px;font-weight:700;color:#53616d}
+  .pay-field input,.pay-field select,.pay-field textarea{width:100%;min-width:0;border:1px solid #d8e0e7;border-radius:7px;padding:10px;background:#fff;color:#1d2a35}
+  .pay-field textarea{min-height:76px;resize:vertical}
+  .pay-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .pay-preview{background:#eef2f5;border-radius:10px;padding:12px;overflow:auto}
+  .pay-paper{width:100%;max-width:560px;margin:auto;background:#fff;box-shadow:0 3px 14px #102b4418;padding:24px;color:#172c40}
+  .pay-signs{display:grid;grid-template-columns:1fr 1fr;border:1px solid #233b52;margin:18px 0}
+  .pay-sign{min-height:78px;text-align:center;border-right:1px solid #233b52}
+  .pay-sign:last-child{border:0}.pay-sign b{display:block;background:#203b56;color:#fff;padding:7px;font-size:12px}
+  .pay-sign span{display:block;padding:18px 4px;color:#8a9299;font-size:11px}
+  .pay-paper table{width:100%;border-collapse:collapse;font-size:11px;margin:10px 0 14px}
+  .pay-paper th,.pay-paper td{border:1px solid #cbd4dc;padding:8px;text-align:left;vertical-align:top}
+  .pay-paper th{background:#edf1f5;width:28%;font-weight:700}
+  .pay-paper .pay-doc-title{text-align:center;font-size:23px;font-weight:800;letter-spacing:.08em;margin:0}
+  .pay-paper .pay-doc-sub{text-align:center;font-size:10px;letter-spacing:.12em;margin:3px 0 16px;color:#697887}
+  .pay-paper .pay-section{font-size:12px;font-weight:800;margin:14px 0 5px}
+  .pay-paper .pay-reason{height:75px;white-space:pre-wrap}
+  .pay-paper .pay-total{text-align:right;font-weight:800;font-size:14px;margin:12px 0}
+  .pay-paper .pay-footer{text-align:center;border-top:2px solid #203b56;padding-top:9px;margin-top:18px;font-size:10px;letter-spacing:.08em}
+  @media(max-width:760px){.pay-wrap{grid-template-columns:1fr}.pay-fields{grid-template-columns:1fr 1fr}.pay-panel{padding:13px}.pay-preview{padding:7px}.pay-paper{padding:17px}}
+  </style>
+  <div class="pay-wrap">
+    <section class="pay-panel">
+      <div class="admin-kicker">PAYMENT DOCUMENT</div><h3>결제 요청 정보 입력</h3>
+      <div class="pay-fields">
+        <div class="pay-field"><label>요청일</label><input id="payDate" type="date" value="${date}" oninput="opsPayPreview()"></div>
+        <div class="pay-field"><label>요청자</label><input id="payName" placeholder="성명" oninput="opsPayPreview()"></div>
+        <div class="pay-field"><label>소속 / 부서</label><input id="payDept" placeholder="지부 또는 부서" oninput="opsPayPreview()"></div>
+        <div class="pay-field"><label>연락처</label><input id="payPhone" placeholder="연락처" oninput="opsPayPreview()"></div>
+        <div class="pay-field"><label>결제 항목</label><select id="payType" onchange="opsPayPreview()"><option>사역비</option><option>출장비</option><option>물품 구입</option><option>행사비</option><option>운영비</option><option>기타</option></select></div>
+        <div class="pay-field"><label>통화</label><select id="payCurrency" onchange="opsPayPreview()"><option value="MMK">MMK (짯)</option><option value="USD">USD ($)</option><option value="KRW">KRW (원)</option><option value="THB">THB (바트)</option></select></div>
+        <div class="pay-field full"><label>결제 금액</label><input id="payAmount" inputmode="decimal" placeholder="예: 500000" oninput="opsPayPreview()"></div>
+        <div class="pay-field full"><label>결제 사유 및 세부 내용</label><textarea id="payReason" placeholder="결제가 필요한 사유와 내용을 입력하세요." oninput="opsPayPreview()"></textarea></div>
+        <div class="pay-field full"><label>첨부 자료</label><input id="payAttach" placeholder="견적서, 영수증 등 (선택)" oninput="opsPayPreview()"></div>
+        <div class="pay-field full"><label>비고</label><textarea id="payNote" rows="2" placeholder="추가 전달 사항" oninput="opsPayPreview()"></textarea></div>
+      </div>
+      <div class="pay-actions">
+        <button class="btn" type="button" onclick="opsPayDownload()">PNG 다운로드</button>
+        <button class="btn light" type="button" onclick="opsPayShare()">카카오톡 공유</button>
+        <button class="btn light" type="button" onclick="opsDashboard()">닫기</button>
+      </div>
+      <p class="meta" style="margin-top:10px">카카오톡 공유는 기기의 공유 메뉴를 사용합니다. 지원되는 기기에서는 카카오톡을 선택해 이미지 파일을 바로 보낼 수 있습니다.</p>
+    </section>
+    <section class="pay-panel"><div class="admin-kicker">LIVE PREVIEW</div><h3>결제 요청서 미리보기</h3><div class="pay-preview"><div class="pay-paper" id="payPaper"></div></div></section>
+  </div>`;
+  opsPayPreview();
+}
+function opsPayVal(id){return document.getElementById(id)?.value?.trim()||'';}
+function opsPayEscape(s){return E(s).replace(/\n/g,'<br>');}
+function opsPayPreview(){
+  const paper=document.getElementById('payPaper');if(!paper)return;
+  const currency=opsPayVal('payCurrency')||'MMK',amount=opsPayVal('payAmount');
+  const num=Number(String(amount).replace(/,/g,'')),formatted=amount&&Number.isFinite(num)?num.toLocaleString('en-US')+' '+currency:amount+' '+currency;
+  const date=opsPayVal('payDate');
+  paper.innerHTML='<h2 class="pay-doc-title">결제 요청서</h2><div class="pay-doc-sub">PAYMENT REQUEST FORM</div>'+
+    '<div class="pay-signs"><div class="pay-sign"><b>행정 코디네이터</b><span>서명 또는 인</span></div><div class="pay-sign"><b>지역대표</b><span>서명 또는 인</span></div></div>'+
+    '<div class="pay-section">기본 정보</div><table><tr><th>요청일</th><td>'+E(date)+'</td></tr><tr><th>요청자</th><td>'+E(opsPayVal('payName'))+'</td></tr><tr><th>소속 / 부서</th><td>'+E(opsPayVal('payDept'))+'</td></tr><tr><th>연락처</th><td>'+E(opsPayVal('payPhone'))+'</td></tr></table>'+
+    '<div class="pay-section">결제 정보</div><table><tr><th>결제 항목</th><td>'+E(opsPayVal('payType'))+'</td></tr><tr><th>결제 금액</th><td><b>'+E(formatted)+'</b></td></tr><tr><th>결제 사유</th><td class="pay-reason">'+opsPayEscape(opsPayVal('payReason'))+'</td></tr><tr><th>첨부 자료</th><td>'+E(opsPayVal('payAttach'))+'</td></tr><tr><th>비고</th><td>'+opsPayEscape(opsPayVal('payNote'))+'</td></tr></table>'+
+    '<p style="text-align:center;font-size:11px;margin:20px 0 10px">위와 같이 결제를 요청합니다.</p><p style="text-align:center;font-size:11px">요청자 : '+E(opsPayVal('payName'))+' (서명)</p><div class="pay-footer">GMS MYANMAR REGIONAL MISSION</div>';
+}
+function opsPayCanvas(){
+  opsPayPreview();
+  const paper=document.getElementById('payPaper');if(!paper)throw new Error('미리보기를 찾을 수 없습니다.');
+  const w=1240,h=1754,scale=2,canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+  const ctx=canvas.getContext('2d');ctx.scale(scale,scale);ctx.fillStyle='#fff';ctx.fillRect(0,0,w/scale,h/scale);
+  const left=44,right=576,full=532;let y=54;
+  const line=(x1,y1,x2,y2,color='#cbd4dc',width=1)=>{ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();};
+  const text=(t,x,yy,size=13,color='#172c40',weight='400',align='left')=>{ctx.fillStyle=color;ctx.font=weight+' '+size+'px Arial, "Noto Sans KR", sans-serif';ctx.textAlign=align;ctx.fillText(String(t||''),x,yy);};
+  text('결제 요청서',310,y,28,'#17344f','700','center');y+=22;text('PAYMENT REQUEST FORM',310,y,11,'#71808d','400','center');y+=25;
+  ctx.fillStyle='#203b56';ctx.fillRect(left,y,full,27);text('행정 코디네이터',left+133,y+18,12,'#fff','700','center');text('지역대표',right-133,y+18,12,'#fff','700','center');
+  ctx.strokeStyle='#203b56';ctx.strokeRect(left,y,full,76);line(310,y,310,y+76,'#203b56');text('서명 또는 인',left+133,y+57,11,'#89939b','400','center');text('서명 또는 인',right-133,y+57,11,'#89939b','400','center');y+=100;
+  const section=t=>{ctx.fillStyle='#17344f';ctx.fillRect(left,y-11,6,6);text(t,left+14,y,14,'#17344f','700');y+=11;};
+  const row=(label,value,height=29)=>{ctx.fillStyle='#edf1f5';ctx.fillRect(left,y,110,height);ctx.strokeStyle='#cbd4dc';ctx.strokeRect(left,y,full,height);line(left+110,y,left+110,y+height);text(label,left+9,y+height/2+4,11,'#24394d','700');const lines=String(value||'').split('\n');lines.slice(0,3).forEach((v,i)=>text(v,left+121,y+16+i*14,11,'#172c40'));y+=height;};
+  section('기본 정보');row('요청일',opsPayVal('payDate'));row('요청자',opsPayVal('payName'));row('소속 / 부서',opsPayVal('payDept'));row('연락처',opsPayVal('payPhone'));y+=18;
+  section('결제 정보');row('결제 항목',opsPayVal('payType'));const amount=opsPayVal('payAmount'),cur=opsPayVal('payCurrency');row('결제 금액',(amount?Number(String(amount).replace(/,/g,'' )).toLocaleString('en-US'): '')+' '+cur);row('결제 사유',opsPayVal('payReason'),92);row('첨부 자료',opsPayVal('payAttach'));row('비고',opsPayVal('payNote'),52);y+=35;
+  text('위와 같이 결제를 요청합니다.',310,y,13,'#172c40','400','center');y+=42;text('요청자 : '+opsPayVal('payName')+'  (서명)',310,y,12,'#172c40','400','center');y+=54;line(left,y,right,y,'#203b56',2);text('GMS MYANMAR REGIONAL MISSION',310,y+22,10,'#526477','700','center');
+  return new Promise(resolve=>canvas.toBlob(b=>resolve(b),'image/png'));
+}
+async function opsPayDownload(){
+  if(!ME||ME.role!=='관리자')return;
+  try{const blob=await opsPayCanvas();if(!blob)throw new Error('이미지를 만들지 못했습니다.');const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='GMC_결제요청서_'+(opsPayVal('payDate')||'').replace(/-/g,'')+'.png';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);}
+  catch(e){alert(e.message||'이미지 다운로드에 실패했습니다.');}
+}
+async function opsPayShare(){
+  if(!ME||ME.role!=='관리자')return;
+  try{
+    const blob=await opsPayCanvas();if(!blob)throw new Error('이미지를 만들지 못했습니다.');
+    const file=new File([blob],'GMC_결제요청서.png',{type:'image/png'});
+    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:'GMC 결제 요청서',text:'결제 요청서를 공유합니다.'});
+    }else{
+      const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=file.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
+      alert('이 기기는 이미지 직접 공유를 지원하지 않아 PNG를 다운로드했습니다. 카카오톡 대화창에 첨부해 주세요.');
+    }
+  }catch(e){if(e?.name!=='AbortError')alert(e.message||'공유를 실행하지 못했습니다. PNG를 다운로드해 카카오톡에 첨부해 주세요.');}
 }
 
 function opsDateIso(value){
