@@ -259,7 +259,7 @@ async function sheetAppend(sheet,values){
 }
 async function sheetUpdate(range,values){const result=await googleJson(sheetUrl(range)+'?valueInputOption=USER_ENTERED',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({range,majorDimension:'ROWS',values})});invalidateSheetReadCache();invalidateOpsReadCache();return result;}
 
-const OPS_TAB_NAMES = ['회원명단','MK 명단','지부현황','지역선교부 코디','행사관리','사무실 예약','업무관리','운영위원회','사무실 비품대장'];
+const OPS_TAB_NAMES = ['회원명단','MK 명단','지부현황','지역선교부 코디','행사관리','사무실 예약','업무관리','운영위원회','사무실 비품대장','결제 요청서'];
 function opsQuoteSheet(name){return "'"+String(name).replace(/'/g,"''")+"'";}
 function opsRange(name,start='A1',end='AZ'){return opsQuoteSheet(name)+'!'+start+':'+end;}
 function opsUrl(range){return 'https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+'/values/'+encodeURIComponent(range);}
@@ -807,6 +807,13 @@ async function api(action,args,ctx=null){
       try{meta=await opsMeta();}
       catch(e){throw new Error('운영 스프레드시트에 접근하지 못했습니다. 공유 설정에서 다음 계정을 편집자로 추가했는지 확인해 주세요: '+CFG.SA_EMAIL+' / 원인: '+String(e.message||e));}
       const byName=new Map((meta.sheets||[]).map(s=>[String(s.properties?.title||''),s.properties||{}]));
+      if(!byName.has('결제 요청서')){
+        await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+':batchUpdate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requests:[{addSheet:{properties:{title:'결제 요청서'}}}]})});
+        const headers=['요청 ID','요청일','요청자','소속 / 부서','통화별 합계','상태','요청 데이터(JSON)','저장일시'];
+        await googleJson(opsUrl("'결제 요청서'!A1:H1")+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({values:[headers]})});
+        byName.set('결제 요청서',{title:'결제 요청서',hidden:false});
+        invalidateSheetReadCache();invalidateOpsReadCache();
+      }
       if(!byName.has('지역선교부 코디')){
         await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(CFG.OPS_SHEET_ID)+':batchUpdate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requests:[{addSheet:{properties:{title:'지역선교부 코디'}}}]})});
         await googleJson(opsUrl("'지역선교부 코디'!A1:F1")+'?valueInputOption=RAW',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({values:[['지역선교부','코디 이름','소속 지부','연락처','이메일','비고']]})});
