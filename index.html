@@ -3098,6 +3098,7 @@ function opsPayVal(id){return document.getElementById(id)?.value?.trim()||'';}
 function opsPayPayoutEditor(currency,label){
   return '<div class="pay-payout"><strong>'+label+'</strong><label>받는 방법</label><select id="payMethod_'+currency+'" onchange="opsPayPayoutChanged(\''+currency+'\')"><option value="현금">현금</option><option value="페이">페이</option><option value="은행 송금">은행 송금</option></select><div id="payPayoutDetails_'+currency+'" hidden><label id="payProviderLabel_'+currency+'">페이 종류 (선택)</label><input id="payProvider_'+currency+'" placeholder="예: KBZPay" oninput="opsPayPreview()"><label id="payReceiverLabel_'+currency+'">페이 수령 번호</label><input id="payReceiverNumber_'+currency+'" placeholder="번호 입력" oninput="opsPayPreview()"></div></div>';
 }
+function opsPayMethodChanged(){opsPayPayoutChanged('MMK');opsPayPayoutChanged('KRW');}
 function opsPayPayoutChanged(currency){
   const method=opsPayVal('payMethod_'+currency),details=document.getElementById('payPayoutDetails_'+currency),providerLabel=document.getElementById('payProviderLabel_'+currency),receiverLabel=document.getElementById('payReceiverLabel_'+currency),receiver=document.getElementById('payReceiverNumber_'+currency),provider=document.getElementById('payProvider_'+currency),totals=opsPayTotals();
   const needs=method==='페이'||method==='은행 송금';
