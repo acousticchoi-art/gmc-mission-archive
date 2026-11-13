@@ -2964,6 +2964,12 @@ function opsPaymentRequest(){
   '.pay-field input,.pay-field select,.pay-field textarea{width:100%;min-width:0;border:1px solid #d8e0e7;border-radius:7px;padding:10px;background:#fff;color:#1d2a35}'+
   '.pay-field textarea{min-height:62px;resize:vertical}'+
   '.pay-items{display:flex;flex-direction:column;gap:9px}'+
+  '.pay-payout-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}'+
+  '.pay-payout{border:1px solid #dce4ea;border-radius:8px;padding:10px;background:#fbfcfd}'+
+  '.pay-payout strong{display:block;font-size:12px;color:#30485e;margin-bottom:7px}'+
+  '.pay-payout label{display:block;font-size:11px;color:#667581;margin:6px 0 3px}'+
+  '.pay-payout input,.pay-payout select{width:100%;min-width:0;border:1px solid #d8e0e7;border-radius:6px;padding:8px;background:#fff}'+
+  '@media(max-width:430px){.pay-payout-grid{grid-template-columns:1fr}}'+
   '.pay-item{border:1px solid #dce4ea;border-radius:9px;padding:12px;background:#fbfcfd}'+
   '.pay-item-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;font-size:12px;font-weight:800;color:#31485d}'+
   '.pay-item-grid{display:grid;grid-template-columns:minmax(0,1fr) 115px 105px;gap:8px;align-items:end}'+
@@ -2995,9 +3001,7 @@ function opsPaymentRequest(){
   '<div class="pay-field"><label>요청자</label><input id="payName" placeholder="성명" oninput="opsPayPreview()"></div>'+
   '<div class="pay-field"><label>소속 / 부서</label><input id="payDept" placeholder="지부 또는 부서" oninput="opsPayPreview()"></div>'+
   '<div class="pay-field"><label>연락처</label><input id="payPhone" placeholder="연락처" oninput="opsPayPreview()"></div>'+
-  '<div class="pay-field full"><label>수령 방법</label><select id="payMethod" onchange="opsPayMethodChanged()"><option value="현금">현금</option><option value="페이">페이</option><option value="은행 송금">은행 송금</option></select></div>'+
-  '<div class="pay-field full" id="payReceiverWrap" hidden><label id="payReceiverLabel">수령 번호</label><input id="payReceiverNumber" placeholder="번호 입력" oninput="opsPayPreview()"></div>'+
-  '<div class="pay-field full" id="payProviderWrap" hidden><label id="payProviderLabel">페이 종류 / 은행명 (선택)</label><input id="payProvider" placeholder="예: KBZPay / KBZ Bank" oninput="opsPayPreview()"></div>'+
+  '<div class="pay-field full"><label>통화별 수령 방법</label><div class="pay-payout-grid">'+opsPayPayoutEditor('MMK','미얀마 짯 (MMK)')+opsPayPayoutEditor('KRW','한국 원화 (KRW)')+'</div></div>'+
   '<div class="pay-field full"><label>결제 항목</label><div id="payItems" class="pay-items"></div><button type="button" class="pay-add" onclick="opsPayAddItem()">＋ 결제 항목 추가</button></div>'+
   '<div class="pay-field full"><label>첨부 자료</label><input id="payAttach" placeholder="견적서, 영수증 등 (선택)" oninput="opsPayPreview()"></div>'+
   '<div class="pay-field full"><label>비고</label><textarea id="payNote" rows="2" placeholder="추가 전달 사항" oninput="opsPayPreview()"></textarea></div>'+
@@ -3027,15 +3031,24 @@ function opsPayItemChanged(el){
   item[el.dataset.payField]=el.value;opsPayPreview();
 }
 function opsPayVal(id){return document.getElementById(id)?.value?.trim()||'';}
-function opsPayMethodChanged(){
-  const method=opsPayVal('payMethod'),wrap=document.getElementById('payReceiverWrap'),provider=document.getElementById('payProviderWrap'),label=document.getElementById('payReceiverLabel'),input=document.getElementById('payReceiverNumber'),providerLabel=document.getElementById('payProviderLabel'),providerInput=document.getElementById('payProvider');
+function opsPayPayoutEditor(currency,label){
+  return '<div class="pay-payout"><strong>'+label+'</strong><label>받는 방법</label><select id="payMethod_'+currency+'" onchange="opsPayPayoutChanged(\''+currency+'\')"><option value="현금">현금</option><option value="페이">페이</option><option value="은행 송금">은행 송금</option></select><div id="payPayoutDetails_'+currency+'" hidden><label id="payProviderLabel_'+currency+'">페이 종류 (선택)</label><input id="payProvider_'+currency+'" placeholder="예: KBZPay" oninput="opsPayPreview()"><label id="payReceiverLabel_'+currency+'">페이 수령 번호</label><input id="payReceiverNumber_'+currency+'" placeholder="번호 입력" oninput="opsPayPreview()"></div></div>';
+}
+function opsPayPayoutChanged(currency){
+  const method=opsPayVal('payMethod_'+currency),details=document.getElementById('payPayoutDetails_'+currency),providerLabel=document.getElementById('payProviderLabel_'+currency),receiverLabel=document.getElementById('payReceiverLabel_'+currency),receiver=document.getElementById('payReceiverNumber_'+currency),provider=document.getElementById('payProvider_'+currency),totals=opsPayTotals();
   const needs=method==='페이'||method==='은행 송금';
-  if(wrap)wrap.hidden=!needs;if(provider)provider.hidden=!needs;
-  if(label)label.textContent=method==='은행 송금'?'은행 계좌번호':'페이 수령 번호';
-  if(input){input.required=needs;input.placeholder=method==='은행 송금'?'은행 계좌번호 입력':'페이 수령 전화번호 또는 계정 번호 입력';}
+  if(details)details.hidden=!needs;
   if(providerLabel)providerLabel.textContent=method==='은행 송금'?'은행명 (선택)':'페이 종류 (선택)';
-  if(providerInput)providerInput.placeholder=method==='은행 송금'?'예: KBZ Bank':'예: KBZPay, WavePay';
+  if(receiverLabel)receiverLabel.textContent=method==='은행 송금'?'은행 계좌번호':'페이 수령 번호';
+  if(receiver){receiver.required=needs&&Number(totals[currency]||0)>0;receiver.placeholder=method==='은행 송금'?'은행 계좌번호 입력':'페이 수령 전화번호 또는 계정 번호 입력';}
+  if(provider)provider.placeholder=method==='은행 송금'?'예: KBZ Bank':'예: KBZPay, WavePay';
   opsPayPreview();
+}
+function opsPayPayoutInfo(currency){
+  const method=opsPayVal('payMethod_'+currency)||'현금';
+  if(method==='현금')return '현금';
+  const provider=opsPayVal('payProvider_'+currency),number=opsPayVal('payReceiverNumber_'+currency);
+  return method+(provider?' · '+provider:'')+(number?' · '+number:'');
 }
 function opsPayEscape(s){return E(s).replace(/\r?\n/g,'<br>');}
 function opsPayTotals(){
@@ -3050,15 +3063,16 @@ function opsPayPreview(){
   const totals=opsPayTotals(),summary=[];
   if(totals.MMK)summary.push('MMK '+opsPayFormat(totals.MMK,'MMK'));
   if(totals.KRW)summary.push('KRW '+opsPayFormat(totals.KRW,'KRW'));
-  const method=opsPayVal('payMethod'),receiver=opsPayVal('payReceiverNumber'),provider=opsPayVal('payProvider');
-  const receiveInfo=method==='현금'?'현금':method+' · '+(provider?provider+' · ':'')+receiver;
+  const receiveRows=[];
+  if(totals.MMK)receiveRows.push('<tr><th>MMK 수령 방법</th><td>'+E(opsPayPayoutInfo('MMK'))+'</td></tr>');
+  if(totals.KRW)receiveRows.push('<tr><th>KRW 수령 방법</th><td>'+E(opsPayPayoutInfo('KRW'))+'</td></tr>');
   paper.innerHTML='<h2 class="pay-doc-title">결제 요청서</h2><div class="pay-doc-sub">PAYMENT REQUEST FORM</div>'+
     '<div class="pay-signs"><div class="pay-sign"><b>행정 코디네이터</b><span>서명 또는 인</span></div><div class="pay-sign"><b>지역대표</b><span>서명 또는 인</span></div></div>'+
-    '<div class="pay-section">기본 정보</div><table><tr><th>요청일</th><td>'+E(opsPayVal('payDate'))+'</td></tr><tr><th>요청자</th><td>'+E(opsPayVal('payName'))+'</td></tr><tr><th>소속 / 부서</th><td>'+E(opsPayVal('payDept'))+'</td></tr><tr><th>연락처</th><td>'+E(opsPayVal('payPhone'))+'</td></tr><tr><th>수령 방법</th><td>'+E(receiveInfo)+'</td></tr></table>'+
+    '<div class="pay-section">기본 정보</div><table><tr><th>요청일</th><td>'+E(opsPayVal('payDate'))+'</td></tr><tr><th>요청자</th><td>'+E(opsPayVal('payName'))+'</td></tr><tr><th>소속 / 부서</th><td>'+E(opsPayVal('payDept'))+'</td></tr><tr><th>연락처</th><td>'+E(opsPayVal('payPhone'))+'</td></tr>'+receiveRows.join('')+'</table>'+
     '<div class="pay-section">결제 내역</div><table><thead><tr><th style="width:8%">No.</th><th>내용</th><th style="width:25%">금액</th><th style="width:16%">통화</th></tr></thead><tbody>'+rows+'</tbody></table>'+
     '<div class="pay-total">통화별 합계<br>'+(summary.length?summary.map(E).join('<br>'):'금액 미입력')+'</div>'+
     '<div class="pay-section">첨부 및 비고</div><table><tr><th>첨부 자료</th><td>'+E(opsPayVal('payAttach'))+'</td></tr><tr><th>비고</th><td>'+opsPayEscape(opsPayVal('payNote'))+'</td></tr></table>'+
-    '<p style="text-align:center;font-size:11px;margin:18px 0 9px">위와 같이 결제를 요청합니다.</p><p style="text-align:center;font-size:11px">요청자 : '+E(opsPayVal('payName'))+' (서명)</p><div class="pay-footer">GMS MYANMAR REGIONAL MISSION</div>';
+    '<p style="text-align:center;font-size:11px;margin:18px 0 9px">위와 같이 결제를 요청합니다.</p><p style="text-align:center;font-size:11px">요청자 : '+E(opsPayVal('payName'))+' (서명)</p><div class="pay-footer">GMS 미얀마 지역선교부</div>';
 }
 function opsPayCanvas(){
   opsPayPreview();
@@ -3076,8 +3090,10 @@ function opsPayCanvas(){
   ctx.strokeStyle='#203b56';ctx.strokeRect(L,y,WIDTH,62);line(310,y,310,y+62,'#203b56');txt('서명 또는 인',L+134,y+49,9,'#89939b','400','center');txt('서명 또는 인',R-134,y+49,9,'#89939b','400','center');y+=76;
   section('기본 정보');
   row('요청일',opsPayVal('payDate'));row('요청자',opsPayVal('payName'));row('소속 / 부서',opsPayVal('payDept'));row('연락처',opsPayVal('payPhone'));
-  const method=opsPayVal('payMethod'),recv=opsPayVal('payReceiverNumber'),prov=opsPayVal('payProvider');
-  row('수령 방법',method==='현금'?'현금':method+' · '+(prov?prov+' · ':'')+recv,30);y+=10;
+  const totals=opsPayTotals();
+  if(totals.MMK)row('MMK 수령',opsPayPayoutInfo('MMK'),30);
+  if(totals.KRW)row('KRW 수령',opsPayPayoutInfo('KRW'),30);
+  y+=10;
   section('결제 내역');
   const items=window.__gmcPayItems||[],col=[L,L+35,L+345,L+455,R];
   ctx.fillStyle='#edf1f5';ctx.fillRect(L,y,WIDTH,23);ctx.strokeStyle='#cbd4dc';ctx.strokeRect(L,y,WIDTH,23);
@@ -3106,8 +3122,8 @@ async function opsPayDownload(){
 function opsPayValidate(){
   const items=window.__gmcPayItems||[];
   if(!items.length||items.some(x=>!x.description.trim()||!x.amount.trim()||!Number.isFinite(Number(String(x.amount).replace(/,/g,'')))||Number(String(x.amount).replace(/,/g,''))<0)){alert('각 결제 항목의 내용과 올바른 금액을 입력해 주세요.');return false;}
-  const method=opsPayVal('payMethod');
-  if((method==='페이'||method==='은행 송금')&&!opsPayVal('payReceiverNumber')){alert(method==='페이'?'페이 수령 번호를 입력해 주세요.':'은행 계좌번호를 입력해 주세요.');document.getElementById('payReceiverNumber')?.focus();return false;}
+  const totals=opsPayTotals();
+  for(const currency of ['MMK','KRW']){if(totals[currency]>0){const method=opsPayVal('payMethod_'+currency)||'현금';if((method==='페이'||method==='은행 송금')&&!opsPayVal('payReceiverNumber_'+currency)){alert(currency+' '+(method==='페이'?'페이 수령 번호':'은행 계좌번호')+'를 입력해 주세요.');document.getElementById('payReceiverNumber_'+currency)?.focus();return false;}}}
   return true;
 }
 async function opsPayShare(){
