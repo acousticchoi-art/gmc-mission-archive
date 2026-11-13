@@ -2383,7 +2383,7 @@ async function opsDashboard(selected){
       {title:'조직 · 인사',items:['조직관리','회원관리']},
       {title:'사역 · 행정',items:['행사관리','업무관리']},
       {title:'시설 · 자산',items:['사무실 예약','사무실 비품대장']},
-      {title:'재정 · 행정',items:['결제 요청서']}
+      {title:'결제',items:['결제 요청서']}
     ];
     document.getElementById('opsTabs').innerHTML=menuGroups.map(group=>
       '<section class="ops-menu-group"><h3>'+group.title+'</h3><div class="ops-menu-items">'+group.items.map(name=>{
