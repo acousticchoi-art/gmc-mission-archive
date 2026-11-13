@@ -3106,11 +3106,11 @@ function opsPayCanvas(){
     const amount=item.amount?Number(String(item.amount).replace(/,/g,'')).toLocaleString('en-US'):'';
     txt(amount,col[3]-7,y+16,9,'#172c40','400','right');txt(item.currency,(col[3]+col[4])/2,y+16,9,'#172c40','400','center');y+=h;
   });
-  const totals=opsPayTotals();y+=8;txt('통화별 합계',L,y,9,'#17344f','700');y+=14;
+  y+=8;txt('통화별 합계',L,y,9,'#17344f','700');y+=14;
   if(totals.MMK){txt('MMK  '+opsPayFormat(totals.MMK,'MMK'),L+8,y,9);y+=13;}
   if(totals.KRW){txt('KRW  '+opsPayFormat(totals.KRW,'KRW'),L+8,y,9);y+=13;}
   y+=7;section('첨부 및 비고');row('첨부 자료',opsPayVal('payAttach'),28);row('비고',opsPayVal('payNote'),40);y+=15;
-  txt('위와 같이 결제를 요청합니다.',310,y,10,'#172c40','400','center');y+=23;txt('요청자 : '+opsPayVal('payName')+'  (서명)',310,y,9,'#172c40','400','center');y+=28;line(L,y,R,y,'#203b56',1.5);txt('GMS MYANMAR REGIONAL MISSION',310,y+15,8,'#526477','700','center');
+  txt('위와 같이 결제를 요청합니다.',310,y,10,'#172c40','400','center');y+=23;txt('요청자 : '+opsPayVal('payName')+'  (서명)',310,y,9,'#172c40','400','center');y+=28;line(L,y,R,y,'#203b56',1.5);txt('GMS 미얀마 지역선교부',310,y+15,9,'#526477','700','center');
   return new Promise(resolve=>canvas.toBlob(b=>resolve(b),'image/png'));
 }
 async function opsPayDownload(){
