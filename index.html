@@ -2978,6 +2978,8 @@ function opsPaymentRequest(){
   '.pay-remove{border:0;background:#f8eaea;color:#963b3b;border-radius:6px;padding:5px 9px;font-size:11px}'+
   '.pay-add{width:100%;border:1px dashed #9aabba;background:#f5f8fa;color:#24435d;border-radius:8px;padding:10px;font-weight:700;margin-top:9px}'+
   '.pay-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}'+
+  '.pay-saved-list{margin-top:14px;border:1px solid #dce4ea;border-radius:9px;padding:12px;background:#fbfcfd;max-height:360px;overflow:auto}'+
+  '.pay-saved-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:10px 2px;border-bottom:1px solid #e5eaee;font-size:12px}'+
   '.pay-preview{background:#eef2f5;border-radius:10px;padding:12px;overflow:auto}'+
   '.pay-paper{width:100%;max-width:560px;margin:auto;background:#fff;box-shadow:0 3px 14px #102b4418;padding:24px;color:#172c40}'+
   '.pay-signs{display:grid;grid-template-columns:1fr 1fr;border:1px solid #233b52;margin:18px 0}'+
@@ -3005,10 +3007,40 @@ function opsPaymentRequest(){
   '<div class="pay-field full"><label>결제 항목</label><div id="payItems" class="pay-items"></div><button type="button" class="pay-add" onclick="opsPayAddItem()">＋ 결제 항목 추가</button></div>'+
   '<div class="pay-field full"><label>첨부 자료</label><input id="payAttach" placeholder="견적서, 영수증 등 (선택)" oninput="opsPayPreview()"></div>'+
   '<div class="pay-field full"><label>비고</label><textarea id="payNote" rows="2" placeholder="추가 전달 사항" oninput="opsPayPreview()"></textarea></div>'+
-  '</div><div class="pay-actions"><button class="btn" type="button" onclick="opsPayDownload()">PNG 다운로드</button><button class="btn light" type="button" onclick="opsPayShare()">카카오톡 공유</button><button class="btn light" type="button" onclick="opsDashboard()">닫기</button></div>'+
+  '</div><div class="pay-actions"><button class="btn" type="button" onclick="opsPaySave()">요청서 저장</button><button class="btn light" type="button" onclick="opsPayShowList()">저장된 요청 목록</button><button class="btn light" type="button" onclick="opsPayDownload()">PNG 다운로드</button><button class="btn light" type="button" onclick="opsPayShare()">카카오톡 공유</button><button class="btn light" type="button" onclick="opsDashboard()">닫기</button></div><div id="paySavedList" class="pay-saved-list" hidden></div>'+
   '<p class="meta" style="margin-top:10px">항목마다 통화를 따로 선택할 수 있습니다. 수령 방법이 페이 또는 은행 송금이면 수령 번호를 입력해야 합니다.</p>'+
   '</section><section class="pay-panel"><div class="admin-kicker">LIVE PREVIEW</div><h3>결제 요청서 미리보기</h3><div class="pay-preview"><div class="pay-paper" id="payPaper"></div></div></section></div>';
   opsPayRenderItems();opsPayMethodChanged();opsPayPreview();
+}
+async function opsPaySave(){
+  if(!ME||ME.role!=='관리자')return;
+  if(!opsPayValidate())return;
+  const totals=opsPayTotals();
+  const payload={date:opsPayVal('payDate'),name:opsPayVal('payName'),dept:opsPayVal('payDept'),phone:opsPayVal('payPhone'),attach:opsPayVal('payAttach'),note:opsPayVal('payNote'),payouts:Object.fromEntries(['MMK','KRW'].map(c=>[c,{method:opsPayVal('payMethod_'+c)||'현금',provider:opsPayVal('payProvider_'+c),number:opsPayVal('payReceiverNumber_'+c)}])),items:(window.__gmcPayItems||[]).map(x=>({...x})),totals};
+  if(!payload.name){alert('요청자를 입력해 주세요.');document.getElementById('payName')?.focus();return;}
+  const id='PAY-'+Date.now(),summary=[totals.MMK?'MMK '+opsPayFormat(totals.MMK,'MMK'):'',totals.KRW?'KRW '+opsPayFormat(totals.KRW,'KRW'):''].filter(Boolean).join(' / ');
+  try{await A('opsCreateRow',[T,'결제 요청서',[id,payload.date,payload.name,payload.dept,summary,'접수',JSON.stringify(payload),new Date().toISOString()]]);alert('결제 요청서가 저장되었습니다.');await opsPayShowList();}
+  catch(e){alert('저장하지 못했습니다: '+e.message);}
+}
+async function opsPayShowList(){
+  const box=document.getElementById('paySavedList');if(!box)return;
+  box.hidden=false;box.innerHTML='<div class="meta">저장된 요청을 불러오는 중...</div>';
+  try{const d=await A('opsListRows',[T,'결제 요청서']),rows=(d.records||[]).slice().reverse();
+    if(!rows.length){box.innerHTML='<b>저장된 결제 요청이 없습니다.</b>';return;}
+    window.__gmcPaySavedRows=rows;
+    box.innerHTML='<div style="font-weight:800;color:#30485e;margin-bottom:8px">저장된 결제 요청 ('+rows.length+'건)</div>'+rows.map(r=>{const v=r.values||[];return '<div class="pay-saved-row"><div><b>'+E(v[1]||'')+' · '+E(v[2]||'')+'</b><div class="meta">'+E(v[3]||'')+' · '+E(v[4]||'')+' · '+E(v[5]||'접수')+'</div></div><button class="btn light" type="button" onclick="opsPayOpenSaved('+r.rowNumber+')">열기</button></div>';}).join('');
+  }catch(e){box.innerHTML='<div class="error notice">목록을 불러오지 못했습니다: '+E(e.message)+'</div>';}
+}
+function opsPayOpenSaved(rowNumber){
+  const row=(window.__gmcPaySavedRows||[]).find(r=>r.rowNumber===rowNumber);if(!row){alert('저장된 요청을 찾지 못했습니다.');return;}
+  try{const data=JSON.parse(row.values?.[6]||'{}');
+    const ids={date:'payDate',name:'payName',dept:'payDept',phone:'payPhone',attach:'payAttach',note:'payNote'};
+    Object.keys(ids).forEach(k=>{const el=document.getElementById(ids[k]);if(el)el.value=data[k]||'';});
+    ['MMK','KRW'].forEach(c=>{const q=data.payouts?.[c]||{};const m=document.getElementById('payMethod_'+c);if(m)m.value=q.method||'현금';const v=document.getElementById('payProvider_'+c);if(v)v.value=q.provider||'';const n=document.getElementById('payReceiverNumber_'+c);if(n)n.value=q.number||'';opsPayPayoutChanged(c);});
+    window.__gmcPayItems=(data.items||[]).map((x,n)=>({...x,id:n+1}));window.__gmcPayItemSeq=window.__gmcPayItems.length;
+    if(!window.__gmcPayItems.length){window.__gmcPayItems=[{id:1,description:'',amount:'',currency:'MMK'}];window.__gmcPayItemSeq=1;}
+    opsPayRenderItems();opsPayPreview();const box=document.getElementById('paySavedList');if(box)box.hidden=true;
+  }catch(e){alert('저장된 요청 데이터를 읽지 못했습니다: '+e.message);}
 }
 function opsPayAddItem(){
   const items=window.__gmcPayItems||[];items.push({id:++window.__gmcPayItemSeq,description:'',amount:'',currency:'MMK'});opsPayRenderItems();opsPayPreview();
