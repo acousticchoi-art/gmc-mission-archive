@@ -257,6 +257,10 @@ async function sheetAppend(sheet,values){
   const result=await googleJson(sheetUrl(sheet+'!A:Z')+':append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({values:[values]})});
   invalidateSheetReadCache();invalidateOpsReadCache();return result;
 }
+async function sheetAppendRaw(sheet,values){
+  const result=await googleJson(sheetUrl(sheet+'!A:Z')+':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({values:[values]})});
+  invalidateSheetReadCache();invalidateOpsReadCache();return result;
+}
 async function sheetUpdate(range,values){const result=await googleJson(sheetUrl(range)+'?valueInputOption=USER_ENTERED',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({range,majorDimension:'ROWS',values})});invalidateSheetReadCache();invalidateOpsReadCache();return result;}
 
 const OPS_TAB_NAMES = ['회원명단','MK 명단','지부현황','지역선교부 코디','행사관리','사무실 예약','업무관리','운영위원회','사무실 비품대장','결제 요청서'];
@@ -399,6 +403,11 @@ function safe(v){const s=String(v??'');return /^[=+\-@]/.test(s)?"'"+s:s;}
 function validatePassword(p){if(typeof p!=='string'||p.length<6)throw new Error('비밀번호는 6자 이상이어야 합니다.');}
 function parseMaterialTimestamp(value){
   const raw=String(value??'').trim();if(!raw)return null;
+  // Google Sheets date/time cells may be returned as serial day numbers.
+  if(typeof value==='number'||/^\d{5}(?:\.\d+)?$/.test(raw)){
+    const serial=Number(raw);
+    if(Number.isFinite(serial)&&serial>20000&&serial<80000)return Date.UTC(1899,11,30)+serial*86400000-390*60000;
+  }
   let m=raw.match(/^(\d{4})[./-](\d{1,2})[./-](\d{1,2})(?:[, T]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
   let y,mo,d,h=0,mi=0,se=0;
   if(m){y=+m[1];mo=+m[2];d=+m[3];h=+(m[4]||0);mi=+(m[5]||0);se=+(m[6]||0);}
@@ -756,10 +765,10 @@ async function api(action,args,ctx=null){
       if(!driveId||!fileName)throw new Error('자료 링크 또는 파일 정보가 없습니다.');
       if(!data.linkOnly)await ensurePublic(driveId);
       const rows=await materialsRows(),id=maxNextId(rows,'D');
-      await sheetAppend('자료',[id,safe(data.title),safe(data.description),safe(data.category),safe(data.language),safe(data.author),safe(data.year),driveId,safe(fileName),safe(data.fileType),nowText(),s.uid,'공개',nowText(),0]);
+      await sheetAppendRaw('자료',[id,safe(data.title),safe(data.description),safe(data.category),safe(data.language),safe(data.author),safe(data.year),driveId,safe(fileName),safe(data.fileType),nowText(),s.uid,'공개',nowText(),0]);
       return {ok:true,id};
     }
-    case 'uploadMaterial':{const s=await requireRole(args[0],['관리자']),data=args[1]||{};if(!data.fileName||!data.base64)throw new Error('파일이 없습니다.');const f=await driveUpload(data);await ensurePublic(f.id);const rows=await materialsRows(),id=maxNextId(rows,'D');await sheetAppend('자료',[id,safe(data.title),safe(data.description),safe(data.category),safe(data.language),safe(data.author),safe(data.year),f.id,f.name,safe(data.fileType),nowText(),s.uid,'공개',nowText(),0]);return {ok:true,id};}
+    case 'uploadMaterial':{const s=await requireRole(args[0],['관리자']),data=args[1]||{};if(!data.fileName||!data.base64)throw new Error('파일이 없습니다.');const f=await driveUpload(data);await ensurePublic(f.id);const rows=await materialsRows(),id=maxNextId(rows,'D');await sheetAppendRaw('자료',[id,safe(data.title),safe(data.description),safe(data.category),safe(data.language),safe(data.author),safe(data.year),f.id,f.name,safe(data.fileType),nowText(),s.uid,'공개',nowText(),0]);return {ok:true,id};}
     case 'updateMaterial':{const s=await requireRole(args[0],MANAGE_ROLES),id=args[1],data=args[2]||{},m=await findMaterial(id);if(!m)throw new Error('자료가 없습니다.');await sheetUpdate('자료!B'+m.row+':G'+m.row,[[safe(data.title),safe(data.description),safe(data.category),safe(data.language),safe(data.author),safe(data.year)]]);await sheetUpdate('자료!J'+m.row+':J'+m.row,[[safe(data.fileType)]]);await sheetUpdate('자료!M'+m.row+':N'+m.row,[[data.status==='비공개'?'비공개':'공개',nowText()]]);return {ok:true};}
     case 'deleteMaterial':{await requireRole(args[0],['관리자']);const m=await findMaterial(args[1]);if(!m)throw new Error('자료가 없습니다.');if(!/^https:\/\//i.test(String(m.driveId||'')))await driveJson('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(m.driveId),{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({trashed:true})});await sheetUpdate('자료!M'+m.row+':M'+m.row,[['삭제']]);return {ok:true};}
     case 'adminMaterials':{await requireRole(args[0],['관리자']);const rows=await materialsRows();const materials=rows.slice(1).map((r,i)=>({r,row:i+2})).filter(x=>x.r[0]&&x.r[12]!=='삭제').sort((a,b)=>(parseMaterialTimestamp(b.r[10])??-Infinity)-(parseMaterialTimestamp(a.r[10])??-Infinity)||b.row-a.row).map(({r})=>({id:r[0],title:r[1],description:r[2],category:r[3],language:r[4],author:r[5],year:r[6],driveId:r[7],fileName:r[8],fileType:r[9],status:r[12],date:r[10],views:Number(r[14]||0)}));return {ok:true,materials};}
