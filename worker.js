@@ -603,12 +603,12 @@ async function api(action,args,ctx=null){
         if(cat && !String(r[3]||'').split(/[，,;|]/).some(c=>compact(c)===compact(cat))) continue;
         if(lang && norm(r[4])!==lang) continue;
         const id=String(r[0]);
-        out.push({id,title:String(r[1]||''),description:String(r[2]||''),category:String(r[3]||''),language:String(r[4]||''),author:String(r[5]||''),year:String(r[6]||''),fileName:String(r[8]||''),fileType:String(r[9]||''),date:String(r[10]||''),views:Number(r[14]||0),viewUrl:'https://drive.google.com/file/d/'+encodeURIComponent(String(r[7]||''))+'/view',downloadUrl:'https://drive.google.com/uc?export=download&id='+encodeURIComponent(String(r[7]||''))});
+        out.push({id,title:String(r[1]||''),description:String(r[2]||''),category:String(r[3]||''),language:String(r[4]||''),author:String(r[5]||''),year:String(r[6]||''),fileName:String(r[8]||''),fileType:String(r[9]||''),date:String(r[10]||''),views:Number(r[14]||0),viewUrl:/^https:\/\//i.test(String(r[7]||''))?String(r[7]):'https://drive.google.com/file/d/'+encodeURIComponent(String(r[7]||''))+'/view',downloadUrl:/^https:\/\//i.test(String(r[7]||''))?String(r[7]):'https://drive.google.com/uc?export=download&id='+encodeURIComponent(String(r[7]||''))});
       }
       out.reverse();
       return {ok:true,materials:out};
     }
-    case 'getMaterial':{const s=await session(args[0]),m=await findMaterial(args[1]);if(!m||m.status!=='공개')throw new Error('자료를 찾을 수 없습니다.');const material={...m,date:m.date,viewUrl:'https://drive.google.com/file/d/'+encodeURIComponent(m.driveId)+'/view',downloadUrl:'https://drive.google.com/uc?export=download&id='+encodeURIComponent(m.driveId)};const log=async()=>{try{await sheetUpdate('자료!O'+m.row+':O'+m.row,[[m.views+1]]);const rv=await recentViewsRows(),rid=maxNextId(rv,'R');await sheetAppend('최근본자료',[rid,s.uid,m.id,nowText()]);}catch(e){}};if(ctx?.waitUntil)ctx.waitUntil(log());else await log();return {ok:true,material};}
+    case 'getMaterial':{const s=await session(args[0]),m=await findMaterial(args[1]);if(!m||m.status!=='공개')throw new Error('자료를 찾을 수 없습니다.');const material={...m,date:m.date,viewUrl:/^https:\/\//i.test(String(m.driveId||''))?String(m.driveId):'https://drive.google.com/file/d/'+encodeURIComponent(m.driveId)+'/view',downloadUrl:/^https:\/\//i.test(String(m.driveId||''))?String(m.driveId):'https://drive.google.com/uc?export=download&id='+encodeURIComponent(m.driveId)};const log=async()=>{try{await sheetUpdate('자료!O'+m.row+':O'+m.row,[[m.views+1]]);const rv=await recentViewsRows(),rid=maxNextId(rv,'R');await sheetAppend('최근본자료',[rid,s.uid,m.id,nowText()]);}catch(e){}};if(ctx?.waitUntil)ctx.waitUntil(log());else await log();return {ok:true,material};}
     case 'listRecentViews':{
       const s=await session(args[0]),rows=await recentViewsRows(),latest=new Map();
       const timeValue=value=>{const raw=String(value||'').trim();if(!raw)return 0;const normalized=raw.replace(/^(\\d{4})-(\\d{2})-(\\d{2}) (\\d{2}:\\d{2}:\\d{2})$/,'$1-$2-$3T$4+06:30');const parsed=Date.parse(normalized);return Number.isFinite(parsed)?parsed:0;};
@@ -729,7 +729,11 @@ async function api(action,args,ctx=null){
     case 'finalizeUpload':{
       const s=await requireRole(args[0],['관리자']),data=args[1]||{};
       let driveId=data.driveId||'', fileName=data.fileName||'';
-      if(!driveId && data.uploadId){
+      if(data.linkOnly){
+        let parsed;try{parsed=new URL(String(driveId));}catch(_){throw new Error('Google Drive 공유 링크가 올바르지 않습니다.');}
+        if(parsed.protocol!=='https:'||!['drive.google.com','docs.google.com'].includes(parsed.hostname))throw new Error('Google Drive 또는 Google Docs 링크만 등록할 수 있습니다.');
+        if(!fileName)throw new Error('파일명을 입력하세요.');
+      }else if(!driveId && data.uploadId){
         let found=null;
         for(let i=0;i<20 && !found;i++){
           try{found=(await api('findUploadedFile',[args[0],{uploadId:data.uploadId,fileName:data.fileName,size:data.size}])).file}catch(_){}
@@ -738,15 +742,15 @@ async function api(action,args,ctx=null){
         if(!found)throw new Error('Drive 업로드는 완료되었지만 등록할 파일을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.');
         driveId=found.id; fileName=found.name||fileName;
       }
-      if(!driveId||!fileName)throw new Error('업로드된 파일 정보가 없습니다.');
-      await ensurePublic(driveId);
+      if(!driveId||!fileName)throw new Error('자료 링크 또는 파일 정보가 없습니다.');
+      if(!data.linkOnly)await ensurePublic(driveId);
       const rows=await materialsRows(),id=maxNextId(rows,'D');
       await sheetAppend('자료',[id,safe(data.title),safe(data.description),safe(data.category),safe(data.language),safe(data.author),safe(data.year),driveId,safe(fileName),safe(data.fileType),nowText(),s.uid,'공개',nowText(),0]);
       return {ok:true,id};
     }
     case 'uploadMaterial':{const s=await requireRole(args[0],['관리자']),data=args[1]||{};if(!data.fileName||!data.base64)throw new Error('파일이 없습니다.');const f=await driveUpload(data);await ensurePublic(f.id);const rows=await materialsRows(),id=maxNextId(rows,'D');await sheetAppend('자료',[id,safe(data.title),safe(data.description),safe(data.category),safe(data.language),safe(data.author),safe(data.year),f.id,f.name,safe(data.fileType),nowText(),s.uid,'공개',nowText(),0]);return {ok:true,id};}
     case 'updateMaterial':{const s=await requireRole(args[0],MANAGE_ROLES),id=args[1],data=args[2]||{},m=await findMaterial(id);if(!m)throw new Error('자료가 없습니다.');await sheetUpdate('자료!B'+m.row+':G'+m.row,[[safe(data.title),safe(data.description),safe(data.category),safe(data.language),safe(data.author),safe(data.year)]]);await sheetUpdate('자료!J'+m.row+':J'+m.row,[[safe(data.fileType)]]);await sheetUpdate('자료!M'+m.row+':N'+m.row,[[data.status==='비공개'?'비공개':'공개',nowText()]]);return {ok:true};}
-    case 'deleteMaterial':{await requireRole(args[0],['관리자']);const m=await findMaterial(args[1]);if(!m)throw new Error('자료가 없습니다.');await driveJson('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(m.driveId),{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({trashed:true})});await sheetUpdate('자료!M'+m.row+':M'+m.row,[['삭제']]);return {ok:true};}
+    case 'deleteMaterial':{await requireRole(args[0],['관리자']);const m=await findMaterial(args[1]);if(!m)throw new Error('자료가 없습니다.');if(!/^https:\/\//i.test(String(m.driveId||'')))await driveJson('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(m.driveId),{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({trashed:true})});await sheetUpdate('자료!M'+m.row+':M'+m.row,[['삭제']]);return {ok:true};}
     case 'adminMaterials':{await requireRole(args[0],['관리자']);const rows=await materialsRows();return {ok:true,materials:rows.slice(1).filter(r=>r[0] && r[12]!=='삭제').map(r=>({id:r[0],title:r[1],description:r[2],category:r[3],language:r[4],author:r[5],year:r[6],driveId:r[7],fileName:r[8],fileType:r[9],status:r[12],date:r[10],views:Number(r[14]||0)})).reverse()};}
     case 'createUser':{const s=await requireRole(args[0],['관리자']),data=args[1]||{};if(!data.name||!data.username||!data.initialPassword||!ROLES.includes(data.role)||data.role==='관리자')throw new Error('필수 정보를 확인하세요.');validatePassword(data.initialPassword);if(await findUserByUsername(data.username))throw new Error('이미 존재하는 아이디입니다.');const salt=randomHex(16),hash=await hashPassword(data.initialPassword,salt),rows=await usersRows(),id=maxNextId(rows,'M');await sheetAppend('회원',[id,safe(data.name),safe(data.username),safe(data.email),safe(data.phone||''),safe(data.branch),data.role,hash,salt,true,'활성',nowText(),'']);return {ok:true,id};}
     case 'listUsers':{await requireRole(args[0],['관리자']);const rows=await usersRows();return {ok:true,users:rows.slice(1).filter(r=>r[0]).map((r,i)=>({id:r[0],name:r[1],username:r[2],email:r[3],phone:r[4],branch:r[5],role:r[6],firstLogin:String(r[9]).toLowerCase()==='true',status:r[10],created:r[11],lastLogin:r[12]}))};}case 'loginHistory':{await requireRole(args[0],['관리자']);const rows=await loginHistoryRows();return {ok:true,history:rows.slice(1).filter(r=>r[0]).map(r=>({id:r[0],userId:r[1],name:r[2],username:r[3],role:r[4],branch:r[5],loginAt:r[6]})).reverse().slice(0,200)};}
