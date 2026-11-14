@@ -3472,7 +3472,7 @@ function renderAdminMaterials(list){
   if(!list.length){box.innerHTML='<div class="notice">조건에 맞는 자료가 없습니다.</div>';return;}
   box.innerHTML=list.map(m=>`<div class="admin-material-row">
     <div class="admin-material-main"><div class="tag">${E(m.category||'기타')}</div><h3>${E(m.title||'제목 없음')}</h3><p>${E(m.author||'저자 미상')} · ${E(m.year||'연도 미상')} · 조회 ${Number(m.views||0)}</p><small>${E(m.fileName||'')}</small></div>
-    <div class="admin-material-meta"><span class="admin-status ${m.status==='공개'?'is-public':m.status==='비공개'?'is-private':'is-deleted'}">${E(m.status||'')}</span><div class="admin-material-actions"><button class="btn light" onclick="editMaterialAdmin('${E(String(m.id||'')).replace(/'/g,"&#039;")}')">수정</button>${m.driveId?'<a class="btn light" target="_blank" rel="noopener" href="https://drive.google.com/file/d/'+encodeURIComponent(m.driveId)+'/view">원본</a>':''}<button class="btn danger" onclick="deleteMaterialAdmin('${E(String(m.id||'')).replace(/'/g,"&#039;")}','${E(m.title||'').replace(/'/g,"&#039;")}')">삭제</button></div></div>
+    <div class="admin-material-meta"><span class="admin-status ${m.status==='공개'?'is-public':m.status==='비공개'?'is-private':'is-deleted'}">${E(m.status||'')}</span><div class="admin-material-actions"><button class="btn light" onclick="editMaterialAdmin('${E(String(m.id||'')).replace(/'/g,"&#039;")}')">수정</button>${m.driveId?'<a class="btn light" target="_blank" rel="noopener" href="'+(/^https:\/\//i.test(String(m.driveId||''))?E(m.driveId):'https://drive.google.com/file/d/'+encodeURIComponent(m.driveId)+'/view')+'">원본</a>':''}<button class="btn danger" onclick="deleteMaterialAdmin('${E(String(m.id||'')).replace(/'/g,"&#039;")}','${E(m.title||'').replace(/'/g,"&#039;")}')">삭제</button></div></div>
   </div>`).join('');
 }
 function editMaterialAdmin(id){
@@ -3506,7 +3506,7 @@ async function saveMaterialAdmin(id){
   catch(e){document.getElementById('ame_msg').innerHTML='<div class="notice error">'+E(e.message)+'</div>';}
 }
 async function deleteMaterialAdmin(id,title){
-  if(!confirm('자료를 삭제하시겠습니까?\n\n'+title+'\n\n삭제하면 Google Drive 원본도 휴지통으로 이동합니다.'))return;
+  if(!confirm('자료를 삭제하시겠습니까?\n\n'+title+'\n\n등록 정보만 삭제 처리됩니다. 직접 올린 기존 파일은 Google Drive에서 별도로 관리하세요.'))return;
   try{await A('deleteMaterial',[T,id]);alert('자료가 삭제되었습니다.');await loadAdminMaterials();}
   catch(e){alert(e.message);}
 }
