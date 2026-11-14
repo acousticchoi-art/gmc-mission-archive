@@ -1875,7 +1875,30 @@ html body #app>.container.ops-page{font-family:inherit;color:#263b4d}
  .hr-branch-members{padding:0 11px 8px}
 }
 </style>
-</head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav><button id="installAppBtn" class="install-cta" type="button" aria-label="GMC 아카이브를 바탕화면에 추가"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v5h14v-5"/></svg><span>바탕화면 추가</span></button></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><button id="backToTop" type="button" aria-label="페이지 맨 위로 이동" title="맨 위로" onclick="window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})">↑</button><script>
+<style id="material-register-layout-fix">
+.material-register-layout{width:100%;max-width:900px;margin:0 auto}
+.material-register-form{width:100%;max-width:none;margin:0;padding:28px;display:grid;gap:18px}
+.material-form-field{min-width:0}
+.material-register-form .material-form-field>label{display:block;margin:0 0 7px;font-size:13px;font-weight:750;color:#24394b}
+.material-register-form .material-form-field>input:not([type=file]),
+.material-register-form .material-form-field>textarea{display:block;width:100%;min-width:0;box-sizing:border-box;border:1px solid #ccd7e0;border-radius:9px;background:#fff;padding:12px 14px;color:#1d2a35;font-size:15px}
+.material-register-form .material-form-field>input:not([type=file]){min-height:48px}
+.material-register-form .material-form-field>textarea{min-height:110px;resize:vertical;line-height:1.55}
+.material-register-form .material-form-meta{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:14px;align-items:start}
+.material-register-form .material-form-file input[type=file]{display:block;width:100%;max-width:100%;min-height:52px;box-sizing:border-box;padding:10px;border:1px solid #ccd7e0;border-radius:9px;background:#fbfcfd;color:#31485b;font-size:14px}
+.material-register-form .file-help{margin-top:7px;line-height:1.55}
+.material-register-form .material-form-submit{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.material-register-form .material-form-submit>.btn{min-height:48px;padding:12px 24px;font-size:15px}
+.material-register-form #uploadmsg{width:100%}
+.material-register-form #uploadmsg:empty{display:none}
+.material-register-form .category-picker{display:flex;flex-wrap:wrap;gap:8px}
+@media(max-width:700px){
+ .material-register-form{padding:18px;gap:16px}
+ .material-register-form .material-form-meta{grid-template-columns:1fr;gap:13px}
+ .material-register-form .material-form-submit{align-items:stretch}
+ .material-register-form .material-form-submit>.btn{width:100%}
+}
+</style></head><body><header><div class="logo"><strong>GMC</strong><span>Mission Archive</span></div><nav id="nav"></nav><button id="installAppBtn" class="install-cta" type="button" aria-label="GMC 아카이브를 바탕화면에 추가"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v5h14v-5"/></svg><span>바탕화면 추가</span></button></header><main id="app"></main><footer>GMC Mission Archive · Myanmar Mission Resources</footer><button id="backToTop" type="button" aria-label="페이지 맨 위로 이동" title="맨 위로" onclick="window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})">↑</button><script>
 //const API='https://gmc-mission-archive.tyzm.workers.dev/api';
   const API='/api';
 let T=localStorage.getItem('gmc_token')||'',ME=null,CATS=[],FAVS=new Set();
@@ -3687,13 +3710,41 @@ function renderMaterialRegister(){
   document.getElementById('materialWorkspace').innerHTML=`<div class="material-register-layout">
     <div class="material-intro"><div class="admin-kicker">NEW MATERIAL</div><h3>선교 자료 등록</h3><p>자료 정보를 입력하고 Google Drive에 원본을 저장합니다.</p></div>
     <div class="panel form material-register-form">
-      <label>제목</label><input id="mt" placeholder="자료 제목을 입력하세요">
-      <label>설명</label><textarea id="md" placeholder="자료에 대한 간단한 설명을 입력하세요"></textarea>
-      <label>카테고리</label>${categoryPickerHtml('mc')}<div class="row"><div><label>언어</label><input id="ml" value="한국어"></div>
-      <div class="row"><div><label>저자</label><input id="ma"></div><div><label>작성연도</label><input id="my" value="${new Date().getFullYear()}"></div></div>
-      <label>파일</label><input id="file" type="file">
-      <div class="file-help">파일 형식은 선택한 파일에서 자동으로 인식됩니다.</div>
-      <button class="btn" style="margin-top:18px" onclick="upload()">Drive에 저장하고 등록</button><div id="uploadmsg"></div>
+      <div class="material-form-field">
+        <label for="mt">제목</label>
+        <input id="mt" placeholder="자료 제목을 입력하세요" autocomplete="off">
+      </div>
+      <div class="material-form-field">
+        <label for="md">설명</label>
+        <textarea id="md" placeholder="자료에 대한 간단한 설명을 입력하세요"></textarea>
+      </div>
+      <div class="material-form-field">
+        <label>카테고리</label>
+        ${categoryPickerHtml('mc')}
+      </div>
+      <div class="material-form-meta">
+        <div class="material-form-field">
+          <label for="ml">언어</label>
+          <input id="ml" value="한국어">
+        </div>
+        <div class="material-form-field">
+          <label for="ma">저자</label>
+          <input id="ma" placeholder="저자명">
+        </div>
+        <div class="material-form-field">
+          <label for="my">작성연도</label>
+          <input id="my" type="number" min="1900" max="2100" value="${new Date().getFullYear()}">
+        </div>
+      </div>
+      <div class="material-form-field material-form-file">
+        <label for="file">파일 첨부</label>
+        <input id="file" type="file" aria-describedby="materialFileHelp">
+        <div class="file-help" id="materialFileHelp">파일 형식은 자동으로 인식됩니다. 파일을 선택한 뒤 아래 버튼을 눌러주세요.</div>
+      </div>
+      <div class="material-form-submit">
+        <button type="button" class="btn" onclick="upload()">Drive에 저장하고 등록</button>
+        <div id="uploadmsg" aria-live="polite"></div>
+      </div>
     </div>
   </div>`;
 }
